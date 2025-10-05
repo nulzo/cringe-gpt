@@ -76,12 +76,6 @@ public class OpenRouterChatProvider(
                 var data = line.Substring(5).Trim();
                 if (data == "[DONE]") break;
 
-                // Log response but truncate if it contains base64 images
-                var logData = data.Length > 1000 && data.Contains("data:image") ?
-                    data.Substring(0, 500) + "...[base64 image data truncated]..." + data.Substring(data.Length - 100) :
-                    data;
-                Logger.LogInformation("OpenRouter Stream Response: {data}", logData);
-
                 StreamedContentChunk? contentChunk = null;
                 var imagesToYield = new List<StreamedImageData>();
 
@@ -120,7 +114,6 @@ public class OpenRouterChatProvider(
                                 if (!string.IsNullOrEmpty(textContent))
                                 {
                                     contentChunk.TextContent = textContent;
-                                    Logger.LogInformation("OpenRouter Text Content: {content}", textContent);
                                 }
                             }
 
@@ -205,8 +198,6 @@ public class OpenRouterChatProvider(
                 // Yield content outside the try-catch block (only if it has text content)
                 if (contentChunk != null && !string.IsNullOrEmpty(contentChunk.TextContent))
                 {
-                    Logger.LogInformation("OpenRouter Yielding content chunk with text={hasText}",
-                        !string.IsNullOrEmpty(contentChunk.TextContent));
                     yield return contentChunk;
                 }
             }
