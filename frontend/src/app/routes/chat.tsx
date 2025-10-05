@@ -348,7 +348,7 @@ function ConversationView({
               className="absolute left-0 w-full"
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
-              <div className="space-y-6 sm:space-y-8">
+              <div className="space-y-6 my-6 sm:space-y-8">
                 <Message
                   key={m.id}
                   message={m}
