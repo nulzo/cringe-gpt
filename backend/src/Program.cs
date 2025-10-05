@@ -277,7 +277,7 @@ builder.Services.AddPricingServices();
 
 var app = builder.Build();
 
-app.MapPrometheusScrapingEndpoint();
+app.MapPrometheusScrapingEndpoint("/metrics");
 
 // Configure the HTTP request pipeline.
 app.UseSerilogRequestLogging();
