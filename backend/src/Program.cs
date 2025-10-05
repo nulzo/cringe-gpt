@@ -348,8 +348,8 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-// HTTPS redirection optional behind reverse proxy
-if (app.Environment.IsDevelopment())
+// Enable HTTPS redirection only in production (avoid breaking containerized dev without HTTPS)
+if (app.Environment.IsProduction())
 {
     app.UseHttpsRedirection();
 }
