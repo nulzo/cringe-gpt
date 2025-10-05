@@ -1,0 +1,37 @@
+# Build outputs
+dist/
+build/
+*.min.js
+
+# Dependencies
+node_modules/
+
+# Configuration files
+*.config.js
+*.config.ts
+*.config.mjs
+vite.config.ts
+
+# Generated files
+*.d.ts
+coverage/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Lock files
+package-lock.json
+yarn.lock
+bun.lockb
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db 

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  ollama-backend:
+    build:
+      context: ./src
+      dockerfile: ../Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Otlp__Endpoint=http://jaeger:4317
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+    ports:
+      - "5278:8080"
+    volumes:
+      - ./src/Logs:/app/Logs
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+    depends_on:
+      - ollama-backend
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317"   # OTLP gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3002:3000"
+    volumes:
+      - ./src/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  grafana-data:

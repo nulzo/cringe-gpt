@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  ollama-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - Otlp__Endpoint=http://jaeger:4317
+      - CORS_ORIGINS=http://localhost:3000
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/chatapp.db
+    ports:
+      - "5278:8080"
+    volumes:
+      - chatapp-data:/app/data
+      - storage-data:/app/Storage
+      - logs-data:/app/Logs
+    restart: unless-stopped
+    depends_on:
+      - jaeger
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_APP_API_URL=http://localhost:5278
+    ports:
+      - "3000:80"
+    depends_on:
+      - ollama-backend
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: unless-stopped
+    depends_on:
+      - ollama-backend
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+  chatapp-data:
+  storage-data:
+  logs-data:

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-query-auth": "^2.4.3"
+  }
+}
