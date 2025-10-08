@@ -83,42 +83,6 @@ export const MessageActions = memo(
                                     onClick={() => copy(message.content)}
                                     className="size-9 text-muted-foreground hover:text-foreground "
                                 >
-                                    <IconThumbUp className="size-5" strokeWidth={2}/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Copy message</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => copy(message.content)}
-                                    className="size-9 text-muted-foreground hover:text-foreground "
-                                >
-                                    <IconThumbDown className="size-5" strokeWidth={2}/>
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Copy message</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    </TooltipProvider>
-
-                    <TooltipProvider>
-                        <Tooltip>
-                            <TooltipTrigger>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => copy(message.content)}
-                                    className="size-9 text-muted-foreground hover:text-foreground "
-                                >
                                     <IconVolume className="size-5" strokeWidth={2}/>
                                 </Button>
                             </TooltipTrigger>

@@ -60,7 +60,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { IconDeviceDesktop, IconSun, IconMoon } from "@tabler/icons-react";
 
-
 // Preset accent colors matching original component
 const presetColors = [
   { name: "Default", value: "oklch(0.645 0.246 16.439)" }, // Primary
@@ -160,7 +159,6 @@ const dataControlsSchema = z.object({
   improveModel: z.boolean(),
 });
 
-
 const primarySections = [
   { id: "general", label: "General", icon: IconSettings },
   { id: "notifications", label: "Notifications", icon: IconBell },
@@ -182,7 +180,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [activeSection, setActiveSection] = useState("general");
   const { data: settings } = useSettings();
   const { mutate: updateSettings } = useUpdateSettings();
-
 
   const { setTheme, theme } = useTheme();
 
@@ -392,7 +389,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   };
 
   // Form submission handlers (only for sections that need manual save)
-  const onPersonalizationSubmit = (data: z.infer<typeof personalizationSchema>) => {
+  const onPersonalizationSubmit = (
+    data: z.infer<typeof personalizationSchema>
+  ) => {
     try {
       // Store personalization data in localStorage for now
       // In a real app, this would be sent to backend
@@ -402,7 +401,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       toast.error("Failed to update personalization settings");
     }
   };
-
 
   const handleSaveProvider = () => {
     if (!selectedProvider) return;
@@ -478,19 +476,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <SelectGroup>
                       <SelectLabel>Themes</SelectLabel>
                       <SelectItem value="light">
-                        <div className="flex items-center gap-2">
-                          Light
-                        </div>
+                        <div className="flex items-center gap-2">Light</div>
                       </SelectItem>
                       <SelectItem value="dark">
-                        <div className="flex items-center gap-2">
-                          Dark
-                        </div>
+                        <div className="flex items-center gap-2">Dark</div>
                       </SelectItem>
                       <SelectItem value="system">
-                        <div className="flex items-center gap-2">
-                          System
-                        </div>
+                        <div className="flex items-center gap-2">System</div>
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>
@@ -501,8 +493,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
               <div className="space-y-4">
                 <Label className="text-base">Accent color</Label>
                 <div className="space-y-3">
-                  <Select 
-                    value={currentAccent} 
+                  <Select
+                    value={currentAccent}
                     onValueChange={handleAccentChange}
                   >
                     <SelectTrigger className="w-fit">
@@ -514,7 +506,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         {presetColors.map((color) => (
                           <SelectItem key={color.name} value={color.value}>
                             <div className="flex items-center gap-3">
-                              <div 
+                              <div
                                 className="border border-border rounded-full size-2"
                                 style={{ backgroundColor: color.value }}
                               />
@@ -524,20 +516,24 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         ))}
                         <SelectItem value="custom">
                           <div className="flex items-center gap-2">
-                            <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 border border-border rounded-full w-4 h-4" />
+                            <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-blue-500 border border-border rounded-full size-2" />
                             Custom
                           </div>
                         </SelectItem>
                       </SelectGroup>
                     </SelectContent>
                   </Select>
-                  
+
                   {/* Custom Color Picker - Only show when custom is selected */}
                   {currentAccent === "custom" && (
                     <div className="flex items-center gap-3 bg-muted/30 p-3 border rounded-lg">
-                      <span className="text-muted-foreground text-sm">Custom Color</span>
+                      <span className="text-muted-foreground text-sm">
+                        Custom Color
+                      </span>
                       <div className="relative flex items-center">
-                        <span className="left-3 absolute text-foreground">#</span>
+                        <span className="left-3 absolute text-foreground">
+                          #
+                        </span>
                         <Input
                           value={
                             currentAccent.startsWith("#")
@@ -550,7 +546,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               if (hex.length === 6) {
                                 handleCustomColorChange(`#${hex}`);
                               } else if (hex.length === 0) {
-                                handleCustomColorChange("oklch(0.645 0.246 16.439)");
+                                handleCustomColorChange(
+                                  "oklch(0.645 0.246 16.439)"
+                                );
                               }
                             }
                           }}
@@ -562,17 +560,27 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <div className="relative">
                         <input
                           type="color"
-                          value={currentAccent.startsWith("#") ? currentAccent : "#4146F8"}
-                          onChange={(e) => handleCustomColorChange(e.target.value)}
+                          value={
+                            currentAccent.startsWith("#")
+                              ? currentAccent
+                              : "#4146F8"
+                          }
+                          onChange={(e) =>
+                            handleCustomColorChange(e.target.value)
+                          }
                           className="absolute inset-0 opacity-0 rounded-full w-full h-full cursor-pointer"
                           aria-label="Custom color picker"
                         />
                         <div
                           className="rounded-full ring-2 ring-offset-2 ring-offset-background w-8 h-8 cursor-pointer"
                           style={{
-                            backgroundColor: currentAccent.startsWith("#") ? currentAccent : "oklch(0.6 0.18 250)",
+                            backgroundColor: currentAccent.startsWith("#")
+                              ? currentAccent
+                              : "oklch(0.6 0.18 250)",
                             boxShadow: `0 0 0 2px ${
-                              currentAccent.startsWith("#") ? currentAccent : "oklch(0.6 0.18 250)"
+                              currentAccent.startsWith("#")
+                                ? currentAccent
+                                : "oklch(0.6 0.18 250)"
                             }`,
                           }}
                         />
@@ -587,7 +595,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <div className="space-y-0.5">
                   <Label className="text-base">Language</Label>
                 </div>
-                <Select onValueChange={handleLanguageChange} defaultValue="auto-detect">
+                <Select
+                  onValueChange={handleLanguageChange}
+                  defaultValue="auto-detect"
+                >
                   <SelectTrigger className="w-fit">
                     <SelectValue />
                   </SelectTrigger>
@@ -612,10 +623,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <div className="space-y-0.5">
                   <Label className="text-base">Spoken language</Label>
                   <p className="text-muted-foreground text-sm">
-                    For best results, select the language you mainly speak. If it's not listed, it may still be supported via auto-detection.
+                    For best results, select the language you mainly speak. If
+                    it's not listed, it may still be supported via
+                    auto-detection.
                   </p>
                 </div>
-                <Select onValueChange={handleSpokenLanguageChange} defaultValue="auto-detect">
+                <Select
+                  onValueChange={handleSpokenLanguageChange}
+                  defaultValue="auto-detect"
+                >
                   <SelectTrigger className="w-fit">
                     <SelectValue />
                   </SelectTrigger>
@@ -644,7 +660,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <Button variant="outline" size="icon">
                     <IconPlayerPlay className="w-4 h-4" />
                   </Button>
-                  <Select onValueChange={handleVoiceChange} defaultValue="maple">
+                  <Select
+                    onValueChange={handleVoiceChange}
+                    defaultValue="maple"
+                  >
                     <SelectTrigger className="w-fit">
                       <SelectValue />
                     </SelectTrigger>
@@ -664,7 +683,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       case "personalization":
         return (
           <Form {...personalizationForm}>
-            <form onSubmit={personalizationForm.handleSubmit(onPersonalizationSubmit)} className="space-y-6">
+            <form
+              onSubmit={personalizationForm.handleSubmit(
+                onPersonalizationSubmit
+              )}
+              className="space-y-6"
+            >
               <div>
                 <h3 className="font-semibold text-xl">Personalization</h3>
               </div>
@@ -676,7 +700,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   render={({ field }) => (
                     <FormItem className="flex justify-between items-center">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Enable customization</FormLabel>
+                        <FormLabel className="text-base">
+                          Enable customization
+                        </FormLabel>
                         <FormDescription className="text-muted-foreground text-sm">
                           Customize how CringeGPT responds to you.{" "}
                           <a href="#" className="text-blue-600 hover:underline">
@@ -685,7 +711,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         </FormDescription>
                       </div>
                       <FormControl>
-              <Switch
+                        <Switch
                           checked={field.value}
                           onCheckedChange={field.onChange}
                         />
@@ -700,25 +726,34 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   render={({ field }) => (
                     <FormItem className="flex justify-between items-center">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">CringeGPT personality</FormLabel>
+                        <FormLabel className="text-base">
+                          CringeGPT personality
+                        </FormLabel>
                         <FormDescription className="text-muted-foreground text-sm">
                           Set the style and tone CringeGPT uses when responding.
                         </FormDescription>
-              </div>
+                      </div>
                       <FormControl>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <SelectTrigger className="w-fit">
                             <SelectValue />
                           </SelectTrigger>
-                <SelectContent>
+                          <SelectContent>
                             <SelectItem value="default">Default</SelectItem>
                             <SelectItem value="chatty">Chatty</SelectItem>
                             <SelectItem value="witty">Witty</SelectItem>
-                            <SelectItem value="straight-shooting">Straight shooting</SelectItem>
-                            <SelectItem value="encouraging">Encouraging</SelectItem>
+                            <SelectItem value="straight-shooting">
+                              Straight shooting
+                            </SelectItem>
+                            <SelectItem value="encouraging">
+                              Encouraging
+                            </SelectItem>
                             <SelectItem value="gen-z">Gen Z</SelectItem>
-                </SelectContent>
-              </Select>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                     </FormItem>
                   )}
@@ -729,7 +764,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   name="customInstructions"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Custom instructions</FormLabel>
+                      <FormLabel className="text-base">
+                        Custom instructions
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Additional behavior, style, and tone preferences"
@@ -738,20 +775,32 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         />
                       </FormControl>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <Button variant="outline" size="sm">Chatty</Button>
-                        <Button variant="outline" size="sm">Witty</Button>
-                        <Button variant="outline" size="sm">Straight shooting</Button>
-                        <Button variant="outline" size="sm">Encouraging</Button>
-                        <Button variant="outline" size="sm">Gen Z</Button>
-                        <Button variant="outline" size="sm">...</Button>
-            </div>
+                        <Button variant="outline" size="sm">
+                          Chatty
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Witty
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Straight shooting
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Encouraging
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          Gen Z
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          ...
+                        </Button>
+                      </div>
                     </FormItem>
                   )}
                 />
 
                 <div className="space-y-4">
                   <h4 className="font-medium text-lg">About you</h4>
-                  
+
                   <FormField
                     control={personalizationForm.control}
                     name="nickname"
@@ -801,15 +850,20 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         </FormItem>
                       )}
                     />
-                    </div>
                   </div>
-                    </div>
-              
+                </div>
+              </div>
+
               <div className="flex justify-end pt-4">
-                <Button type="submit" disabled={dataControlsForm.formState.isSubmitting}>
-                  {dataControlsForm.formState.isSubmitting ? "Saving..." : "Save changes"}
+                <Button
+                  type="submit"
+                  disabled={dataControlsForm.formState.isSubmitting}
+                >
+                  {dataControlsForm.formState.isSubmitting
+                    ? "Saving..."
+                    : "Save changes"}
                 </Button>
-                  </div>
+              </div>
             </form>
           </Form>
         );
@@ -824,7 +878,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Improve the model for everyone</Label>
+                  <Label className="text-base">
+                    Improve the model for everyone
+                  </Label>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-muted-foreground text-sm">
@@ -835,7 +891,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     onCheckedChange={(checked) => {
                       dataControlsForm.setValue("improveModel", checked);
                       // Auto-save to localStorage
-                      localStorage.setItem("dataControls", JSON.stringify({ improveModel: checked }));
+                      localStorage.setItem(
+                        "dataControls",
+                        JSON.stringify({ improveModel: checked })
+                      );
                     }}
                   />
                 </div>
@@ -846,35 +905,45 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <div className="space-y-0.5">
                     <Label className="text-base">Shared links</Label>
                   </div>
-                  <Button variant="outline" size="sm">Manage</Button>
+                  <Button variant="outline" size="sm">
+                    Manage
+                  </Button>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div className="space-y-0.5">
                     <Label className="text-base">Archived chats</Label>
                   </div>
-                  <Button variant="outline" size="sm">Manage</Button>
+                  <Button variant="outline" size="sm">
+                    Manage
+                  </Button>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div className="space-y-0.5">
                     <Label className="text-base">Archive all chats</Label>
                   </div>
-                  <Button variant="outline" size="sm">Archive all</Button>
+                  <Button variant="outline" size="sm">
+                    Archive all
+                  </Button>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div className="space-y-0.5">
                     <Label className="text-base">Delete all chats</Label>
                   </div>
-                  <Button variant="destructive" size="sm">Delete all</Button>
+                  <Button variant="destructive" size="sm">
+                    Delete all
+                  </Button>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div className="space-y-0.5">
                     <Label className="text-base">Export data</Label>
                   </div>
-                  <Button variant="outline" size="sm">Export</Button>
+                  <Button variant="outline" size="sm">
+                    Export
+                  </Button>
                 </div>
               </div>
             </div>
@@ -886,27 +955,28 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <div className="space-y-6">
             <div>
               <h3 className="font-semibold text-xl">Notifications</h3>
-                  </div>
+            </div>
 
             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <div className="space-y-0.5">
                   <Label className="text-base">Responses</Label>
                   <p className="text-muted-foreground text-sm">
-                    Get notified when CringeGPT responds to requests that take time, like research or image generation.
+                    Get notified when CringeGPT responds to requests that take
+                    time, like research or image generation.
                   </p>
                 </div>
                 <Select defaultValue="push">
                   <SelectTrigger className="w-fit">
                     <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
+                  </SelectTrigger>
+                  <SelectContent>
                     <SelectItem value="push">Push</SelectItem>
                     <SelectItem value="none">None</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         );
 
@@ -1199,7 +1269,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     onClick={() => setActiveSection(section.id)}
                   >
                     <Icon className="size-4" />
-                      {section.label}
+                    {section.label}
                   </Button>
                 );
               })}
@@ -1220,12 +1290,12 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         className="justify-start gap-3 px-3 h-10"
                         onClick={() => setActiveSection(section.id)}
                       >
-                          <ProviderIconFromKey
-                            providerKey={key}
+                        <ProviderIconFromKey
+                          providerKey={key}
                           size={16}
-                            className="rounded"
-                          />
-                          {section.label}
+                          className="rounded"
+                        />
+                        {section.label}
                       </Button>
                     );
                   })}

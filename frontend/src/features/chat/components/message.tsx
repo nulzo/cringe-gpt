@@ -11,6 +11,10 @@ import { MessageError } from "./message-error";
 import { MessageLoading } from "./message-loading";
 import { ImageSkeleton } from "./image-skeleton";
 import { useUpdateMessageLike } from "../api/update-message-like";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
+import {Button} from "@/components/ui/button.tsx";
+import {IconCheck, IconCopy} from "@tabler/icons-react";
+import {useClipboard} from "@/hooks/use-clipboard.ts";
 
 // Helper to extract provider from model ID - you can move this to a utils file
 const getProviderFromModel = (modelId: string): string | undefined => {
@@ -44,15 +48,14 @@ export const Message = memo(
       },
       ref
     ) => {
-      // Handle both snake_case (is_liked) and camelCase (isLiked) formats from backend
       const [isLiked, setIsLiked] = useState(
         message.isLiked || message.is_liked || false
       );
 
-      // Track if we're in an optimistic update to prevent prop syncing
+      const {copy, copied} = useClipboard();
+
       const isOptimisticUpdate = useRef(false);
 
-      // Mock model info - replace with actual model data from your models API
       const modelInfo = useMemo(
         () => ({
           isOnline: true,
@@ -65,10 +68,8 @@ export const Message = memo(
       const providerName = modelInfo?.provider;
       const isModelOnline = modelInfo?.isOnline || false;
 
-      // Use the new API mutation for updating likes
       const updateLikeMutation = useUpdateMessageLike();
 
-      // Update local state when message prop changes (only when not in optimistic update)
       useEffect(() => {
         if (!isOptimisticUpdate.current) {
           const newIsLiked = message.isLiked || message.is_liked || false;
@@ -76,21 +77,16 @@ export const Message = memo(
         }
       }, [message.isLiked, message.is_liked]);
 
-      // Handle like functionality
       const handleLike = async () => {
         if (updateLikeMutation.isPending) return;
 
         const newIsLiked = !isLiked;
 
-        // Mark that we're in an optimistic update
         isOptimisticUpdate.current = true;
 
-        // Optimistically update UI
         setIsLiked(newIsLiked);
 
         try {
-          // Call the API to update the like status
-          // Use the correct property name - backend sends 'messageId' (camelCase) not 'message_id'
           const messageGuid =
             (message as any).messageId || message.id.toString();
           await updateLikeMutation.mutateAsync({
@@ -98,16 +94,10 @@ export const Message = memo(
             isLiked: newIsLiked,
           });
 
-          // Call the callback if provided (for backward compatibility)
-          if (onUpdateLike) {
-            await onUpdateLike(message.id, newIsLiked);
-          }
         } catch (error) {
-          // Revert on error
           setIsLiked(!newIsLiked);
           console.error("Failed to update like status:", error);
         } finally {
-          // Clear optimistic update flag
           isOptimisticUpdate.current = false;
         }
       };
@@ -200,13 +190,15 @@ export const Message = memo(
                   />
                 </div>
 
-                <MessageBody
-                  message={message}
-                  isTyping={isTyping}
-                  isCancelled={isCancelled}
-                />
+                <div className="py-4">
+                  <MessageBody
+                      message={message}
+                      isTyping={isTyping}
+                      isCancelled={isCancelled}
+                  />
+                </div>
+
                 {showActions && (
-                  // <div className="group-hover:opacity-100 opacity-0 transition-all duration-100">
                   <div>
                     <MessageActions
                       message={message}
@@ -232,11 +224,23 @@ export const Message = memo(
                 />
               </div>
               <div className="flex items-center justify-end w-full max-w-[70%]">
-                <MessageActions
-                  message={message}
-                  isLiked={false}
-                  handleLike={() => {}}
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => copy(message.content)}
+                          className="size-9 text-muted-foreground hover:text-foreground "
+                      >
+                        {copied ? <IconCheck className="size-5" strokeWidth={2} /> : <IconCopy className="size-5" strokeWidth={2}/>}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy message</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
           )}
