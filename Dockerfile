@@ -31,6 +31,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     ConnectionStrings__DefaultConnection="Data Source=/app/data/chatapp.db" \
     Storage__Path=/app/Storage \
     AUTO_MIGRATE=true \
+    ENABLE_HTTPS_REDIRECT=false \
     SEED_DEFAULT_ADMIN=true \
     DEFAULT_ADMIN_USERNAME=admin \
     DEFAULT_ADMIN_EMAIL=admin@example.com \

@@ -122,7 +122,7 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
   setAbortController(abortController);
   startStream(conversationId || 'pending', tempAssistant, abortController);
 
-  const base = import.meta.env.MODE === 'production' ? '/api' : env.API_URL;
+  const base = import.meta.env.MODE === 'production' ? '' : env.API_URL;
   const response = await fetch(`${base}/api/v1/chat/completions`, {
     method: 'POST',
     headers: {

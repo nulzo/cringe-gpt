@@ -300,8 +300,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollama WebUI Backend API v1"); });
 }
 
-// Enable HTTPS redirection only in production (avoid breaking containerized dev without HTTPS)
-if (app.Environment.IsProduction())
+// Enable HTTPS redirection only when explicitly requested
+if (bool.TryParse(configuration["ENABLE_HTTPS_REDIRECT"], out var httpsRedirect) && httpsRedirect)
 {
     app.UseHttpsRedirection();
 }
