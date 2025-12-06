@@ -78,6 +78,13 @@ const AuthRoutes = {
         return { Component: RegisterRoute };
       },
     },
+    {
+      path: "logout",
+      lazy: async () => {
+        const { LogoutRoute } = await import("@/app/routes/auth/logout");
+        return { Component: LogoutRoute };
+      },
+    },
   ],
 };
 

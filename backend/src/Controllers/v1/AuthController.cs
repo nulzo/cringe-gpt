@@ -29,8 +29,9 @@ public class AuthController : BaseApiController
     }
 
     [HttpPost("logout")]
-    public async Task<ActionResult<AuthResponseDto>> Logout()
+    public async Task<IActionResult> Logout()
     {
-        return Ok("Not implemented");
+        await _authService.LogoutAsync();
+        return NoContent();
     }
 }

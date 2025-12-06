@@ -14,15 +14,10 @@ export function useConsolidatedChatState() {
 
   // Get state from store
   const {
-    messages,
-    streamedMessage,
-    isStreaming,
-    currentConversationId,
     inputValue,
     attachments,
     setMessages,
     setInputValue,
-    setAttachments,
     addAttachments,
     removeAttachment,
     clearInput,
@@ -92,18 +87,11 @@ export function useConsolidatedChatState() {
   const handleSendMessage = async (message: string) => {
     if (!message.trim() && attachments.length === 0) return;
 
-    const convertedAttachments = await Promise.all(
-      attachments.map(async (file) => ({
-        fileName: file.name,
-        contentType: file.type,
-        base64Data: await fileToBase64(file)
-      }))
-    );
-
+    // Defer attachment conversion to the streaming API layer to keep UI memory light
     sendMessageMutation.mutate({
       conversationId: conversationId || null,
       content: message,
-      attachments: convertedAttachments,
+      attachments,
       onNewConversation: (newConversationId: string) => {
         navigate(`/chat/${newConversationId}`);
       },

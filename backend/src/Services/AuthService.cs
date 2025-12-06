@@ -71,6 +71,12 @@ public class AuthService : IAuthService
         };
     }
 
+    public Task LogoutAsync()
+    {
+        // Stateless JWT logout: rely on client to drop token. Hook for future revocation/metrics.
+        return Task.CompletedTask;
+    }
+
     private async Task<AppUser?> FindUserAsync(string usernameOrEmail)
     {
         if (usernameOrEmail.Contains('@')) return await _userManager.FindByEmailAsync(usernameOrEmail);

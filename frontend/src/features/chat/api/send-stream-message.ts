@@ -6,6 +6,8 @@ import { type Message } from '../types';
 import { normalizeMessage } from './get-conversation';
 import { env } from '@/configuration/env';
 import useNotificationStore from '@/stores/notification-store';
+import { CHAT_MAX_ATTACHMENTS } from '../config';
+import { fileToBase64, filterValidAttachments } from '../utils/attachments';
 
 // Define the attachment interface
 interface AttachmentDto {
@@ -14,13 +16,15 @@ interface AttachmentDto {
   base64Data: string;
 }
 
-const streamMessageFn = async (variables: {
+export type StreamMessageInput = {
   conversationId: string | null;
   content: string;
   attachments?: File[] | AttachmentDto[];
   onNewConversation?: (conversationId: string) => void;
   onStreamInterrupted?: (error: any, recoveryInfo: any) => void;
-}) => {
+};
+
+const streamMessageFn = async (variables: StreamMessageInput) => {
   const {
     addMessage,
     // legacy methods (unused post multi-stream)
@@ -95,24 +99,19 @@ const streamMessageFn = async (variables: {
   let attachmentDtos: AttachmentDto[] | null = null;
 
   if (attachments && attachments.length > 0) {
-    attachmentDtos = await Promise.all(
-      attachments.map(async (attachment) => {
-        if (attachment instanceof File) {
-          // Convert File to AttachmentDto
-          const MAX_FILE_SIZE = 8 * 1024 * 1024;
-          if (attachment.size > MAX_FILE_SIZE) return null as any;
-          return {
-            fileName: attachment.name,
-            contentType: attachment.type,
-            base64Data: await toBase64(attachment),
-          };
-        } else {
-          // It's already an AttachmentDto
-          return attachment as AttachmentDto;
-        }
-      })
+    const incomingFiles = attachments.filter((attachment): attachment is File => attachment instanceof File);
+    const incomingDtos = attachments.filter((attachment): attachment is AttachmentDto => !(attachment instanceof File));
+
+    const validFiles = filterValidAttachments(incomingFiles);
+    const preparedFiles = await Promise.all(
+      validFiles.map(async (attachment) => ({
+        fileName: attachment.name,
+        contentType: attachment.type,
+        base64Data: await fileToBase64(attachment),
+      }))
     );
-    attachmentDtos = attachmentDtos.filter(Boolean);
+
+    attachmentDtos = [...incomingDtos, ...preparedFiles].slice(0, CHAT_MAX_ATTACHMENTS);
   }
 
   // Make request
@@ -322,16 +321,9 @@ const streamMessageFn = async (variables: {
   }
 };
 
-const toBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = (error) => reject(error);
-  });
-
-export const useSendStreamMessage = (options?: any) => {
-  return useMutation({
+export const useSendStreamMessage = (options?: any) =>
+  useMutation<any, unknown, StreamMessageInput>({
+    mutationKey: ['send-stream-message'],
     mutationFn: streamMessageFn,
     ...options,
     onError: (error: any) => {
@@ -347,4 +339,3 @@ export const useSendStreamMessage = (options?: any) => {
       }
     },
   });
-};

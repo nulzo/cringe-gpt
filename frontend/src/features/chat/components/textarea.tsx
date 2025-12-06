@@ -33,6 +33,7 @@ import { ChatToolsPopover } from "./chat-tools-popover";
 import { ImageGenerationModal } from "@/features/image-generation/components/image-generation-modal";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { IconPlayerStop } from "@tabler/icons-react";
+import { filterValidAttachments } from "../utils/attachments";
 
 interface ModernChatAreaProps {
   value: string;
@@ -72,10 +73,6 @@ export function ModernChatArea({
   const { selectedModelId, setSelectedModel } = useChatConfigStore();
   const isStreaming = useChatStore((s) => s.isStreaming);
   const cancelStream = useChatStore((s) => s.cancelStream);
-
-  // Soft limits to keep UX responsive and payloads reasonable
-  const MAX_ATTACHMENTS = 6;
-  const MAX_FILE_SIZE_MB = 8; // ChatGPT-like sensible limit
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
@@ -122,10 +119,7 @@ export function ModernChatArea({
 
   const handleFileSelect = (files: FileList | null) => {
     if (files) {
-      const asArray = Array.from(files);
-      const filtered = asArray
-        .slice(0, MAX_ATTACHMENTS)
-        .filter((f) => f.size <= MAX_FILE_SIZE_MB * 1024 * 1024);
+      const filtered = filterValidAttachments(Array.from(files));
       if (filtered.length > 0) onAttachments(filtered);
     }
   };
@@ -157,9 +151,7 @@ export function ModernChatArea({
 
     if (imageFiles.length > 0) {
       event.preventDefault(); // Prevent default paste behavior for images
-      const filtered = imageFiles
-        .slice(0, MAX_ATTACHMENTS)
-        .filter((f) => f.size <= MAX_FILE_SIZE_MB * 1024 * 1024);
+      const filtered = filterValidAttachments(imageFiles);
       if (filtered.length > 0) onAttachments(filtered);
     }
   };

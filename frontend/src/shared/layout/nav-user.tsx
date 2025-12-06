@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { useUIState } from "./ui-state-provider";
+import { useLogout } from "@/features/auth/api/logout";
+import { PATHS } from "@/configuration/paths";
 import {
   IconBellRinging,
   IconBrandGithub,
@@ -46,6 +48,13 @@ export function NavUser({ user, isOpen }: NavUserProps) {
   const [isHovered, setIsHovered] = useState(false);
   const { openSettingsModal } = useUIState();
   const navigate = useNavigate();
+  const { mutateAsync: logout, isPending: isLoggingOut } = useLogout({
+    onSuccess: () => navigate(PATHS.LOGIN.path, { replace: true }),
+  });
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   const popoverItemsTop = [
     {
@@ -87,7 +96,8 @@ export function NavUser({ user, isOpen }: NavUserProps) {
     {
       icon: IconLogout,
       label: "Log out",
-      onClick: () => {},
+      onClick: handleLogout,
+      disabled: isLoggingOut,
     }
   ]
 
@@ -184,7 +194,15 @@ export function NavUser({ user, isOpen }: NavUserProps) {
         <DropdownMenuSeparator className="m-1 bg-border" />
         
         {popoverItemsBottom.map((item) => (
-          <DropdownMenuItem key={item.label} className="gap-3 px-2 py-2 text-sm transition-colors cursor-pointer">
+          <DropdownMenuItem
+            key={item.label}
+            onSelect={(e) => {
+              e.preventDefault();
+              item.onClick?.(e as any);
+            }}
+            disabled={(item as any).disabled}
+            className="gap-3 px-2 py-2 text-sm transition-colors cursor-pointer"
+          >
             <item.icon className="size-5 text-foreground/90" />
             {item.label}
           </DropdownMenuItem>

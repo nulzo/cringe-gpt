@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { type Message } from '../types';
+import { filterValidAttachments } from '../utils/attachments';
 
 interface ConversationStreamState {
   message: Message;
@@ -207,9 +208,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Input actions
   setInputValue: (value) => set({ inputValue: value }),
-  setAttachments: (files) => set({ attachments: files }),
+  setAttachments: (files) => set({ attachments: filterValidAttachments(files) }),
   addAttachments: (files) => set((state) => ({
-    attachments: [...state.attachments, ...files]
+    attachments: filterValidAttachments([...state.attachments, ...files])
   })),
   removeAttachment: (fileName) => set((state) => ({
     attachments: state.attachments.filter(f => f.name !== fileName)
