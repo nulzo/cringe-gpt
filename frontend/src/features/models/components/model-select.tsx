@@ -33,8 +33,9 @@ import {useVirtualizer} from "@tanstack/react-virtual";
 import {getProviderKeyFromModel, ProviderIcon,} from "@/components/ui/provider-icon";
 import {PROVIDERS} from "@/configuration/const";
 import {OpenRouter} from "@lobehub/icons";
-import {IconArrowDown, IconArrowUp, IconInfoCircle,} from "@tabler/icons-react";
+import {IconAlertCircle, IconArrowDown, IconArrowUp, IconInfoCircle,} from "@tabler/icons-react";
 import MarkdownRenderer from "@/features/markdown/components/markdown-renderer";
+import { useUIState } from "@/shared/layout/ui-state-provider";
 
 interface ModelSelectProps {
     value?: string;
@@ -223,12 +224,14 @@ function ModelSelectList({
                              onValueChange,
                              setOpen,
                              setSearch,
+                             onOpenSettings,
                          }: {
     groupedModels: Record<string, ModelResponse[]>;
     value?: string;
     onValueChange: (value: string) => void;
     setOpen: (open: boolean) => void;
     setSearch: (search: string) => void;
+    onOpenSettings: () => void;
 }) {
     const parentRef = useRef<HTMLDivElement>(null);
     const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -259,7 +262,12 @@ function ModelSelectList({
     if (flatItems.length === 0) {
         return (
             <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                No models found.
+                <div className="space-y-3">
+                    <p>No models available. Add an API key in Settings to load models.</p>
+                    <Button variant="outline" size="sm" onClick={onOpenSettings}>
+                        Open Settings
+                    </Button>
+                </div>
             </CommandEmpty>
         );
     }
@@ -436,6 +444,7 @@ function ModelSelectInner({
                               className,
                           }: ModelSelectProps) {
     const {data: models} = useModels();
+    const { openSettingsModal } = useUIState();
     const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [sortKey, setSortKey] = useState<SortKey>("provider");
@@ -512,9 +521,25 @@ function ModelSelectInner({
 
     if (!models || models.length === 0) {
         return (
-            <Button variant="ghost" className="h-9 w-9 p-0" disabled>
-                <div className="w-5 h-5 rounded bg-muted animate-pulse"/>
-            </Button>
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn("h-9 w-9 p-0 rounded-md bg-transparent hover:bg-hover transition-all")}
+                            onClick={openSettingsModal}
+                            aria-label="No models yet, open settings"
+                        >
+                            <IconAlertCircle className="w-5 h-5 text-muted-foreground" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs text-center">
+                        <p className="text-sm font-medium">No models yet</p>
+                        <p className="text-xs text-muted-foreground">Open Settings to add API keys</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
         );
     }
 
@@ -576,6 +601,7 @@ function ModelSelectInner({
                         onValueChange={onValueChange}
                         setOpen={setOpen}
                         setSearch={setSearch}
+                        onOpenSettings={openSettingsModal}
                     />
                 </Command>
             </PopoverContent>

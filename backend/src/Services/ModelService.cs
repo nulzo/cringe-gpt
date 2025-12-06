@@ -37,6 +37,12 @@ public class ModelService : IModelService
             try
             {
                 var settings = await _settingsService.GetFullSettingsAsync(userId, providerType);
+                if (string.IsNullOrWhiteSpace(settings.ApiKey))
+                {
+                    _logger.LogInformation("Skipping {Provider} models for user {UserId} due to missing API key", providerType, userId);
+                    continue;
+                }
+
                 var providerModels = await provider.GetModelsAsync(settings.ApiKey, settings.ApiUrl);
                 allModels.AddRange(providerModels);
             }
@@ -66,6 +72,12 @@ public class ModelService : IModelService
         }
 
         var settings = await _settingsService.GetFullSettingsAsync(userId, providerType);
+        if (string.IsNullOrWhiteSpace(settings.ApiKey))
+        {
+            _logger.LogInformation("Skipping {Provider} models for user {UserId} due to missing API key", providerType, userId);
+            return Enumerable.Empty<ModelResponseDto>();
+        }
+
         var models = await provider.GetModelsAsync(settings.ApiKey, settings.ApiUrl);
 
         return models;

@@ -26,7 +26,7 @@ import { useSettings } from "@/features/settings/api/get-settings";
 import { NavUser } from "@/shared/layout/nav-user";
 import { CringeLogo } from "@/components/cringe";
 import { useAnimationStore } from "@/stores/animation-store";
-import { SidebarConversationItem } from "@/shared/layout/conversation-list-item";
+import { SidebarConversationList } from "@/shared/layout/sidebar-conversation-list";
 
 const sidebarHeaderLinks = [
   {
@@ -178,15 +178,19 @@ export function Layout() {
                 {/* Logo or Toggle Button */}
                 <div className="flex justify-center items-center w-12 h-12">
                   {isSidebarOpen ? (
-                    <CringeLogo className="ml-3 size-6" />
+                    <CringeLogo className="size-6" />
                   ) : (
-                    <Button
+                    <button
                       onClick={() => setIsSidebarOpen(true)}
-                      variant="ghost"
-                      className="ml-2 text-foreground"
+                      className="group relative flex items-center justify-center w-12 h-12 rounded-md text-foreground hover:bg-sidebar-hover transition-colors"
+                      aria-label="Expand sidebar"
                     >
-                      <IconMenu2 size={24} />
-                    </Button>
+                      <CringeLogo className="size-6 transition-opacity group-hover:opacity-0" />
+                      <IconLayoutSidebar
+                        size={24}
+                        className="absolute text-foreground opacity-0 group-hover:opacity-90 transition-opacity"
+                      />
+                    </button>
                   )}
                 </div>
 
@@ -290,53 +294,11 @@ export function Layout() {
             </div>
 
             {/* Main scrollable area (converastions) */}
-            <div
-              className="overflow-auto"
-              style={{
-                height: "calc(100% - 80px)",
-                maxHeight: "calc(100% - 80px)",
-              }}
-            >
-              <nav className="p-2">
-                <div key="conversations" className="mb-2">
-                  {/* Section Header */}
-
-                  <div
-                    className={`px-3 h-8 flex items-center justify-between
-                                                      ${
-                                                        isSidebarOpen
-                                                          ? "opacity-100"
-                                                          : "hidden"
-                                                      }
-                                                      `}
-                    
-                  >
-                    <div className="overflow-hidden text-[12px] text-muted-foreground/75 whitespace-nowrap select-none">
-                      Conversations
-                    </div>
-                  </div>
-
-                  {/* Section Items */}
-                  <div className="space-y-1">
-                    {conversations.isLoading && <div>loading ...</div>}
-                    {!conversations.isLoading &&
-                      conversations.data &&
-                      conversations.data.map((item) => {
-                        return (
-                          <SidebarConversationItem
-                            conversation={item}
-                            key={item.id}
-                            isOpen={isSidebarOpen}
-                            isActive={
-                              window.location.pathname === `/chat/${item.id}`
-                            }
-                          />
-                        );
-                      })}
-                  </div>
-                </div>
-              </nav>
-            </div>
+            <SidebarConversationList
+              conversations={conversations.data || []}
+              isLoading={conversations.isLoading}
+              isSidebarOpen={isSidebarOpen}
+            />
 
             {/* Footer - Fixed at bottom */}
             <div className="bottom-0 z-10 sticky flex-shrink-0 bg-sidebar">
