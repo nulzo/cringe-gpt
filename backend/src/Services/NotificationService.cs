@@ -8,10 +8,15 @@ public class NotificationService(IHubContext<NotificationsHub> hub) : INotificat
 {
     private readonly IHubContext<NotificationsHub> _hub = hub;
 
-    public async Task NotifyConversationCompletedAsync(int userId, int conversationId, Guid messageId, CancellationToken cancellationToken = default)
+    public Task NotifyConversationCompletedAsync(int userId, int conversationId, Guid messageId, CancellationToken cancellationToken = default)
     {
-        await _hub.Clients.User(userId.ToString())
-            .SendAsync("conversationCompleted", new { conversationId, messageId }, cancellationToken);
+        return SendNotificationAsync(userId, "conversationCompleted", new { conversationId, messageId }, cancellationToken);
+    }
+
+    public async Task SendNotificationAsync<T>(int userId, string method, T payload,
+        CancellationToken cancellationToken = default)
+    {
+        await _hub.Clients.User(userId.ToString()).SendAsync(method, payload, cancellationToken);
     }
 }
 

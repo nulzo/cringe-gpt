@@ -1,0 +1,92 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cringe-gpt-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cringe-gpt
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cringe-gpt
+  template:
+    metadata:
+      labels:
+        app: cringe-gpt
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/your-org/cringe-gpt:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: API_BASE_PATH
+              value: "/api"
+            - name: ConnectionStrings__DefaultConnection
+              value: "Data Source=/app/data/chatapp.db"
+            - name: Storage__Path
+              value: "/app/Storage"
+            - name: DEFAULT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cringe-gpt-admin
+                  key: password
+            - name: DEFAULT_ADMIN_USERNAME
+              value: "admin"
+            - name: DEFAULT_ADMIN_EMAIL
+              value: "admin@example.com"
+            - name: CORS_ORIGINS
+              value: "http://localhost:8080"
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+              subPath: data
+            - name: data
+              mountPath: /app/Storage
+              subPath: storage
+            - name: logs
+              mountPath: /app/Logs
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cringe-gpt-data
+        - name: logs
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cringe-gpt
+spec:
+  selector:
+    app: cringe-gpt
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+

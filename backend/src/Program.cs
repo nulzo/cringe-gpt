@@ -291,61 +291,19 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
 });
 
+// Preserve compatibility with builds that expect requests to be prefixed with /api
+// (the frontend proxies /api -> backend in production).
+var apiBasePath = configuration["API_BASE_PATH"] ?? "/api";
+if (!string.IsNullOrWhiteSpace(apiBasePath) && apiBasePath.StartsWith('/'))
+{
+    app.UsePathBase(apiBasePath);
+}
+
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Ollama WebUI Backend API v1"); });
-
-    // Apply migrations and seed database for development
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            var dbContext = services.GetRequiredService<AppDbContext>();
-            dbContext.Database.Migrate();
-
-            var userManager = services.GetRequiredService<UserManager<AppUser>>();
-            var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
-
-            Console.WriteLine("Checking if admin exists");
-            // Seed Admin role
-            if (!roleManager.RoleExistsAsync("Admin").Result)
-            {
-                Console.WriteLine("Creating admin role");
-                roleManager.CreateAsync(new IdentityRole<int>("Admin")).Wait();
-            }
-
-            Console.WriteLine("Checking if user exists");
-            // Check if the default user exists
-            if (!userManager.Users.Any(u => u.UserName == "admin"))
-            {
-                Console.WriteLine("Creating admin user");
-                // Create the default user
-                var defaultUser = new AppUser
-                {
-                    UserName = "admin",
-                    Email = "admin@example.com",
-                    EmailConfirmed = true,
-                    Settings = new UserSettings()
-                };
-                var result = userManager.CreateAsync(defaultUser, "admin").Result;
-
-                if (result.Succeeded)
-                {
-                    Console.WriteLine("Created admin user");
-                    userManager.AddToRoleAsync(defaultUser, "Admin").Wait();
-                    Console.WriteLine("Assinged admin role to admin user");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-        }
-    }
 }
 
 // Enable HTTPS redirection only in production (avoid breaking containerized dev without HTTPS)
@@ -362,6 +320,8 @@ app.UseCors("allowOrigin");
 app.UseAuthentication();
 app.UseAuthorization();
 
+ApplyMigrationsAndSeed(app, configuration);
+
 app.MapControllers();
 app.MapHub<NotificationsHub>("/hubs/notifications");
 
@@ -369,9 +329,68 @@ app.MapHub<NotificationsHub>("/hubs/notifications");
 app.MapGet("/", () => Results.Redirect("/index.html"));
 app.MapGet("/test", () => Results.Redirect("/stream-test.html"));
 
+// Ensure client-side routing works for the SPA
+app.MapFallbackToFile("/index.html");
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = HealthCheckResponseWriter.WriteResponse
 });
 
 app.Run();
+
+static void ApplyMigrationsAndSeed(WebApplication app, IConfiguration configuration)
+{
+    var migrateEnabled = !bool.TryParse(configuration["AUTO_MIGRATE"], out var migrateFlag) || migrateFlag;
+    if (!migrateEnabled) return;
+
+    using var scope = app.Services.CreateScope();
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var dbContext = services.GetRequiredService<AppDbContext>();
+        dbContext.Database.Migrate();
+
+        var shouldSeedAdmin = bool.TryParse(configuration["SEED_DEFAULT_ADMIN"], out var seedFlag)
+            ? seedFlag
+            : app.Environment.IsDevelopment();
+
+        if (!shouldSeedAdmin) return;
+
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole<int>>>();
+
+        var adminUserName = configuration["DEFAULT_ADMIN_USERNAME"] ?? "admin";
+        var adminEmail = configuration["DEFAULT_ADMIN_EMAIL"] ?? "admin@example.com";
+        var adminPassword = configuration["DEFAULT_ADMIN_PASSWORD"] ?? "admin";
+
+        if (!roleManager.RoleExistsAsync("Admin").Result)
+        {
+            roleManager.CreateAsync(new IdentityRole<int>("Admin")).Wait();
+        }
+
+        if (!userManager.Users.Any(u => u.UserName == adminUserName))
+        {
+            var defaultUser = new AppUser
+            {
+                UserName = adminUserName,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                Settings = new UserSettings()
+            };
+
+            var result = userManager.CreateAsync(defaultUser, adminPassword).Result;
+
+            if (result.Succeeded)
+            {
+                userManager.AddToRoleAsync(defaultUser, "Admin").Wait();
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+    }
+}
