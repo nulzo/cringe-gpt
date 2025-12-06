@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- Frontend build ----------
-FROM ghcr.io/oven-sh/bun:1.1 AS frontend-builder
+FROM oven/bun:1.1 AS frontend-builder
 WORKDIR /frontend
 
 # Copy only files needed to install dependencies

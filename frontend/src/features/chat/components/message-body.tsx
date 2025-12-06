@@ -70,9 +70,18 @@ export const MessageBody = memo(
 
     const isUser = message.role === "user";
 
+    // Normalized image buckets
+    const processedImages = Array.isArray(message.images)
+      ? message.images.filter((img: any) => Boolean((img as any)?.id))
+      : [];
+    const inlineImages = Array.isArray(message.images)
+      ? message.images.filter((img: any) => !img?.id && (img?.image_url?.url || img?.url))
+      : [];
+
     // Check if we have any images to display
     const hasImages =
-      (Array.isArray(message.images) && message.images.length > 0) ||
+      processedImages.length > 0 ||
+      inlineImages.length > 0 ||
       (Array.isArray(message.attachments) && message.attachments.length > 0);
 
     return (
@@ -80,47 +89,74 @@ export const MessageBody = memo(
         {/* Unified Image Display - Handle all types of images */}
         {hasImages && (
           <div className="mb-2 flex flex-wrap gap-2">
-            {/* Unified approach: only handled processed images or attachments fallback */}
-            {Array.isArray(message.images) &&
-            message.images.length > 0 &&
-            (message.images[0] as any)?.id
-              ? message.images.map((img: any, index) => (
-                  <ImageDisplay
-                    key={`processed-image-${img.id || index}`}
-                    fileId={img.id}
-                    altText={img.name || `Image ${index + 1}`}
-                    className="max-w-24"
+            {/* Persisted images (ids map to /files) */}
+            {processedImages.map((img: any, index) => (
+              <ImageDisplay
+                key={`processed-image-${img.id || index}`}
+                fileId={img.id}
+                altText={img.name || `Image ${index + 1}`}
+                className="max-w-24"
+                images={processedImages.map((im: any) => ({
+                  fileId: im.id,
+                  altText: im.name,
+                }))}
+                imageIndex={index}
+                messageId={message.id}
+                conversationId={message.conversation_uuid}
+              />
+            ))}
+
+            {/* Streaming/remote image URLs (data URLs or hosted) */}
+            {inlineImages.map((img: any, idx) => {
+              const url = img?.image_url?.url ?? img?.url;
+              const alt = img?.type === "image_url" ? img?.alt ?? img?.name : `Image ${idx + 1}`;
+              return (
+                <div
+                  key={`inline-image-${idx}-${url}`}
+                  className="relative max-w-24 rounded-lg overflow-hidden border bg-muted/40"
+                >
+                  <img
+                    src={url}
+                    alt={alt}
+                    className="w-full h-auto object-contain rounded-lg"
+                    onError={(e) => {
+                      console.error("Failed to load streamed image:", url);
+                      e.currentTarget.style.display = "none";
+                    }}
                   />
-                ))
-              : Array.isArray(message.attachments) &&
-                message.attachments.map((att) => (
-                  <div
-                    key={att.file_name}
-                    className="relative max-w-24 rounded-lg overflow-hidden"
-                  >
-                    {att.file_type.startsWith("image/") ? (
-                      <img
-                        src={att.file_path}
-                        alt={att.file_name}
-                        className="w-full h-auto object-contain rounded-lg"
-                        onError={(e) => {
-                          console.error(
-                            "Failed to load attachment:",
-                            att.file_path
-                          );
-                          e.currentTarget.style.display = "none";
-                        }}
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-2 p-4 bg-muted rounded-lg">
-                        <IconPhoto className="size-8" />
-                        <p className="max-w-20 truncate px-2 text-xs">
-                          {att.file_name}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                </div>
+              );
+            })}
+
+            {/* User attachments fallback */}
+            {processedImages.length === 0 &&
+              inlineImages.length === 0 &&
+              Array.isArray(message.attachments) &&
+              message.attachments.map((att) => (
+                <div
+                  key={att.file_name}
+                  className="relative max-w-24 rounded-lg overflow-hidden"
+                >
+                  {att.file_type.startsWith("image/") ? (
+                    <img
+                      src={att.file_path}
+                      alt={att.file_name}
+                      className="w-full h-auto object-contain rounded-lg"
+                      onError={(e) => {
+                        console.error("Failed to load attachment:", att.file_path);
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 p-4 bg-muted rounded-lg">
+                      <IconPhoto className="size-8" />
+                      <p className="max-w-20 truncate px-2 text-xs">
+                        {att.file_name}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))}
           </div>
         )}
 
@@ -173,7 +209,7 @@ export const MessageBody = memo(
         {/* For assistant messages with only images and no text, show a placeholder */}
         {!isUser && hasImages && !displayContent.trim() && !isTyping && (
           <div className="px-1 text-muted-foreground text-sm italic">
-            Generated image{message.images?.length === 1 ? "" : "s"}
+            Generated image{(message.images?.length ?? 0) === 1 ? "" : "s"}
           </div>
         )}
       </>

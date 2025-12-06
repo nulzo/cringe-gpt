@@ -33,13 +33,83 @@ export const normalizeMessage = (m: any): Message => {
     error: m.error,
   } as Message;
 
-  // Unify images into processed image IDs interface for UI
-  const processed = m.processedImages as any[] | undefined;
+  const mergedImages: any[] = [];
+
+  const addProcessedImages = (imgs?: any[]) => {
+    if (!Array.isArray(imgs)) return;
+    imgs.forEach((p: any, index: number) => {
+      if (p?.id) {
+        mergedImages.push({
+          id: p.id,
+          name: p.name ?? `Image ${index + 1}`,
+          url: p.url,
+          mimeType: p.mimeType,
+        });
+      }
+    });
+  };
+
+  const addInlineImages = (imgs?: any[]) => {
+    if (!Array.isArray(imgs)) return;
+    imgs.forEach((img: any, index: number) => {
+      const url = img?.image_url?.url ?? img?.url;
+      if (url) {
+        mergedImages.push({
+          type: img?.type ?? 'image_url',
+          image_url: { url },
+          index: img?.index ?? index,
+        });
+      }
+    });
+  };
+
+  // Images can arrive under several shapes; normalize them all
+  addProcessedImages(m.processedImages);
+  addProcessedImages(m.images);
+
+  // Raw image_url streaming payloads (no file id yet)
+  addInlineImages(m.images);
+
+  // image_ids from legacy flow
   const imageIds = m.image_ids as (string | number)[] | undefined;
-  if (Array.isArray(processed) && processed.length > 0) {
-    (camel as any).images = processed.map((p: any) => ({ id: p.id, name: p.name, url: p.url, mimeType: p.mimeType }));
-  } else if (Array.isArray(imageIds) && imageIds.length > 0) {
-    (camel as any).images = imageIds.map((id) => ({ id } as any));
+  if (Array.isArray(imageIds) && imageIds.length > 0) {
+    mergedImages.push(...imageIds.map((id) => ({ id } as any)));
+  }
+
+  // toolCallsJson/tool_calls_json may contain serialized MessageImageDto[]
+  const toolCallsJson =
+    m.toolCallsJson ??
+    m.tool_calls_json ??
+    m.tool_callsJson ??
+    m.tool_calls;
+
+  if (toolCallsJson) {
+    try {
+      const parsed = typeof toolCallsJson === 'string' ? JSON.parse(toolCallsJson) : toolCallsJson;
+      if (Array.isArray(parsed)) {
+        // Could be list of ids or list of objects
+        parsed.forEach((p: any, idx: number) => {
+          if (p?.id) {
+            mergedImages.push({
+              id: p.id,
+              name: p.name ?? `Image ${idx + 1}`,
+              url: p.url,
+              mimeType: p.mimeType,
+            });
+          } else if (typeof p === 'number' || typeof p === 'string') {
+            mergedImages.push({ id: p });
+          }
+        });
+      }
+    } catch (e) {
+      // swallow – malformed payloads should not break chat rendering
+      console.warn('Failed to parse toolCallsJson for message', m, e);
+    }
+  }
+
+  if (mergedImages.length > 0) {
+    (camel as any).images = mergedImages;
+    camel.has_images = camel.has_images ?? true;
   }
 
   return camel;

@@ -35,6 +35,7 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
     startStream,
     renameStreamKey,
     appendStreamFor,
+    appendStreamImageFor,
     finalizeStream,
   } = useChatStore.getState();
 
@@ -249,8 +250,13 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
               if (contentAccumulator.length > 0) {
                 scheduleSmartUpdate(true);
               }
-              // For simplicity and a unified image model, skip provider-specific streamed URLs here.
-              // Upstream should convert to processed images and return ids in the final message.
+              if (eventData && (eventData.url || eventData.image_url?.url)) {
+                const key = (receivedConversationId || conversationId || 'pending') as string;
+                appendStreamImageFor(key, {
+                  ...eventData,
+                  image_url: eventData.image_url ?? { url: eventData.url },
+                });
+              }
               break;
             case 'final_message':
               // Flush any remaining content before finalizing

@@ -45,6 +45,7 @@ interface ChatState {
   startStream: (key: string, initialAssistant: Message, abortController: AbortController) => void;
   renameStreamKey: (oldKey: string, newKey: string) => void;
   appendStreamFor: (key: string, chunk: string) => void;
+  appendStreamImageFor: (key: string, image: any) => void;
   finalizeStream: (key: string, finalMessage: Message) => void;
   cancelStreamFor: (key: string) => void;
   markConversationRead: (conversationId: string) => void;
@@ -221,7 +222,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   startStream: (key, initialAssistant, abortController) => set((state) => ({
     streams: {
       ...state.streams,
-      [key]: { message: initialAssistant, isStreaming: true, abortController },
+      [key]: { message: { ...initialAssistant, images: [] }, isStreaming: true, abortController },
     },
   })),
 
@@ -238,6 +239,37 @@ export const useChatStore = create<ChatState>((set, get) => ({
       streams: {
         ...state.streams,
         [key]: { ...s, message: { ...s.message, content: s.message.content + chunk } },
+      },
+    };
+  }),
+
+  appendStreamImageFor: (key, image) => set((state) => {
+    const s = state.streams[key];
+    if (!s) return {} as any;
+
+    const nextImages = Array.isArray(s.message.images) ? [...s.message.images] : [];
+    const url = image?.image_url?.url ?? image?.url;
+    const index = image?.index;
+
+    // Avoid duplicates by url+index signature
+    const exists = nextImages.some((img: any) => {
+      const imgUrl = img?.image_url?.url ?? img?.url;
+      const imgIndex = img?.index;
+      return imgUrl === url && (imgIndex ?? index) === (index ?? imgIndex);
+    });
+
+    if (!exists && url) {
+      nextImages.push({
+        type: image?.type ?? 'image_url',
+        image_url: { url },
+        index: index ?? nextImages.length,
+      });
+    }
+
+    return {
+      streams: {
+        ...state.streams,
+        [key]: { ...s, message: { ...s.message, images: nextImages } },
       },
     };
   }),

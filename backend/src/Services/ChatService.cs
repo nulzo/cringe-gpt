@@ -159,6 +159,7 @@ public class ChatService : IChatService
         var provider = _providerFactory.CreateProvider(chatRequest.ProviderType);
         var assistantResponse = new StringBuilder();
         var streamedImages = new List<StreamedImageData>();
+        var emittedImageCount = 0;
 
         var stopwatch = Stopwatch.StartNew();
         var providerResponse = provider.StreamChatAsync(chatRequest, settings.ApiKey, settings.ApiUrl, cancellationToken);
@@ -171,15 +172,14 @@ public class ChatService : IChatService
             yield return streamEvent;
 
             // Also yield image events if we have images and streaming is enabled
-            if (request.Stream && streamedImages.Any())
+            if (request.Stream && streamedImages.Count > emittedImageCount)
             {
-                // Yield image events for any accumulated images
-                foreach (var image in streamedImages)
+                // Yield only new images since last emission
+                for (var i = emittedImageCount; i < streamedImages.Count; i++)
                 {
-                    yield return new ImageStreamEvent { Data = image };
+                    yield return new ImageStreamEvent { Data = streamedImages[i] };
                 }
-                // Don't clear the list here - we need it for the final message
-                // Images will be processed and cleared when the final message is created
+                emittedImageCount = streamedImages.Count;
             }
         }
 
