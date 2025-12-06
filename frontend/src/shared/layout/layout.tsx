@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconChartHistogram,
@@ -8,6 +8,7 @@ import {
   IconMenu2,
   IconMessagePlus,
   IconSearch,
+  IconX,
   IconSettings,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,12 @@ function SidebarNavButton({ item, isOpen }: { item: any; isOpen: boolean }) {
 }
 
 export function Layout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  );
+  const [isMobile, setIsMobile] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.innerWidth < 1024 : false
+  );
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const { animationsEnabled } = useAnimationStore();
@@ -153,6 +159,17 @@ export function Layout() {
     ? SIDEBAR_TRANSITION_DURATION
     : 0;
 
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1024px)");
+    const update = () => {
+      setIsMobile(mq.matches);
+      setIsSidebarOpen(!mq.matches);
+    };
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   const handleCommandPaletteNavigation = (path: string) => {
     navigate(path);
     setIsCommandPaletteOpen(false);
@@ -161,19 +178,65 @@ export function Layout() {
   return (
     <>
         <Head title={pageTitle} />
-      <div className="flex flex-col w-screen h-screen max-h-screen overflow-hidden">
+      <div className="flex flex-col min-h-screen w-full max-w-screen overflow-hidden bg-sidebar">
+        {/* Mobile top bar */}
+        <header className="flex items-center gap-2 px-3 py-2 lg:hidden border-b border-border/60 bg-sidebar sticky top-0 z-30">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={() => setIsSidebarOpen(true)}
+            aria-label="Open navigation"
+          >
+            <IconMenu2 size={22} />
+          </Button>
+          <div className="flex-1 truncate font-semibold text-foreground">
+            {pageTitle || APP_NAME}
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={openSettingsModal}
+            aria-label="Open settings"
+          >
+            <IconSettings size={20} />
+          </Button>
+        </header>
 
         {/* --- Main Content Area --- */}
-        <div className="flex flex-1 bg-sidebar overflow-hidden">
+        <div className="relative flex flex-1 overflow-hidden">
+          {/* Overlay for mobile */}
+          {isMobile && isSidebarOpen && (
+            <div
+              className="fixed inset-0 z-30 bg-black/50 backdrop-blur-[1px]"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+          )}
+
           {/* --- SIDEBAR --- */}
           <aside
-            className={`h-full flex flex-col flex-shrink-0
-                                   ${isSidebarOpen ? "w-[250px]" : "w-[70px]"}
-                                   `}
+            className={cn(
+              "bg-sidebar h-full flex flex-col flex-shrink-0 z-40 lg:z-0",
+              "transition-transform will-change-transform",
+              isMobile
+                ? "fixed inset-y-0 left-0"
+                : "relative",
+              isSidebarOpen
+                ? "translate-x-0"
+                : isMobile
+                ? "-translate-x-full"
+                : "translate-x-0",
+              isSidebarOpen
+                ? isMobile
+                  ? "w-[min(82vw,18rem)]"
+                  : "w-[250px]"
+                : "w-[70px]"
+            )}
             style={{ transitionDuration: `${transitionDuration}ms` }}
           >
             {/* Header - Fixed at top */}
-            <div className="top-0 z-10 sticky flex-shrink-0 bg-sidebar">
+            <div className="top-0 z-10 sticky flex-shrink-0 bg-sidebar shadow-sm lg:shadow-none">
               <div className="flex items-center gap-1 mt-2 px-2 h-16">
                 {/* Logo or Toggle Button */}
                 <div className="flex justify-center items-center w-12 h-12">
@@ -213,14 +276,28 @@ export function Layout() {
                     </span>
                     <span className="text-primary text-xs">{APP_VERSION}</span>
                   </div>
-                  <Button
-                    onClick={() => setIsSidebarOpen(false)}
-                    variant="ghost"
-                    size="icon"
-                    className="mr-1 text-foreground"
-                  >
-                    <IconLayoutSidebar size={24} />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      onClick={() => setIsSidebarOpen(false)}
+                      variant="ghost"
+                      size="icon"
+                      className="mr-1 text-foreground hidden lg:flex"
+                      aria-label="Collapse sidebar"
+                    >
+                      <IconLayoutSidebar size={24} />
+                    </Button>
+                    {isMobile && (
+                      <Button
+                        onClick={() => setIsSidebarOpen(false)}
+                        variant="ghost"
+                        size="icon"
+                        className="text-foreground lg:hidden"
+                        aria-label="Close sidebar"
+                      >
+                        <IconX size={22} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="mx-2 bg-border h-[1px]" />
@@ -320,8 +397,8 @@ export function Layout() {
           </aside>
 
           {/* --- PAGE CONTENT --- */}
-          <main className="flex-1 bg-background my-5 mr-5 rounded-lg overflow-hidden">
-            <div className="p-1 w-full h-full overflow-y-auto">
+          <main className="flex-1 bg-background m-3 lg:mr-5 lg:my-5 rounded-xl lg:rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-2 lg:p-3 w-full h-full overflow-y-auto">
               <Outlet />
             </div>
           </main>

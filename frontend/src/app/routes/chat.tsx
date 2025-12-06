@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
 } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 import { ModernChatArea } from "@/features/chat/components/textarea";
 import { Message } from "@/features/chat/components/message";
@@ -24,6 +25,9 @@ import { type Message as ChatMessage } from "@/features/chat/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 const COMPOSER_OVERLAP_PX = 55;
+const COMPOSER_WIDTH_CLASSES =
+  "[--thread-content-max-width:40rem] @[48rem]:[--thread-content-max-width:44rem] @[64rem]:[--thread-content-max-width:48rem] w-full max-w-(--thread-content-max-width) mx-auto";
+const COMPOSER_TRANSITION = { duration: 0.22, ease: [0.22, 1, 0.36, 1] };
 
 type ChatViewMode = "loading" | "welcome" | "conversation";
 
@@ -88,6 +92,14 @@ export function ChatRoute() {
       ? "welcome"
       : "conversation";
 
+  const isWelcome = mode === "welcome";
+  const mainClassName = [
+    "relative w-full",
+    isWelcome
+      ? "flex min-h-full items-center justify-center px-4 py-10 overflow-hidden"
+      : "min-h-0 overflow-y-auto overscroll-contain -mb-[var(--composer-overlap-px)]",
+  ].join(" ");
+
   const onSendMessage = useCallback(
     (msg: string) => handleSendMessage(msg),
     [handleSendMessage]
@@ -113,31 +125,41 @@ export function ChatRoute() {
     >
       <main
         ref={scrollRef as RefObject<HTMLDivElement>}
-        className="
-          relative overflow-y-auto overscroll-contain
-          -mb-[var(--composer-overlap-px)]
-        "
+        className={mainClassName}
         data-viewtransition="chat-main"
       >
         {mode === "loading" && <LoadingSkeleton endRef={endRef} />}
 
-        {mode === "welcome" && (
-          <WelcomePanel
-            name={settings?.data?.name}
-            composer={
-              <ChatComposer
-                mode="welcome"
-                value={inputValue}
-                onChange={onInputChange}
-                onSendMessage={onSendMessage}
-                attachments={attachments}
-                onAttachments={handleAttachmentsChange}
-                onRemoveAttachment={handleRemoveAttachment}
-                disabled={isPending || isLoading}
-              />
-            }
-          />
-        )}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {mode === "welcome" && (
+            <WelcomePanel
+              name={settings?.data?.name}
+              composer={
+                <motion.div
+                  key="composer-welcome"
+                  layout
+                  layoutId="chat-composer"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 12 }}
+                  transition={COMPOSER_TRANSITION}
+                  className={`${COMPOSER_WIDTH_CLASSES} px-4 @[48rem]:px-6`}
+                >
+                  <ChatComposer
+                    mode="welcome"
+                    value={inputValue}
+                    onChange={onInputChange}
+                    onSendMessage={onSendMessage}
+                    attachments={attachments}
+                    onAttachments={handleAttachmentsChange}
+                    onRemoveAttachment={handleRemoveAttachment}
+                    disabled={isPending || isLoading}
+                  />
+                </motion.div>
+              }
+            />
+          )}
+        </AnimatePresence>
 
         {mode === "conversation" && (
           <ConversationView
@@ -150,34 +172,47 @@ export function ChatRoute() {
         )}
       </main>
 
-      {mode !== "welcome" && (
-        <footer
-          className="relative z-10 pt-4 content-fade bg-gradient-to-t from-background via-background to-transparent"
-          data-viewtransition="chat-footer"
-        >
-          <ScrollToBottomButton
-            isVisible={showButton}
-            onClick={scrollToBottom}
-            className="absolute -top-10 left-1/2 -translate-x-1/2"
-          />
-
-          <div className="text-base mx-auto [--thread-content-margin:--spacing(4)] @[37rem]:[--thread-content-margin:--spacing(6)] @[72rem]:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin)">
-            <ChatComposer
-              mode="chat"
-              value={inputValue}
-              onChange={onInputChange}
-              onSendMessage={onSendMessage}
-              attachments={attachments}
-              onAttachments={handleAttachmentsChange}
-              onRemoveAttachment={handleRemoveAttachment}
-              disabled={isPending || isLoading}
+      <AnimatePresence mode="popLayout" initial={false}>
+        {mode !== "welcome" && (
+          <motion.footer
+            key="composer-chat"
+            className="relative z-10 pt-4 content-fade bg-gradient-to-t from-background via-background to-transparent"
+            data-viewtransition="chat-footer"
+            layout
+            transition={COMPOSER_TRANSITION}
+          >
+            <ScrollToBottomButton
+              isVisible={showButton}
+              onClick={scrollToBottom}
+              className="absolute -top-10 left-1/2 -translate-x-1/2"
             />
-            <p className="mt-2 mb-1 text-center text-xs text-muted-foreground/70">
-              {APP_AI_WARNING_TEXT}
-            </p>
-          </div>
-        </footer>
-      )}
+
+            <motion.div
+              layout
+              layoutId="chat-composer"
+              transition={COMPOSER_TRANSITION}
+              className={`text-base [--thread-content-margin:--spacing(4)] @[37rem]:[--thread-content-margin:--spacing(6)] @[72rem]:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) ${COMPOSER_WIDTH_CLASSES}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+            >
+              <ChatComposer
+                mode="chat"
+                value={inputValue}
+                onChange={onInputChange}
+                onSendMessage={onSendMessage}
+                attachments={attachments}
+                onAttachments={handleAttachmentsChange}
+                onRemoveAttachment={handleRemoveAttachment}
+                disabled={isPending || isLoading}
+              />
+              <p className="mt-2 mb-1 text-center text-xs text-muted-foreground/70">
+                {APP_AI_WARNING_TEXT}
+              </p>
+            </motion.div>
+          </motion.footer>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
