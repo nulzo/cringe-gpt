@@ -39,6 +39,9 @@ builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfig
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        // Standardize casing to camelCase across API and SSE to align with JS clients
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
@@ -290,15 +293,6 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor | Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto
 });
-
-// Preserve compatibility with builds that expect requests to be prefixed with /api
-// (the frontend proxies /api -> backend in production).
-var apiBasePath = configuration["API_BASE_PATH"] ?? "/api";
-if (!string.IsNullOrWhiteSpace(apiBasePath) && apiBasePath.StartsWith('/'))
-{
-    app.UsePathBase(apiBasePath);
-}
-
 
 if (app.Environment.IsDevelopment())
 {

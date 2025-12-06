@@ -29,10 +29,10 @@ interface AppProviderProps {
  * - Add other providers here as needed (Theme, Auth, etc.)
  */
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  // Ensure axios has Authorization if token exists
-  bootstrapAuthFromStorage();
   useEffect(() => {
-    const apiBase = import.meta.env.MODE === 'production' ? '/api' : env.API_URL;
+    // Ensure axios has Authorization if token exists and hydrate auth store
+    bootstrapAuthFromStorage();
+    const apiBase = import.meta.env.MODE === 'production' ? '' : env.API_URL;
     ensureNotificationsConnection(apiBase, () => localStorage.getItem('token'));
   }, []);
   return (

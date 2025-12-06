@@ -28,7 +28,6 @@ WORKDIR /app
 
 ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_ENVIRONMENT=Production \
-    API_BASE_PATH=/api \
     ConnectionStrings__DefaultConnection="Data Source=/app/data/chatapp.db" \
     Storage__Path=/app/Storage \
     AUTO_MIGRATE=true \

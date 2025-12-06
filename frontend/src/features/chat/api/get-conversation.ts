@@ -35,6 +35,14 @@ export const normalizeMessage = (m: any): Message => {
 
   const mergedImages: any[] = [];
 
+  // Helper to pull a property regardless of Pascal/camel case
+  const pick = (obj: any, ...keys: string[]) => {
+    for (const k of keys) {
+      if (obj && Object.prototype.hasOwnProperty.call(obj, k)) return (obj as any)[k];
+    }
+    return undefined;
+  };
+
   const addProcessedImages = (imgs?: any[]) => {
     if (!Array.isArray(imgs)) return;
     imgs.forEach((p: any, index: number) => {
@@ -64,24 +72,27 @@ export const normalizeMessage = (m: any): Message => {
   };
 
   // Images can arrive under several shapes; normalize them all
-  addProcessedImages(m.processedImages);
-  addProcessedImages(m.images);
+  addProcessedImages(pick(m, 'processedImages', 'ProcessedImages'));
+  addProcessedImages(pick(m, 'images', 'Images'));
 
   // Raw image_url streaming payloads (no file id yet)
-  addInlineImages(m.images);
+  addInlineImages(pick(m, 'images', 'Images'));
 
   // image_ids from legacy flow
-  const imageIds = m.image_ids as (string | number)[] | undefined;
+  const imageIds = pick(m, 'image_ids', 'imageIds', 'ImageIds') as (string | number)[] | undefined;
   if (Array.isArray(imageIds) && imageIds.length > 0) {
     mergedImages.push(...imageIds.map((id) => ({ id } as any)));
   }
 
   // toolCallsJson/tool_calls_json may contain serialized MessageImageDto[]
-  const toolCallsJson =
-    m.toolCallsJson ??
-    m.tool_calls_json ??
-    m.tool_callsJson ??
-    m.tool_calls;
+  const toolCallsJson = pick(
+    m,
+    'toolCallsJson',
+    'ToolCallsJson',
+    'tool_calls_json',
+    'tool_callsJson',
+    'tool_calls'
+  );
 
   if (toolCallsJson) {
     try {

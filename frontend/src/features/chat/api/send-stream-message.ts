@@ -250,11 +250,16 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
               if (contentAccumulator.length > 0) {
                 scheduleSmartUpdate(true);
               }
-              if (eventData && (eventData.url || eventData.image_url?.url)) {
+              const url =
+                eventData?.image_url?.url ??
+                eventData?.url ??
+                eventData?.Url ??
+                eventData?.image_url?.Url;
+              if (eventData && url) {
                 const key = (receivedConversationId || conversationId || 'pending') as string;
                 appendStreamImageFor(key, {
                   ...eventData,
-                  image_url: eventData.image_url ?? { url: eventData.url },
+                  image_url: eventData.image_url ?? { url },
                 });
               }
               break;

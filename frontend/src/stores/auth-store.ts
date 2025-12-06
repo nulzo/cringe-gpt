@@ -21,7 +21,8 @@ export const useAuthStore = create<AuthState>()(
             token: null,
             isInitialized: false,
             isLoading: false,
-            setAuth: (user, token) => set({ user, token, isLoading: false }),
+            setAuth: (user, token) =>
+                set({ user, token, isLoading: false, isInitialized: true }),
             clearAuth: () => {
                 try {
                     localStorage.removeItem('token');
@@ -29,7 +30,8 @@ export const useAuthStore = create<AuthState>()(
                 return set({
                     user: null,
                     token: null,
-                    isLoading: false
+                    isLoading: false,
+                    isInitialized: true
                 });
             },
             setLoading: (loading) => set({ isLoading: loading }),
@@ -46,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
             partialize: (state) => ({
                 user: state.user,
                 token: state.token
-            }),
+            })
         }
     )
 );

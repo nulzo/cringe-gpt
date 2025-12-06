@@ -61,13 +61,13 @@ spec:
               mountPath: /app/Logs
           livenessProbe:
             httpGet:
-              path: /api/health
+              path: /health
               port: 8080
             initialDelaySeconds: 20
             periodSeconds: 30
           readinessProbe:
             httpGet:
-              path: /api/health
+              path: /health
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 15

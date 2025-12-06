@@ -72,11 +72,15 @@ export async function logout(): Promise<void> {
 
 export async function bootstrapAuthFromStorage() {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+        useAuthStore.getState().setInitialized(true);
+        return;
+    }
     // Drop expired tokens eagerly to avoid 401 loops
     if (isJwtExpired(token)) {
         try { localStorage.removeItem('token'); } catch {}
         useAuthStore.getState().clearAuth();
+        useAuthStore.getState().setInitialized(true);
         return;
     }
     // Set header immediately for early requests
@@ -98,4 +102,5 @@ export async function bootstrapAuthFromStorage() {
         await setToken(null);
         useAuthStore.getState().clearAuth();
     }
+    useAuthStore.getState().setInitialized(true);
 }

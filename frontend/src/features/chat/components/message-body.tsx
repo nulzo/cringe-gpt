@@ -75,7 +75,10 @@ export const MessageBody = memo(
       ? message.images.filter((img: any) => Boolean((img as any)?.id))
       : [];
     const inlineImages = Array.isArray(message.images)
-      ? message.images.filter((img: any) => !img?.id && (img?.image_url?.url || img?.url))
+      ? message.images.filter((img: any) => {
+          const u = img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
+          return !img?.id && Boolean(u);
+        })
       : [];
 
     // Check if we have any images to display
@@ -108,7 +111,7 @@ export const MessageBody = memo(
 
             {/* Streaming/remote image URLs (data URLs or hosted) */}
             {inlineImages.map((img: any, idx) => {
-              const url = img?.image_url?.url ?? img?.url;
+              const url = img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
               const alt = img?.type === "image_url" ? img?.alt ?? img?.name : `Image ${idx + 1}`;
               return (
                 <div

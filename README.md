@@ -32,7 +32,6 @@ docker run -p 8080:8080 \
 Key environment flags (all optional, sensible defaults provided):
 
 - `ConnectionStrings__DefaultConnection` – SQLite path (default `/app/data/chatapp.db`)
-- `API_BASE_PATH` – keep as `/api` to match the bundled frontend
 - `AUTO_MIGRATE` – run EF migrations on startup (default `true`)
 - `SEED_DEFAULT_ADMIN` plus `DEFAULT_ADMIN_*` – seed admin user (default enabled)
 - `CORS_ORIGINS` – comma-separated origins when not same-origin (default `http://localhost:8080`)
@@ -50,4 +49,4 @@ The manifest:
 - Creates a `ReadWriteOnce` PVC for the SQLite DB and uploads (`/app/data`, `/app/Storage`)
 - Mounts an `emptyDir` for logs
 - Exposes port 80 via a ClusterIP Service
-- Uses `/api/health` for readiness/liveness
+- Uses `/health` for readiness/liveness

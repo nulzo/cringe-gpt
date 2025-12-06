@@ -43,7 +43,15 @@ const AppLayout = () => (
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = useAuthStore((s) => s.token);
+  const isInitialized = useAuthStore((s) => s.isInitialized);
   const location = useLocation();
+  if (!isInitialized) {
+    return (
+      <div className="flex justify-center items-center w-full h-full">
+        <IconLoader2 size={48} className="animate-spin" />
+      </div>
+    );
+  }
   if (!token) {
     const redirectTo = `${location.pathname}${location.search}`;
     return <Navigate to={PATHS.LOGIN.getHref(redirectTo)} replace />;
