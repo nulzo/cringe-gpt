@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { AnalyticsDashboard, AnalyticsQueryParams } from '../types';
 
@@ -15,8 +15,9 @@ export const useDashboardAnalytics = (params: AnalyticsQueryParams = {}) => {
   return useQuery({
     queryKey: ['analytics', 'dashboard', params],
     queryFn: () => getDashboardAnalytics(params),
-    staleTime: 30 * 1000, // 30 seconds - analytics should update more frequently
+    staleTime: 30 * 1000, // 30 seconds
     gcTime: 10 * 60 * 1000, // 10 minutes
+    placeholderData: keepPreviousData,
   });
 };
 

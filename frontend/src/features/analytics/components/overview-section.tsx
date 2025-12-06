@@ -109,7 +109,7 @@ function OverviewSection() {
             {/* Time Series Charts */}
             <div className="grid gap-6 @[80rem]:grid-cols-2">
                 {/* Requests & Cost Over Time */}
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             Usage & Cost Trends ({getTimeRangeLabel()})
@@ -180,7 +180,7 @@ function OverviewSection() {
                 </Card>
 
                 {/* Token Usage Breakdown */}
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle>Token Usage Breakdown ({getTimeRangeLabel()})</CardTitle>
                         <CardDescription>{getGroupingLabel()} prompt vs completion tokens</CardDescription>
@@ -208,7 +208,7 @@ function OverviewSection() {
 
             {/* Performance Metrics */}
             {dashboard.data && (
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle>Performance Metrics</CardTitle>
                         <CardDescription>Response times and system performance</CardDescription>

@@ -9,15 +9,17 @@ export function KPI({
     label,
     value,
     hint,
-    trend
+    trend,
+    className,
 }: {
     label: string
     value: string
     hint?: string
     trend?: "up" | "down" | "neutral"
+    className?: string
 }) {
     return (
-        <Card className="transition-all duration-200 hover:shadow-md">
+        <Card className={cn("transition-all duration-200 hover:shadow-md border-border/60 bg-card/70 backdrop-blur-sm", className)}>
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                     {label}
@@ -50,7 +52,7 @@ export function KPISkeleton() {
     return (
         <div className="grid gap-4 @[48rem]:grid-cols-2 @[80rem]:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="animate-pulse">
+                <Card key={i} className="animate-pulse border-border/60 bg-card/70 backdrop-blur-sm">
                     <CardHeader className="pb-3">
                         <Skeleton className="h-4 w-24" />
                         <Skeleton className="h-8 w-32 mt-2" />
@@ -68,13 +70,15 @@ export function ComparisonKPI({
     value,
     previousValue,
     hint,
-    format = "number"
+    format = "number",
+    className,
 }: {
     label: string
     value: number
     previousValue?: number
     hint?: string
     format?: "number" | "currency" | "percentage"
+    className?: string
 }) {
     const formatValue = (val: number) => {
         switch (format) {
@@ -100,7 +104,7 @@ export function ComparisonKPI({
     const change = calculateChange()
 
     return (
-        <Card className="transition-all duration-200 hover:shadow-md">
+        <Card className={cn("transition-all duration-200 hover:shadow-md border-border/60 bg-card/70 backdrop-blur-sm", className)}>
             <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                     {label}

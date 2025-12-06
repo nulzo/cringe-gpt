@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { TimeSeriesMetrics, AnalyticsQueryParams } from '../types';
 
@@ -16,7 +16,8 @@ export const useTimeSeriesMetrics = (params: AnalyticsQueryParams = {}) => {
   return useQuery({
     queryKey: ['analytics', 'timeseries', params],
     queryFn: () => getTimeSeriesMetrics(params),
-    staleTime: 30 * 1000, // 30 seconds - analytics should update more frequently
-    gcTime: 10 * 60 * 1000,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    placeholderData: keepPreviousData,
   });
 };

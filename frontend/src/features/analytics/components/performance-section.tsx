@@ -119,7 +119,7 @@ function PerformanceSection() {
             {/* Performance Charts */}
             <div className="grid gap-6 @[80rem]:grid-cols-2">
                 {/* Response Time Distribution */}
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Clock className="h-5 w-5" />
@@ -148,7 +148,7 @@ function PerformanceSection() {
                 </Card>
 
                 {/* Performance Trends */}
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <TrendingUp className="h-5 w-5" />
@@ -179,7 +179,7 @@ function PerformanceSection() {
 
             {/* Performance Insights */}
             {performance.data && (
-                <Card>
+                <Card className="border-border/60 bg-card/70 backdrop-blur-sm shadow-sm">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Activity className="h-5 w-5" />
