@@ -51,9 +51,18 @@ const sidebarHeaderLinks = [
   { id: "search", name: "Search", icon: IconSearch },
 ];
 
-const SIDEBAR_TRANSITION_DURATION = 300;
+const SIDEBAR_TRANSITION_DURATION = 240;
 
-function SidebarNavButton({ item, isOpen }: { item: any; isOpen: boolean }) {
+type SidebarItem = {
+  id: string;
+  name: string;
+  icon: any;
+  path?: string;
+  shortcut?: string;
+  fn?: () => void;
+};
+
+const SidebarNavButton = ({ item, isOpen }: { item: SidebarItem; isOpen: boolean }) => {
   const Icon = item.icon;
   const location = useLocation();
 
@@ -104,7 +113,7 @@ function SidebarNavButton({ item, isOpen }: { item: any; isOpen: boolean }) {
       )}
     </Tooltip>
   );
-}
+};
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -167,10 +176,13 @@ export function Layout() {
         <div className="flex flex-1 bg-sidebar overflow-hidden">
           {/* --- SIDEBAR --- */}
           <aside
-            className={`h-full flex flex-col flex-shrink-0
-                                   ${isSidebarOpen ? "w-[250px]" : "w-[70px]"}
-                                   `}
+            className={cn(
+              "h-full flex flex-col flex-shrink-0 border-r border-border/40 bg-sidebar",
+              "transition-[width] ease-in-out will-change-[width]",
+              isSidebarOpen ? "w-[256px]" : "w-[72px]"
+            )}
             style={{ transitionDuration: `${transitionDuration}ms` }}
+            aria-expanded={isSidebarOpen}
           >
             {/* Header - Fixed at top */}
             <div className="top-0 z-10 sticky flex-shrink-0 bg-sidebar">
@@ -291,51 +303,41 @@ export function Layout() {
 
             {/* Main scrollable area (converastions) */}
             <div
-              className="overflow-auto"
+              className={cn(
+                "overflow-auto transition-[opacity] ease-in-out",
+                isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               style={{
                 height: "calc(100% - 80px)",
                 maxHeight: "calc(100% - 80px)",
+                transitionDuration: `${transitionDuration}ms`,
               }}
             >
-              <nav className="p-2">
-                <div key="conversations" className="mb-2">
-                  {/* Section Header */}
-
-                  <div
-                    className={`px-3 h-8 flex items-center justify-between
-                                                      ${
-                                                        isSidebarOpen
-                                                          ? "opacity-100"
-                                                          : "hidden"
-                                                      }
-                                                      `}
-                    
-                  >
-                    <div className="overflow-hidden text-[12px] text-muted-foreground/75 whitespace-nowrap select-none">
-                      Conversations
+              {isSidebarOpen && (
+                <nav className="p-2">
+                  <div key="conversations" className="mb-2">
+                    <div className="px-3 h-8 flex items-center justify-between">
+                      <div className="overflow-hidden text-[12px] text-muted-foreground/75 whitespace-nowrap select-none">
+                        Conversations
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Section Items */}
-                  <div className="space-y-1">
-                    {conversations.isLoading && <div>loading ...</div>}
-                    {!conversations.isLoading &&
-                      conversations.data &&
-                      conversations.data.map((item) => {
-                        return (
+                    <div className="space-y-1">
+                      {conversations.isLoading && <div className="text-xs text-muted-foreground px-3 py-1">Loading…</div>}
+                      {!conversations.isLoading &&
+                        conversations.data &&
+                        conversations.data.map((item) => (
                           <SidebarConversationItem
                             conversation={item}
                             key={item.id}
                             isOpen={isSidebarOpen}
-                            isActive={
-                              window.location.pathname === `/chat/${item.id}`
-                            }
+                            isActive={window.location.pathname === `/chat/${item.id}`}
                           />
-                        );
-                      })}
+                        ))}
+                    </div>
                   </div>
-                </div>
-              </nav>
+                </nav>
+              )}
             </div>
 
             {/* Footer - Fixed at bottom */}

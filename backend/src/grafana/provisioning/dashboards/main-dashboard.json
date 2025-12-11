@@ -52,6 +52,92 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
       "targets": [ { "expr": "sum(rate(dotnet_gc_heap_total_allocated_bytes_total[5m]))", "legendFormat": "Memory Allocated", "refId": "A" } ]
+    },
+    {
+      "id": 5,
+      "title": "Requests by Status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count[5m])) by (status_code)",
+          "legendFormat": "{{status_code}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Error & 429 Rate (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "fieldConfig": { "defaults": { "unit": "percent" } },
+      "targets": [
+        {
+          "expr": "100 * sum(rate(http_server_request_duration_seconds_count{status_code=~\"5..|429\"}[5m])) / sum(rate(http_server_request_duration_seconds_count[5m]))",
+          "legendFormat": "5xx/429 %",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Provider Errors by Provider/Model",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "targets": [
+        {
+          "expr": "sum(rate(app_provider_errors_total[5m])) by (provider, model)",
+          "legendFormat": "{{provider}} / {{model}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Provider Response Time P95 by Provider",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(app_provider_response_time_seconds_bucket[5m])) by (le, provider))",
+          "legendFormat": "{{provider}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Unhandled Exceptions",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "targets": [
+        {
+          "expr": "rate(app_exceptions_unhandled_total[5m])",
+          "legendFormat": "Unhandled",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "SignalR Negotiation Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "datasource": { "type": "prometheus", "uid": "prometheus-ds-uid" },
+      "targets": [
+        {
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_route=\"/hubs/notifications/negotiate\"}[5m]))",
+          "legendFormat": "negotiates",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "refresh": "5s",
