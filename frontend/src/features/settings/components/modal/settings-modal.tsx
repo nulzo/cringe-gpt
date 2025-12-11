@@ -195,6 +195,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     // -------------------------------------------
     return presetColors[0].value;
   });
+  const [accentSelection, setAccentSelection] = useState<string>(() => {
+    const isPreset = presetColors.some((c) => c.value === currentAccent);
+    return isPreset ? currentAccent : "custom";
+  });
 
   // Apply initial/stored accent color on mount
   useEffect(() => {
@@ -354,16 +358,29 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   // Handle color change and save to localStorage
   const handleAccentChange = (colorValue: string) => {
-    setCurrentAccent(colorValue);
-    if (colorValue !== "custom") {
-      applyAccentColor(colorValue);
-      localStorage.setItem(ACCENT_STORAGE_KEY, colorValue);
+    setAccentSelection(colorValue);
+    // When switching to custom, ensure we have a valid hex to edit
+    if (colorValue === "custom") {
+      const fallbackHex =
+        currentAccent && currentAccent.startsWith("#")
+          ? currentAccent
+          : "#4146F8";
+      setCurrentAccent(fallbackHex);
+      applyAccentColor(fallbackHex);
+      localStorage.setItem(ACCENT_STORAGE_KEY, fallbackHex);
+      generalForm.setValue("accentColor", fallbackHex);
+      return;
     }
+
+    setCurrentAccent(colorValue);
+    applyAccentColor(colorValue);
+    localStorage.setItem(ACCENT_STORAGE_KEY, colorValue);
     generalForm.setValue("accentColor", colorValue);
   };
 
   // Handle custom color input changes
   const handleCustomColorChange = (colorValue: string) => {
+    setAccentSelection("custom");
     setCurrentAccent(colorValue);
     applyAccentColor(colorValue);
     localStorage.setItem(ACCENT_STORAGE_KEY, colorValue);
@@ -494,7 +511,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <Label className="text-base">Accent color</Label>
                 <div className="space-y-3">
                   <Select
-                    value={currentAccent}
+                    value={accentSelection}
                     onValueChange={handleAccentChange}
                   >
                     <SelectTrigger className="w-fit">
@@ -525,65 +542,60 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   </Select>
 
                   {/* Custom Color Picker - Only show when custom is selected */}
-                  {currentAccent === "custom" && (
-                    <div className="flex items-center gap-3 bg-muted/30 p-3 border rounded-lg">
-                      <span className="text-muted-foreground text-sm">
-                        Custom Color
-                      </span>
-                      <div className="relative flex items-center">
-                        <span className="left-3 absolute text-foreground">
-                          #
-                        </span>
-                        <Input
-                          value={
-                            currentAccent.startsWith("#")
-                              ? currentAccent.substring(1).toUpperCase()
-                              : "4146F8"
-                          }
-                          onChange={(e) => {
-                            const hex = e.target.value.toUpperCase();
-                            if (/^[0-9A-F]{0,6}$/.test(hex)) {
-                              if (hex.length === 6) {
-                                handleCustomColorChange(`#${hex}`);
-                              } else if (hex.length === 0) {
-                                handleCustomColorChange(
-                                  "oklch(0.645 0.246 16.439)"
-                                );
-                              }
-                            }
-                          }}
-                          className="pl-7 w-24 font-mono text-sm uppercase"
-                          placeholder="4146F8"
-                        />
+                  {accentSelection === "custom" && (
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        {["#4146F8","#F97316","#F43F5E","#0EA5E9","#22C55E","#EAB308","#8B5CF6","#0F172A"].map((swatch) => (
+                          <button
+                            key={swatch}
+                            type="button"
+                            aria-label={`Use color ${swatch}`}
+                            onClick={() => handleCustomColorChange(swatch)}
+                            className="size-8 rounded-full border border-border shadow-sm transition hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                            style={{ backgroundColor: swatch }}
+                          />
+                        ))}
                       </div>
-                      {/* Color preview dot with color picker */}
-                      <div className="relative">
-                        <input
-                          type="color"
-                          value={
-                            currentAccent.startsWith("#")
-                              ? currentAccent
-                              : "#4146F8"
-                          }
-                          onChange={(e) =>
-                            handleCustomColorChange(e.target.value)
-                          }
-                          className="absolute inset-0 opacity-0 rounded-full w-full h-full cursor-pointer"
-                          aria-label="Custom color picker"
-                        />
-                        <div
-                          className="rounded-full ring-2 ring-offset-2 ring-offset-background w-8 h-8 cursor-pointer"
-                          style={{
-                            backgroundColor: currentAccent.startsWith("#")
-                              ? currentAccent
-                              : "oklch(0.6 0.18 250)",
-                            boxShadow: `0 0 0 2px ${
+
+                      <div className="flex items-center gap-3 bg-muted/40 p-3 border rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={currentAccent.startsWith("#") ? currentAccent : "#4146F8"}
+                            onChange={(e) => handleCustomColorChange(e.target.value)}
+                            className="size-10 rounded-md border border-border cursor-pointer bg-transparent p-0"
+                            aria-label="Custom accent color"
+                          />
+                          <div className="flex flex-col">
+                            <span className="text-xs text-muted-foreground">Accent preview</span>
+                            <div
+                              className="h-2 w-16 rounded-full"
+                              style={{ backgroundColor: currentAccent.startsWith("#") ? currentAccent : "#4146F8" }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="relative flex items-center">
+                          <span className="left-3 absolute text-foreground/70 text-sm">#</span>
+                          <Input
+                            value={
                               currentAccent.startsWith("#")
-                                ? currentAccent
-                                : "oklch(0.6 0.18 250)"
-                            }`,
-                          }}
-                        />
+                                ? currentAccent.substring(1).toUpperCase()
+                                : "4146F8"
+                            }
+                            onChange={(e) => {
+                              const hex = e.target.value.toUpperCase();
+                              if (/^[0-9A-F]{0,6}$/.test(hex)) {
+                                if (hex.length === 6) {
+                                  handleCustomColorChange(`#${hex}`);
+                                }
+                              }
+                            }}
+                            maxLength={6}
+                            className="pl-7 w-28 font-mono text-sm uppercase"
+                            placeholder="4146F8"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
