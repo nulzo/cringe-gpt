@@ -220,6 +220,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Multi-conversation streaming actions impl
   startStream: (key, initialAssistant, abortController) => set((state) => ({
+    currentConversationId: key,
     streams: {
       ...state.streams,
       [key]: { message: { ...initialAssistant, images: [] }, isStreaming: true, abortController },
@@ -229,7 +230,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   renameStreamKey: (oldKey, newKey) => set((state) => {
     if (!state.streams[oldKey]) return {} as any;
     const { [oldKey]: oldStream, ...rest } = state.streams;
-    return { streams: { ...rest, [newKey]: oldStream } };
+    return {
+      currentConversationId: state.currentConversationId === oldKey ? newKey : state.currentConversationId,
+      streams: { ...rest, [newKey]: oldStream },
+    };
   }),
 
   appendStreamFor: (key, chunk) => set((state) => {

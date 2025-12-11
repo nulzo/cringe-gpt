@@ -177,9 +177,23 @@ builder.Services.AddAuthentication(options =>
             RoleClaimType = ClaimTypes.Role
         };
         
-        // Add event handlers for additional token validation if needed
+        // Allow SignalR to authenticate via query string for WebSockets/SSE when using access_token
         options.Events = new JwtBearerEvents
         {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+
+                // If the request is for our SignalR hub
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/notifications", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
             OnTokenValidated = context =>
             {
                 // The NameIdentifier claim contains the user ID as a string

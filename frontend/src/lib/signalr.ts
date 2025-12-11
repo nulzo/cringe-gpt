@@ -3,12 +3,15 @@ import useNotificationStore from '@/stores/notification-store';
 
 let connection: import('@microsoft/signalr').HubConnection | null = null;
 
-export function ensureNotificationsConnection(apiBase: string, getToken: () => string | null) {
+export async function ensureNotificationsConnection(apiBase: string, getToken: () => string | null) {
+  // Do not start connection until we have a token; avoids immediate 401/auto-retry loops
+  const token = getToken();
+  if (!token) return null;
   if (connection) return connection;
 
   connection = new HubConnectionBuilder()
     .withUrl(`${apiBase}/hubs/notifications`, {
-      accessTokenFactory: () => getToken() || ''
+      accessTokenFactory: () => getToken() || '',
     })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Information)
@@ -22,11 +25,26 @@ export function ensureNotificationsConnection(apiBase: string, getToken: () => s
     });
   });
 
-  connection.start().catch(() => {
-    // Swallow errors; will auto-retry
-  });
+  try {
+    await connection.start();
+  } catch (error) {
+    // Leave connection null so a later auth state change can retry cleanly
+    connection = null;
+    console.error('Failed to start notifications connection', error);
+  }
 
   return connection;
+}
+
+export async function stopNotificationsConnection() {
+  if (!connection) return;
+  const current = connection;
+  connection = null;
+  try {
+    await current.stop();
+  } catch {
+    // ignore stop errors
+  }
 }
 
 

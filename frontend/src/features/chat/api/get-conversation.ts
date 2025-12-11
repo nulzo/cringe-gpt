@@ -57,9 +57,12 @@ export const normalizeMessage = (m: any): Message => {
     });
   };
 
+  // Inline/streaming images (no persisted id yet)
   const addInlineImages = (imgs?: any[]) => {
     if (!Array.isArray(imgs)) return;
     imgs.forEach((img: any, index: number) => {
+      // Only treat as inline if there is no persisted id
+      if (img?.id) return;
       const url = img?.image_url?.url ?? img?.url;
       if (url) {
         mergedImages.push({
@@ -119,7 +122,20 @@ export const normalizeMessage = (m: any): Message => {
   }
 
   if (mergedImages.length > 0) {
-    (camel as any).images = mergedImages;
+    // Deduplicate by id or by canonical url to avoid double-rendering (streamed + persisted)
+    const seen = new Set<string>();
+    const unique = mergedImages.filter((img) => {
+      const key =
+        (img.id ? `id:${img.id}` : null) ??
+        (img.image_url?.url ? `url:${img.image_url.url}` : null) ??
+        (img.url ? `url:${img.url}` : null);
+      if (!key) return true;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    (camel as any).images = unique;
     camel.has_images = camel.has_images ?? true;
   }
 

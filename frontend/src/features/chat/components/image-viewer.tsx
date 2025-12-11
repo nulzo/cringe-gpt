@@ -397,6 +397,13 @@ export function ImageViewer({
             initial="hidden"
             animate="visible"
             exit="exit"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                onClose?.();
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
           >
             <div className="text-white text-center">
               <IconX className="w-12 h-12 mx-auto mb-4" />
@@ -494,6 +501,7 @@ export function ImageViewer({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
+                  onDoubleClick={toggleZoom}
                 >
                   <Button
                     variant="ghost"

@@ -14,8 +14,9 @@ import { GlobalImageViewer } from "@/features/chat/components/global-image-viewe
 import { AnimationSyncEffect } from "@/shared/ui/animation-sync";
 import { bootstrapAuthFromStorage } from "@/lib/auth";
 import { useEffect } from 'react';
-import { ensureNotificationsConnection } from '@/lib/signalr';
+import { ensureNotificationsConnection, stopNotificationsConnection } from '@/lib/signalr';
 import { env } from '@/configuration/env';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -29,12 +30,28 @@ interface AppProviderProps {
  * - Add other providers here as needed (Theme, Auth, etc.)
  */
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+  const token = useAuthStore((s) => s.token);
+  const isAuthReady = useAuthStore((s) => s.isInitialized);
+
   useEffect(() => {
     // Ensure axios has Authorization if token exists and hydrate auth store
     bootstrapAuthFromStorage();
-    const apiBase = import.meta.env.MODE === 'production' ? '' : env.API_URL;
-    ensureNotificationsConnection(apiBase, () => localStorage.getItem('token'));
   }, []);
+
+  useEffect(() => {
+    // Wait until auth bootstrap finishes to avoid racing with null tokens
+    if (!isAuthReady) return;
+
+    // Normalize to origin (strip trailing /api[/vX]) so hub path is correct
+    const rawBase = import.meta.env.MODE === 'production' ? '' : env.API_URL;
+    const apiBase = rawBase.replace(/\/api(\/v\d+)?\/?$/, '');
+
+    if (token) {
+      ensureNotificationsConnection(apiBase, () => localStorage.getItem('token'));
+    } else {
+      stopNotificationsConnection();
+    }
+  }, [token, isAuthReady]);
   return (
     <HelmetProvider>
       <I18nProvider
