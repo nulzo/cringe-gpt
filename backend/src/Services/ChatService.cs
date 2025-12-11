@@ -451,7 +451,7 @@ public class ChatService : IChatService
     private async Task<Message> BuildAssistantMessageAsync(AppUser user, Conversation conversation, Message userMessage,
         StringBuilder assistantResponse, List<StreamedImageData> streamedImages, string model, ProviderType providerType, UsageData usageData)
     {
-        if (assistantResponse.Length == 0)
+        if (assistantResponse.Length == 0 && !streamedImages.Any())
             throw new ApiException("Provider returned no content.", HttpStatusCode.BadGateway);
 
         var content = assistantResponse.ToString();
@@ -480,7 +480,7 @@ public class ChatService : IChatService
             }
         }
 
-        // Save streamed images as files
+        // Save streamed images as files (or keep remote URLs)
         if (streamedImages.Any())
         {
             var savedImages = new List<MessageImageDto>();
@@ -491,8 +491,9 @@ public class ChatService : IChatService
                 {
                     var base64Data = imageData.Url;
                     string mimeType = "image/png";
+                    var isDataUrl = base64Data.StartsWith("data:image/");
 
-                    if (base64Data.StartsWith("data:image/"))
+                    if (isDataUrl)
                     {
                         var parts = base64Data.Split(',');
                         if (parts.Length == 2)
@@ -504,21 +505,34 @@ public class ChatService : IChatService
                         }
                     }
 
-                    var imageBytes = Convert.FromBase64String(base64Data);
-                    var fileName = $"streamed-image-{imageData.Index}-{DateTime.UtcNow.Ticks}.png";
-                    var appFile = await _fileService.SaveFileAsync(user.Id, imageBytes, fileName, mimeType);
-
-                    savedImages.Add(new MessageImageDto
+                    if (isDataUrl)
                     {
-                        Id = appFile.Id,
-                        Name = $"Generated Image {imageData.Index + 1}",
-                        Url = $"/api/v1/files/{appFile.Id}",
-                        MimeType = mimeType
-                    });
+                        var imageBytes = Convert.FromBase64String(base64Data);
+                        var fileName = $"streamed-image-{imageData.Index}-{DateTime.UtcNow.Ticks}.png";
+                        var appFile = await _fileService.SaveFileAsync(user.Id, imageBytes, fileName, mimeType);
+
+                        savedImages.Add(new MessageImageDto
+                        {
+                            Id = appFile.Id,
+                            Name = $"Generated Image {imageData.Index + 1}",
+                            Url = $"/api/v1/files/{appFile.Id}",
+                            MimeType = mimeType
+                        });
+                    }
+                    else
+                    {
+                        // Non-data URLs (e.g., provider-hosted URLs). Keep as-is so the client can render.
+                        savedImages.Add(new MessageImageDto
+                        {
+                            Name = $"Generated Image {imageData.Index + 1}",
+                            Url = imageData.Url,
+                            MimeType = null
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to save streamed image {index}: {message}", imageData.Index, ex.Message);
+                    _logger.LogError(ex, "Failed to process streamed image {index}: {message}", imageData.Index, ex.Message);
                 }
             }
 

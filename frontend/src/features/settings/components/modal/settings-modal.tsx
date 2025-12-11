@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   IconBell,
   IconClock,
@@ -53,6 +53,7 @@ import { toast } from "sonner";
 import { api } from "@/lib/api-client";
 import { useModelsByProviderWithOptions } from "@/features/models/api/get-models-by-provider";
 import { ProviderIconFromKey } from "@/components/ui/provider-icon";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -176,7 +177,7 @@ interface SettingsModalProps {
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [activeSection, setActiveSection] = useState("general");
   const { data: settings } = useSettings();
-  const { mutate: updateSettings } = useUpdateSettings();
+  const { mutateAsync: updateSettings, isPending: isSavingSettings } = useUpdateSettings();
 
   const { setTheme, theme } = useTheme();
 
@@ -232,6 +233,62 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
       improveModel: true,
     },
   });
+
+  const [profileName, setProfileName] = useState(settings?.name ?? "");
+  const [avatarPreview, setAvatarPreview] = useState(settings?.avatar ?? "");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setProfileName(settings?.name ?? "");
+    setAvatarPreview(settings?.avatar ?? "");
+  }, [settings?.name, settings?.avatar]);
+
+  const handleSaveName = async () => {
+    const trimmed = profileName.trim();
+    try {
+      await updateSettings({ name: trimmed || undefined });
+      toast.success("Name updated");
+    } catch (err) {
+      toast.error("Failed to update name");
+      setProfileName(settings?.name ?? "");
+      console.error(err);
+    }
+  };
+
+  const handleAvatarFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Please choose an image under 2MB");
+      return;
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+    setAvatarPreview(dataUrl);
+    try {
+      await updateSettings({ avatarDataUrl: dataUrl, removeAvatar: false });
+      toast.success("Profile photo updated");
+    } catch (err) {
+      toast.error("Failed to update profile photo");
+      console.error(err);
+      setAvatarPreview(settings?.avatar ?? "");
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarPreview("");
+    try {
+      await updateSettings({ removeAvatar: true });
+      toast.success("Profile photo removed");
+    } catch (err) {
+      toast.error("Failed to remove profile photo");
+      console.error(err);
+      setAvatarPreview(settings?.avatar ?? "");
+    }
+  };
 
   // Providers list and selected provider state (lazy while modal closed)
   const { data: providers = [] } = useProviders({ enabled: open });
@@ -997,13 +1054,76 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 Profile
               </h5>
               <div className="gap-4 grid grid-cols-2">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Email</Label>
                   <Input value={settings?.email ?? ""} disabled />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <Label>Name</Label>
-                  <Input value={settings?.name ?? ""} disabled />
+                  <div className="flex gap-2">
+                    <Input
+                      value={profileName}
+                      placeholder="Display name"
+                      onChange={(e) => setProfileName(e.target.value)}
+                      onBlur={() => void handleSaveName()}
+                      disabled={isSavingSettings}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => void handleSaveName()}
+                      disabled={isSavingSettings}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <Label>Profile Photo</Label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-14 h-14 border">
+                      {avatarPreview ? (
+                        <AvatarImage src={avatarPreview} alt={profileName || "Avatar"} />
+                      ) : (
+                        <AvatarFallback>
+                          {profileName?.charAt(0)?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isSavingSettings}
+                        >
+                          Upload
+                        </Button>
+                        {avatarPreview && (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => void handleRemoveAvatar()}
+                            disabled={isSavingSettings}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        PNG/JPG up to 2MB.
+                      </p>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => void handleAvatarFile(e.target.files?.[0] ?? null)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

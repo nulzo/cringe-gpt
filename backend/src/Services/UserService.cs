@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
@@ -8,7 +9,9 @@ using OllamaWebuiBackend.Services.Interfaces;
 
 namespace OllamaWebuiBackend.Services;
 
-public class UserService(UserManager<AppUser> userManager, IUserRepository userRepository) : IUserService
+public class UserService(
+    UserManager<AppUser> userManager,
+    IUserRepository userRepository) : IUserService
 {
     private readonly UserManager<AppUser> _userManager = userManager;
     private readonly IUserRepository _userRepository = userRepository;
@@ -27,6 +30,38 @@ public class UserService(UserManager<AppUser> userManager, IUserRepository userR
         var user = await _userRepository.GetTrackedProfileByIdAsync(userId);
 
         if (user == null) throw new ApiException("User not found.", HttpStatusCode.NotFound);
+
+        var hasChanges = false;
+
+        if (!string.IsNullOrWhiteSpace(updateDto.Name) && updateDto.Name != user.UserName)
+        {
+            user.UserName = updateDto.Name;
+            user.NormalizedUserName = updateDto.Name.ToUpperInvariant();
+            hasChanges = true;
+        }
+
+        if (updateDto.RemoveAvatar == true)
+        {
+            user.Avatar = null;
+            hasChanges = true;
+        }
+        else if (!string.IsNullOrWhiteSpace(updateDto.AvatarDataUrl))
+        {
+            if (TryParseDataUrl(updateDto.AvatarDataUrl, out var content, out var mimeType))
+            {
+                if (content.Length > 2 * 1024 * 1024)
+                {
+                    throw new ApiException("Avatar too large. Max 2MB.", HttpStatusCode.BadRequest);
+                }
+                // Store data URL directly to avoid authenticated fetches for <img> tags
+                user.Avatar = updateDto.AvatarDataUrl;
+                hasChanges = true;
+            }
+            else
+            {
+                throw new ApiException("Invalid avatar payload.", HttpStatusCode.BadRequest);
+            }
+        }
 
         if (updateDto.Settings != null)
         {
@@ -49,7 +84,12 @@ public class UserService(UserManager<AppUser> userManager, IUserRepository userR
                 settings.PreferredModel = updateDto.Settings.PreferredModel;
                 _userRepository.UpdateSettings(settings);
             }
-            
+            hasChanges = true;
+        }
+
+        if (hasChanges)
+        {
+            _userRepository.Update(user);
             await _userRepository.SaveChangesAsync();
         }
 
@@ -65,6 +105,27 @@ public class UserService(UserManager<AppUser> userManager, IUserRepository userR
             Name = userDto.Name,
             Settings = userDto.Settings
         };
+    }
+
+    private static bool TryParseDataUrl(string dataUrl, out byte[] content, out string mimeType)
+    {
+        content = Array.Empty<byte>();
+        mimeType = string.Empty;
+
+        var match = Regex.Match(dataUrl, @"^data:(?<mime>[^;]+);base64,(?<data>.+)$");
+        if (!match.Success) return false;
+
+        mimeType = match.Groups["mime"].Value;
+        var base64 = match.Groups["data"].Value;
+        try
+        {
+            content = Convert.FromBase64String(base64);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     public async Task DeleteUserAsync(int userId)

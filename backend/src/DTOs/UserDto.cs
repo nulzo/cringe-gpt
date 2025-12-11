@@ -29,5 +29,7 @@ public class UserProfileDto
 public class UserUpdateDto
 {
     public UserSettingsDto? Settings { get; set; }
-    // Add other updatable user fields here in the future, e.g., username
+    public string? Name { get; set; }
+    public string? AvatarDataUrl { get; set; }
+    public bool? RemoveAvatar { get; set; }
 }
