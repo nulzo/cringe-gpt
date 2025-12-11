@@ -167,158 +167,71 @@ public class ChatService : IChatService
         var providerStream = StreamProviderContent(providerResponse, assistantResponse,
             chatRequest.ProviderType.ToString(), model, request.Stream, streamedImages, cancellationToken);
 
-        await foreach (var streamEvent in providerStream)
-        {
-            yield return streamEvent;
-
-            // Also yield image events if we have images and streaming is enabled
-            if (request.Stream && streamedImages.Count > emittedImageCount)
-            {
-                // Yield only new images since last emission
-                for (var i = emittedImageCount; i < streamedImages.Count; i++)
-                {
-                    yield return new ImageStreamEvent { Data = streamedImages[i] };
-                }
-                emittedImageCount = streamedImages.Count;
-            }
-        }
-
-        stopwatch.Stop();
-
-        var usageData = await providerResponse.GetUsageDataAsync();
-        // var finishReason = await providerResponse.FinishReason!;
-
         Message? assistantMessage = null;
-        if (assistantResponse.Length > 0)
+        UsageData? usageData = null;
+
+        try
         {
-            var content = assistantResponse.ToString();
-            var (parsedContent, imageUrls) = ParseMarkdownImages(content);
-
-            _logger.LogInformation("Creating final message. Streamed images count: {streamedCount}, Parsed image URLs: {urlCount}",
-                streamedImages.Count, imageUrls.Count);
-
-            assistantMessage = new Message
+            await foreach (var streamEvent in providerStream)
             {
-                Role = "assistant",
-                Content = parsedContent,
-                Provider = chatRequest.ProviderType,
-                Model = model,
-                ParentMessageId = userMessage.MessageId,
-                TokenCount = usageData.CompletionTokens,
-                FinishReason = "complete",
-                ConversationId = conversation.Id,
-                HasImages = streamedImages.Any() || imageUrls.Any()
-            };
+                yield return streamEvent;
 
-            // Store image URLs in ToolCallsJson for non-streamed images
-            if (imageUrls.Any() && !streamedImages.Any())
-            {
-                var fileIds = ExtractFileIdsFromUrls(imageUrls);
-                if (fileIds.Any())
+                // Also yield image events if we have images and streaming is enabled
+                if (request.Stream && streamedImages.Count > emittedImageCount)
                 {
-                    assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(fileIds);
-                }
-            }
-
-            // Save streamed images as files
-            _logger.LogInformation("Processing {count} streamed images for final message", streamedImages.Count);
-            if (streamedImages.Any())
-            {
-                var fileIds = new List<int>();
-                var savedImages = new List<MessageImageDto>();
-
-                foreach (var imageData in streamedImages)
-                {
-                    try
+                    // Yield only new images since last emission
+                    for (var i = emittedImageCount; i < streamedImages.Count; i++)
                     {
-                        _logger.LogInformation("Processing image {index} with URL length {length}", imageData.Index, imageData.Url.Length);
-
-                        // Convert base64 to bytes - handle different formats
-                        var base64Data = imageData.Url;
-                        string mimeType = "image/png";
-
-                        if (base64Data.StartsWith("data:image/"))
-                        {
-                            // Extract MIME type and base64 data
-                            var parts = base64Data.Split(',');
-                            if (parts.Length == 2)
-                            {
-                                var mimePart = parts[0];
-                                base64Data = parts[1];
-                                if (mimePart.Contains("jpeg") || mimePart.Contains("jpg"))
-                                    mimeType = "image/jpeg";
-                            }
-                        }
-
-                        _logger.LogInformation("Converting base64 data for image {index}, length: {length}", imageData.Index, base64Data.Length);
-                        var imageBytes = Convert.FromBase64String(base64Data);
-
-                        // Save file
-                        var fileName = $"streamed-image-{imageData.Index}-{DateTime.UtcNow.Ticks}.png";
-                        var appFile = await _fileService.SaveFileAsync(user.Id, imageBytes, fileName, mimeType);
-
-                        fileIds.Add(appFile.Id);
-
-                        // Create MessageImageDto for proper mapping
-                        savedImages.Add(new MessageImageDto
-                        {
-                            Id = appFile.Id,
-                            Name = $"Generated Image {imageData.Index + 1}",
-                            Url = $"/api/v1/files/{appFile.Id}",
-                            MimeType = mimeType
-                        });
-
-                        _logger.LogInformation("Saved streamed image {index} as file {fileId}", imageData.Index, appFile.Id);
+                        yield return new ImageStreamEvent { Data = streamedImages[i] };
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to save streamed image {index}: {message}", imageData.Index, ex.Message);
-                        // Continue processing other images even if one fails
-                    }
-                }
-
-                // Store processed images in ToolCallsJson for proper mapping
-                if (savedImages.Any())
-                {
-                    assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(savedImages);
-                    _logger.LogInformation("Stored {count} processed images in ToolCallsJson: {json}", savedImages.Count, assistantMessage.ToolCallsJson);
-                }
-                else
-                {
-                    _logger.LogWarning("No images were successfully saved, ToolCallsJson will be empty");
+                    emittedImageCount = streamedImages.Count;
                 }
             }
-            else
-            {
-                _logger.LogWarning("No streamed images to process for final message");
-            }
 
-            // Clear the streamed images list now that we've processed them for the final message
-            streamedImages.Clear();
-
-            conversation.Messages.Add(assistantMessage);
+            stopwatch.Stop();
+            usageData = await providerResponse.GetUsageDataAsync();
+            assistantMessage = await BuildAssistantMessageAsync(user, conversation, userMessage, assistantResponse, streamedImages, model, chatRequest.ProviderType, usageData);
         }
-
-        if (conversation.Id == 0)
-            await _conversationRepository.AddAsync(conversation);
-        await _conversationRepository.SaveChangesAsync();
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _operationalMetricsService.RecordProviderError(chatRequest.ProviderType.ToString(), model);
+            assistantMessage = await BuildErrorAssistantMessageAsync(conversation, userMessage, ex, chatRequest.ProviderType, model);
+            yield return new ErrorStreamEvent
+            {
+                Data = new
+                {
+                    code = "chat_generation_failed",
+                    message = "The assistant failed to generate a reply.",
+                    detail = ex.Message,
+                    retryable = true
+                }
+            };
+        }
 
         if (assistantMessage != null)
         {
+            if (conversation.Id == 0)
+                await _conversationRepository.AddAsync(conversation);
+            await _conversationRepository.SaveChangesAsync();
+
             yield return new FinalMessageStreamEvent { Data = assistantMessage };
 
-            var metric = await _metricsService.RecordUsageAsync(user, conversation, assistantMessage, model,
-                usageData.PromptTokens, usageData.CompletionTokens, (int)stopwatch.ElapsedMilliseconds, usageData.ActualCost);
-            yield return new MetricsStreamEvent { Data = metric };
+            if (usageData != null && !assistantMessage.IsError)
+            {
+                var metric = await _metricsService.RecordUsageAsync(user, conversation, assistantMessage, model,
+                    usageData.PromptTokens, usageData.CompletionTokens, (int)stopwatch.ElapsedMilliseconds, usageData.ActualCost);
+                yield return new MetricsStreamEvent { Data = metric };
 
-            // Notify via SignalR so UI can show a toast if user is not on this conversation
-            try
-            {
-                await _notificationService.NotifyConversationCompletedAsync(user.Id, conversation.Id, assistantMessage.MessageId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send completion notification for conversation {ConversationId}", conversation.Id);
+                // Notify via SignalR so UI can show a toast if user is not on this conversation
+                try
+                {
+                    await _notificationService.NotifyConversationCompletedAsync(user.Id, conversation.Id, assistantMessage.MessageId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send completion notification for conversation {ConversationId}", conversation.Id);
+                }
             }
         }
     }
@@ -376,6 +289,116 @@ public class ChatService : IChatService
                             // The image events will be handled separately in the main stream
                         }
                     }
+
+    private async Task<Message> BuildAssistantMessageAsync(AppUser user, Conversation conversation, Message userMessage,
+        StringBuilder assistantResponse, List<StreamedImageData> streamedImages, string model, ProviderType providerType, UsageData usageData)
+    {
+        if (assistantResponse.Length == 0)
+            throw new ApiException("Provider returned no content.", HttpStatusCode.BadGateway);
+
+        var content = assistantResponse.ToString();
+        var (parsedContent, imageUrls) = ParseMarkdownImages(content);
+
+        var assistantMessage = new Message
+        {
+            Role = "assistant",
+            Content = parsedContent,
+            Provider = providerType,
+            Model = model,
+            ParentMessageId = userMessage.MessageId,
+            TokenCount = usageData.CompletionTokens,
+            FinishReason = "complete",
+            ConversationId = conversation.Id,
+            HasImages = streamedImages.Any() || imageUrls.Any()
+        };
+
+        // Store image URLs in ToolCallsJson for non-streamed images
+        if (imageUrls.Any() && !streamedImages.Any())
+        {
+            var fileIds = ExtractFileIdsFromUrls(imageUrls);
+            if (fileIds.Any())
+            {
+                assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(fileIds);
+            }
+        }
+
+        // Save streamed images as files
+        if (streamedImages.Any())
+        {
+            var savedImages = new List<MessageImageDto>();
+
+            foreach (var imageData in streamedImages)
+            {
+                try
+                {
+                    var base64Data = imageData.Url;
+                    string mimeType = "image/png";
+
+                    if (base64Data.StartsWith("data:image/"))
+                    {
+                        var parts = base64Data.Split(',');
+                        if (parts.Length == 2)
+                        {
+                            var mimePart = parts[0];
+                            base64Data = parts[1];
+                            if (mimePart.Contains("jpeg") || mimePart.Contains("jpg"))
+                                mimeType = "image/jpeg";
+                        }
+                    }
+
+                    var imageBytes = Convert.FromBase64String(base64Data);
+                    var fileName = $"streamed-image-{imageData.Index}-{DateTime.UtcNow.Ticks}.png";
+                    var appFile = await _fileService.SaveFileAsync(user.Id, imageBytes, fileName, mimeType);
+
+                    savedImages.Add(new MessageImageDto
+                    {
+                        Id = appFile.Id,
+                        Name = $"Generated Image {imageData.Index + 1}",
+                        Url = $"/api/v1/files/{appFile.Id}",
+                        MimeType = mimeType
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to save streamed image {index}: {message}", imageData.Index, ex.Message);
+                }
+            }
+
+            if (savedImages.Any())
+            {
+                assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(savedImages);
+            }
+        }
+
+        streamedImages.Clear();
+        conversation.Messages.Add(assistantMessage);
+        return assistantMessage;
+    }
+
+    private async Task<Message> BuildErrorAssistantMessageAsync(Conversation conversation, Message userMessage, Exception ex, ProviderType providerType, string model)
+    {
+        var assistantMessage = new Message
+        {
+            Role = "assistant",
+            Content = $"The assistant ran into a problem: {ex.Message}",
+            Provider = providerType,
+            Model = model,
+            ParentMessageId = userMessage.MessageId,
+            FinishReason = "error",
+            ConversationId = conversation.Id,
+            IsError = true,
+            Error = new MessageError
+            {
+                Title = "Generation failed",
+                Description = ex.Message,
+                ErrorCode = "chat_generation_failed"
+            }
+        };
+
+        conversation.Messages.Add(assistantMessage);
+        await _conversationRepository.SaveChangesAsync();
+        return assistantMessage;
+    }
                 }
             }
         }

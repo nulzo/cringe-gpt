@@ -300,9 +300,9 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
               useNotificationStore.getState().addNotification({
                 type: 'error',
                 title: 'Chat Error',
-                message: eventData.message || 'An error occurred during chat',
+                message: eventData.detail || eventData.message || 'The assistant ran into a problem. You can retry.',
               });
-              clearStreaming();
+              // Keep streaming state; a final_message may follow with the persisted error message
               break;
           }
         }

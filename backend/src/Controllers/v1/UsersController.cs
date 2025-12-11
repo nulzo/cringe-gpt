@@ -19,7 +19,7 @@ public class UsersController : BaseApiController
     }
 
     [HttpGet("me")]
-    [EnableRateLimiting("fixedRateLimit")]
+    [EnableRateLimiting("user")]
     public async Task<ActionResult<UserProfileDto>> GetMe()
     {
         var userId = GetUserId();

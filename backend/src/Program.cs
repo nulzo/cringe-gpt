@@ -23,6 +23,7 @@ using OllamaWebuiBackend.Services.Providers;
 using OllamaWebuiBackend.Services.Providers.Interfaces;
 using OllamaWebuiBackend.SignalR;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -33,7 +34,11 @@ const string serviceName = "OllamaWebuiBackend";
 builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
     .ReadFrom.Configuration(context.Configuration)
     .ReadFrom.Services(services)
-    .Enrich.FromLogContext());
+    .Enrich.FromLogContext()
+    // Quiet chatty frameworks while keeping diagnostics available when needed
+    .MinimumLevel.Override("Microsoft.AspNetCore.SignalR", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Http.Connections", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Routing.EndpointMiddleware", LogEventLevel.Warning));
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -71,7 +76,7 @@ builder.Services.AddRateLimiter(options =>
             return RateLimitPartition.GetFixedWindowLimiter(userId, _ =>
                 new FixedWindowRateLimiterOptions
                 {
-                    PermitLimit = 30, // 30 requests for authenticated users
+                    PermitLimit = 120, // generous per-user limit to avoid throttling normal UX
                     Window = TimeSpan.FromMinutes(1)
                 });
 
@@ -88,7 +93,7 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddFixedWindowLimiter("fixedRateLimit", opt =>
     {
-        opt.PermitLimit = 5;
+        opt.PermitLimit = 60;
         opt.Window = TimeSpan.FromSeconds(30);
         // opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         // opt.QueueLimit = 2;
@@ -297,10 +302,32 @@ var app = builder.Build();
 app.MapPrometheusScrapingEndpoint("/metrics");
 
 // Configure the HTTP request pipeline.
-app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging(options =>
+{
+    // Drop noisy endpoints from request logging while keeping traces/metrics intact
+    options.Filter = (httpContext, _, _) =>
+    {
+        var path = httpContext.Request.Path;
+        if (path.StartsWithSegments("/hubs/notifications/negotiate", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path.StartsWithSegments("/hubs/notifications", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path.StartsWithSegments("/metrics", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase)) return false;
+        if (path == "/") return false;
+        return true;
+    };
+
+    options.GetLevel = (httpContext, elapsedMs, ex) =>
+    {
+        if (ex != null) return LogEventLevel.Error;
+        // Treat slow requests as warnings
+        if (elapsedMs > 2000) return LogEventLevel.Warning;
+        return LogEventLevel.Information;
+    };
+});
+app.UseCors("allowOrigin"); // ensure CORS headers are present even on rejections
 app.UseRateLimiter();
 app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
-app.UseCors("allowOrigin");
 
 // Respect reverse proxy headers (Nginx)
 app.UseForwardedHeaders(new ForwardedHeadersOptions

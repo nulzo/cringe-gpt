@@ -30,8 +30,24 @@ export const normalizeMessage = (m: any): Message => {
     has_tool_calls: m.has_tool_calls,
     tool_calls: m.tool_calls,
     attachments: m.attachments,
-    error: m.error,
+    error: undefined as any,
   } as Message;
+
+  // Normalize error payloads
+  const rawError = (m as any).error || (m as any).Error;
+  if (rawError) {
+    camel.error = {
+      error_code: rawError.error_code ?? rawError.errorCode ?? rawError.code,
+      error_title: rawError.error_title ?? rawError.title ?? 'Error',
+      error_description:
+        rawError.error_description ??
+        rawError.description ??
+        rawError.detail ??
+        rawError.message ??
+        'Something went wrong.',
+    };
+    camel.is_error = camel.is_error ?? true;
+  }
 
   const mergedImages: any[] = [];
 
