@@ -10,7 +10,7 @@ interface LikedMessagesResponse {
   };
 }
 
-export const getLikedMessages = (page = 1, pageSize = 20): Promise<LikedMessagesResponse> => {
+const getLikedMessages = (page = 1, pageSize = 20): Promise<LikedMessagesResponse> => {
   return api.get(`/messages/liked?page=${page}&pageSize=${pageSize}`);
 };
 

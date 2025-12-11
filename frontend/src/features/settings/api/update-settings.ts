@@ -3,7 +3,7 @@ import {useMutation, useQueryClient} from '@tanstack/react-query';
 import {api} from '@/lib/api-client';
 import type {Settings} from '@/features/settings/types';
 
-export const updateSettings = (data: { settings: Partial<Settings['settings']> }): Promise<Settings> => {
+const updateSettings = (data: { settings: Partial<Settings['settings']> }): Promise<Settings> => {
     return api.patch('/users/me', data);
 };
 

@@ -67,17 +67,3 @@ export const useHotkeyConfigStore = create<HotkeyConfigState>()(
  */
 export const useHotkey = (id: ActionId) =>
     useHotkeyConfigStore((s) => s.configs[id]?.keys ?? hotkeyActions[id].defaultKeys);
-
-/**
- * Same as useHotkey but already formatted for UI (⌘ + O, Ctrl + O, …)
- */
-export const useHotkeyDisplay = (id: ActionId) => {
-    const shortcut = useHotkey(id);
-
-    // You can keep this converter anywhere you like.
-    const isMac = /^Mac/.test(navigator.platform);
-    return shortcut
-        .replace(/mod/i, isMac ? "⌘" : "Ctrl")
-        .replace(/\+/g, " + ")            // nicer spacing
-        .toUpperCase();
-};

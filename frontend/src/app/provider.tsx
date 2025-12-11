@@ -29,7 +29,7 @@ interface AppProviderProps {
  * - I18n Provider for translations
  * - Add other providers here as needed (Theme, Auth, etc.)
  */
-export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
+const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const token = useAuthStore((s) => s.token);
   const isAuthReady = useAuthStore((s) => s.isInitialized);
 

@@ -3,7 +3,7 @@ import { api } from '@/lib/api-client';
 import type { ModelResponse } from '@/types/api';
 import type { ProviderType } from '@/features/chat/types';
 
-export const getModelsByProvider = (provider: ProviderType): Promise<Array<ModelResponse>> => {
+const getModelsByProvider = (provider: ProviderType): Promise<Array<ModelResponse>> => {
   const search = new URLSearchParams();
   search.set('provider', provider as string);
   return api.get(`/models?${search.toString()}`);

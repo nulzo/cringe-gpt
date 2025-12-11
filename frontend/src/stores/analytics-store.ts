@@ -60,7 +60,7 @@ const defaultLoadingState: AnalyticsLoadingState = {
   trends: false
 };
 
-export const useAnalyticsStore = create<AnalyticsState>()(
+const useAnalyticsStore = create<AnalyticsState>()(
   devtools(
     persist(
       (set, get) => ({
@@ -170,20 +170,8 @@ export const useAnalyticsStore = create<AnalyticsState>()(
   )
 );
 
-// Selectors for commonly used state
+// Selectors used by the remaining analytics UI
 export const useAnalyticsTimeRange = () => useAnalyticsStore((state) => state.timeRange);
 export const useAnalyticsFilters = () => useAnalyticsStore((state) => state.filters);
-export const useAnalyticsLoading = () => useAnalyticsStore((state) => state.loading);
-export const useAnalyticsActiveTab = () => useAnalyticsStore((state) => state.activeTab);
-
-// Individual action selectors
 export const useSetTimeRange = () => useAnalyticsStore((state) => state.setTimeRange);
-export const useSetFilters = () => useAnalyticsStore((state) => state.setFilters);
-export const useSetLoading = () => useAnalyticsStore((state) => state.setLoading);
-export const useSetActiveTab = () => useAnalyticsStore((state) => state.setActiveTab);
-export const useSetChartType = () => useAnalyticsStore((state) => state.setChartType);
-export const useSetTheme = () => useAnalyticsStore((state) => state.setTheme);
-export const useResetFilters = () => useAnalyticsStore((state) => state.resetFilters);
 export const useGetQuickTimeRange = () => useAnalyticsStore((state) => state.getQuickTimeRange);
-export const useIsCacheValid = () => useAnalyticsStore((state) => state.isCacheValid);
-export const useUpdateCacheTimestamp = () => useAnalyticsStore((state) => state.updateCacheTimestamp);

@@ -28,7 +28,7 @@ async function setToken(token: string | null) {
     }
 }
 
-export async function getMe(): Promise<UserDto | null> {
+async function getMe(): Promise<UserDto | null> {
     try {
         const user = await api.get<UserDto>('/users/me');
         return user;

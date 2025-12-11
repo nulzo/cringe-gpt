@@ -79,19 +79,6 @@ export const formatDetailedDate = (timestamp: number): string => {
 };
 
 /**
- * Format file size in bytes to human readable format
- */
-export const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-};
-
-/**
  * Format number with commas
  */
 export const formatNumber = (num: number): string => {
@@ -106,36 +93,6 @@ export const formatCost = (cost: number): string => {
         return '<$0.01';
     }
     return `$${cost.toFixed(4)}`;
-};
-
-/**
- * Truncate text to a specified length
- */
-export const truncateText = (text: string, maxLength: number): string => {
-    if (text.length <= maxLength) return text;
-    return text.slice(0, maxLength).trim() + '...';
-};
-
-/**
- * Clean citation text by removing problematic patterns
- */
-export const cleanCitationText = (text: string): string => {
-    if (!text) return '';
-
-    return text
-        // Remove Unicode null characters
-        .replace(/\u0000/g, '')
-        // Remove sequences of [?] or [0]
-        .replace(/(\[\?+\]|\[0+\])+/g, '')
-        // Remove undefined] text
-        .replace(/undefined\]/g, '')
-        // Remove [undefined] text
-        .replace(/\[undefined\]/g, '')
-        // Remove sequences of [n][n][n]
-        .replace(/\[\d+\]\[\d+\]\[\d+\]/g, '')
-        // Remove sequences of [n] [n]
-        .replace(/\[\d+\]\s*\[\d+\]/g, '')
-        .trim();
 };
 
 // Get Time-to-greeting via Locale

@@ -142,7 +142,7 @@ export const normalizeMessage = (m: any): Message => {
   return camel;
 };
 
-export const getConversation = async (conversationId: string): Promise<Conversation> => {
+const getConversation = async (conversationId: string): Promise<Conversation> => {
   const res = await api.get(`/conversations/${conversationId}`);
   if (res && Array.isArray(res.messages)) {
     res.messages = res.messages.map(normalizeMessage);

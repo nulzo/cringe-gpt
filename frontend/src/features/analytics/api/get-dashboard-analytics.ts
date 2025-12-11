@@ -1,8 +1,8 @@
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { AnalyticsDashboard, AnalyticsQueryParams } from '../types';
 
-export const getDashboardAnalytics = (params: AnalyticsQueryParams = {}): Promise<AnalyticsDashboard> => {
+const getDashboardAnalytics = (params: AnalyticsQueryParams = {}): Promise<AnalyticsDashboard> => {
   const searchParams = new URLSearchParams();
 
   if (params.from) searchParams.append('from', params.from);
@@ -18,13 +18,5 @@ export const useDashboardAnalytics = (params: AnalyticsQueryParams = {}) => {
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 10 * 60 * 1000, // 10 minutes
     placeholderData: keepPreviousData,
-  });
-};
-
-export const prefetchDashboardAnalytics = (queryClient: ReturnType<typeof useQueryClient>, params: AnalyticsQueryParams = {}) => {
-  return queryClient.prefetchQuery({
-    queryKey: ['analytics', 'dashboard', params],
-    queryFn: () => getDashboardAnalytics(params),
-    staleTime: 30 * 1000,
   });
 };

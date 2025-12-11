@@ -1,8 +1,8 @@
 import type { AnalyticsQueryParams } from "@/features/analytics/types"
 
-export type MaybeDate = Date | string | undefined | null
+type MaybeDate = Date | string | undefined | null
 
-export function toIso(d: MaybeDate): string | undefined {
+function toIso(d: MaybeDate): string | undefined {
     if (!d) return undefined
     const date = typeof d === "string" ? new Date(d) : d
     return isNaN(date.getTime()) ? undefined : date.toISOString()

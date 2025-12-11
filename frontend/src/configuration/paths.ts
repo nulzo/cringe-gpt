@@ -1,6 +1,5 @@
 export const PATHS = {
     HOME: '/',
-    DASHBOARD: '/dashboard',
     LOGIN: {
         path: '/login',
         getHref: (redirectTo?: string | null | undefined) =>

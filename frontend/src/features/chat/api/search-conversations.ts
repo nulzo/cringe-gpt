@@ -1,7 +1,7 @@
 import { api } from '@/lib/api-client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 
-export interface ConversationSearchItem {
+interface ConversationSearchItem {
   id: number;
   conversation_id: string;
   current_node_id?: string | null;
@@ -16,12 +16,12 @@ export interface ConversationSearchItem {
   };
 }
 
-export interface ConversationSearchResponse {
+interface ConversationSearchResponse {
   items: ConversationSearchItem[];
   cursor?: string | null;
 }
 
-export const searchConversations = async (query: string, cursor?: string | null): Promise<ConversationSearchResponse> => {
+const searchConversations = async (query: string, cursor?: string | null): Promise<ConversationSearchResponse> => {
   const params = new URLSearchParams({ query });
   if (cursor) params.set('cursor', cursor);
   const res = await api.get(`/conversations/search?${params.toString()}`);

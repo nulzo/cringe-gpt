@@ -21,10 +21,6 @@ const ImageGenerationPage = lazy(
   () => import("@/features/image-generation/routes/image-generation-page")
 );
 
-const DashboardPage = lazy(
-  () => import("@/features/dashboard/routes/dashboard-page")
-);
-
 const AppLayout = () => (
   <UIStateProvider>
     <SidebarProvider>
@@ -124,10 +120,6 @@ export const router = createBrowserRouter([
           {
             path: "analytics",
             element: <Analytics />,
-          },
-          {
-            path: PATHS.DASHBOARD.slice(1), // Remove leading slash
-            element: <DashboardPage />,
           },
         ],
       },

@@ -3,7 +3,7 @@ import {useQuery} from '@tanstack/react-query';
 import {api} from '@/lib/api-client';
 import type {Settings} from '@/features/settings/types';
 
-export const getSettings = (): Promise<Settings> => {
+const getSettings = (): Promise<Settings> => {
     return api.get('/users/me');
 };
 

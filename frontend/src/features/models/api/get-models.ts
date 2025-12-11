@@ -2,7 +2,7 @@ import {useQuery} from '@tanstack/react-query';
 import {api} from '@/lib/api-client';
 import {type ModelResponse} from '@/types/api';
 
-export const getModels = (): Promise<Array<ModelResponse>> => {
+const getModels = (): Promise<Array<ModelResponse>> => {
     return api.get(`/models`);
 };
 

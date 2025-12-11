@@ -61,34 +61,4 @@ export function fillMissingDates<T extends TimeSeriesMetrics>(
   return filledData;
 }
 
-/**
- * Ensures ChartConfig has proper dataKey mappings for chart components
- */
-export function createChartConfig<T extends Record<string, any>>(
-  config: Record<string, { label: string; color: string }>,
-  dataKeys?: (keyof T)[]
-): Record<string, { label: string; color: string }> {
-  const result = { ...config };
-
-  // If dataKeys are provided, ensure they map correctly
-  if (dataKeys) {
-    dataKeys.forEach(key => {
-      const keyStr = key as string;
-      if (!result[keyStr]) {
-        result[keyStr] = {
-          label: keyStr.charAt(0).toUpperCase() + keyStr.slice(1),
-          color: `var(--chart-${Object.keys(result).length + 1})`
-        };
-      }
-    });
-  }
-
-  return result;
-}
-
-/**
- * Formats chart container className for full width usage
- */
-export function getFullWidthChartClass(height: number = 300): string {
-  return `h-[${height}px] w-full`;
-}
+// Additional chart helpers removed until we need richer chart composition

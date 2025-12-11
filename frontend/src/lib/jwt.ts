@@ -1,6 +1,6 @@
-export type JwtPayload = { exp?: number } & Record<string, unknown>;
+type JwtPayload = { exp?: number } & Record<string, unknown>;
 
-export function parseJwt(token: string): JwtPayload | null {
+function parseJwt(token: string): JwtPayload | null {
     try {
         const base64Url = token.split('.')[1];
         if (!base64Url) return null;

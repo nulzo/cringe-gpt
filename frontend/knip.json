@@ -1,0 +1,9 @@
+{
+  "workspaces": {
+    ".": {
+      "entry": ["src/main.tsx"],
+      "ignore": ["src/components/ui/**"]
+    }
+  }
+}
+

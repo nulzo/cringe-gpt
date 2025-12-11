@@ -6,7 +6,7 @@ import { katexExtension } from '../lib/katex';
 import { thinkExtension } from '../lib/think';
 import { citationExtension } from '../lib/citation';
 
-export const markedInstance = new Marked(
+const markedInstance = new Marked(
     markedHighlight({
         langPrefix: 'hljs language-',
         highlight(code, lang) {

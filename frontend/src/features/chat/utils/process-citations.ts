@@ -41,33 +41,6 @@ export const addInlineCitations = (content: string, citations: Citation[]): stri
 };
 
 /**
- * Force inline citations even if not naturally placed
- */
-export const forceInlineCitations = (content: string, citations: Citation[]): string => {
-    if (!content || !citations || citations.length === 0) {
-        return content;
-    }
-
-    let processedContent = content;
-
-    // Clean up the content first
-    processedContent = processedContent
-        .replace(/\u0000/g, '')
-        .replace(/e:$/g, '');
-
-    // Add citations at the end if they weren't naturally placed
-    const citationMarkers = citations
-        .map((_, index) => `[${index + 1}]`)
-        .join(' ');
-
-    if (citationMarkers) {
-        processedContent += ` ${citationMarkers}`;
-    }
-
-    return processedContent;
-};
-
-/**
  * Extract and clean citations from a message
  */
 export const processCitations = (citations: Citation[]): Citation[] => {
@@ -101,13 +74,4 @@ export const processCitations = (citations: Citation[]): Citation[] => {
     });
 };
 
-/**
- * Check if content has citation markers
- */
-export const hasCitationMarkers = (content: string): boolean => {
-    if (!content) return false;
-
-    // Look for citation patterns like [1], [2], etc.
-    const citationPattern = /\[\d+\]/g;
-    return citationPattern.test(content);
-}; 
+// hasCitationMarkers removed because inline checks are not used anywhere else

@@ -2,7 +2,7 @@ import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { type ConversationSummary } from '../../chat/types';
 
-export const getPinnedConversations = (): Promise<ConversationSummary[]> => {
+const getPinnedConversations = (): Promise<ConversationSummary[]> => {
   return api.get('/conversations/pinned');
 };
 

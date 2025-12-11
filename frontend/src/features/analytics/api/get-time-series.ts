@@ -2,7 +2,7 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { TimeSeriesMetrics, AnalyticsQueryParams } from '../types';
 
-export const getTimeSeriesMetrics = (params: AnalyticsQueryParams = {}): Promise<TimeSeriesMetrics[]> => {
+const getTimeSeriesMetrics = (params: AnalyticsQueryParams = {}): Promise<TimeSeriesMetrics[]> => {
   const searchParams = new URLSearchParams();
 
   if (params.from) searchParams.append('from', params.from);
