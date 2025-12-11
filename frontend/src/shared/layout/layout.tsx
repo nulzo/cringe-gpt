@@ -63,6 +63,8 @@ type SidebarItem = {
 };
 
 const SidebarNavButton = ({ item, isOpen }: { item: SidebarItem; isOpen: boolean }) => {
+  if (!item.path) return null;
+
   const Icon = item.icon;
   const location = useLocation();
 
@@ -74,25 +76,28 @@ const SidebarNavButton = ({ item, isOpen }: { item: SidebarItem; isOpen: boolean
       ? location.pathname === "/" && location.search.includes("temp=true")
       : item.path && location.pathname.startsWith(item.path);
 
-  const commonClasses = `hover:bg-sidebar-hover group/sidebar-nav-button flex items-center w-full h-9 rounded-md text-sm font-base text-foreground group relative overflow-hidden`;
+  const commonClasses = `group/sidebar-nav-button flex items-center w-full h-9 rounded-md text-sm font-base text-foreground group relative overflow-hidden`;
 
   const element = (
     <Link to={item.path} className={commonClasses}>
-      <div className={`w-[56px] h-full flex-shrink-0 flex items-center justify-center z-10`}>
-        <Icon className="size-5 text-foreground/90" />
+      <div
+        className="absolute left-0 top-0 h-full rounded-md group-hover:bg-sidebar-hover ease-in-out"
+        style={{
+          left: isOpen ? "0px" : "8px",
+          width: isOpen ? "100%" : "40px",
+          transitionDuration: `${SIDEBAR_TRANSITION_DURATION}ms`,
+        }}
+      />
+      <div className="w-[56px] h-full flex-shrink-0 flex items-center justify-center z-10">
+        <Icon className="size-5 text-foreground/90 group-hover/sidebar-nav-button:text-foreground" />
       </div>
       <div
-        className={`flex-1 flex items-center justify-between whitespace-nowrap overflow-hidden z-10
-                                                           ${
-                                                             isOpen
-                                                               ? "opacity-100 translate-x-0"
-                                                               : "opacity-0 -translate-x-2"
-                                                           }
-                                                           `}
+        className={`flex-1 flex items-center justify-between whitespace-nowrap overflow-hidden z-10 transition-all ${
+          isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2"
+        }`}
+        style={{ transitionDuration: `${SIDEBAR_TRANSITION_DURATION}ms` }}
       >
-        <span>
-          {item.name}
-        </span>
+        <span>{item.name}</span>
         {item.shortcut && (
           <div className="group-hover/sidebar-nav-button:opacity-100 text-muted-foreground text-sm flex items-center gap-1 opacity-0 mr-2 px-1.5 rounded h-5 font-medium text-[10px] pointer-events-none select-none">
             <span className="">⌘</span>
