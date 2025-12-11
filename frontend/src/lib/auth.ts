@@ -31,6 +31,8 @@ async function setToken(token: string | null) {
 async function getMe(): Promise<UserDto | null> {
     try {
         const user = await api.get<UserDto>('/users/me');
+        // Seed React Query cache so subsequent callers do not refetch /users/me
+        queryClient.setQueryData(['settings'], user);
         return user;
     } catch {
         return null;
@@ -45,6 +47,7 @@ export async function login(input: LoginInput): Promise<UserDto> {
     if (!user) throw new Error('Unable to fetch user after login');
 
     useAuthStore.getState().setAuth(user, res.token);
+    queryClient.setQueryData(['settings'], user);
     return user;
 }
 
@@ -56,6 +59,7 @@ export async function register(input: RegisterInput): Promise<UserDto> {
     if (!user) throw new Error('Unable to fetch user after register');
 
     useAuthStore.getState().setAuth(user, res.token);
+    queryClient.setQueryData(['settings'], user);
     return user;
 }
 
@@ -70,37 +74,44 @@ export async function logout(): Promise<void> {
     queryClient.removeQueries();
 }
 
+let bootstrapPromise: Promise<void> | null = null;
+
 export async function bootstrapAuthFromStorage() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        useAuthStore.getState().setInitialized(true);
-        return;
-    }
-    // Drop expired tokens eagerly to avoid 401 loops
-    if (isJwtExpired(token)) {
-        try { localStorage.removeItem('token'); } catch {}
-        useAuthStore.getState().clearAuth();
-        useAuthStore.getState().setInitialized(true);
-        return;
-    }
-    // Set header immediately for early requests
-    (api as any).defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    // Set token in store so guards allow rendering
-    try {
-        useAuthStore.setState({ token });
-    } catch { }
-    // Try to hydrate user
-    try {
-        const user = await getMe();
-        if (user) {
-            useAuthStore.getState().setAuth(user, token);
-        } else {
+    if (bootstrapPromise) return bootstrapPromise;
+    bootstrapPromise = (async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            useAuthStore.getState().setInitialized(true);
+            return;
+        }
+        // Drop expired tokens eagerly to avoid 401 loops
+        if (isJwtExpired(token)) {
+            try { localStorage.removeItem('token'); } catch {}
+            useAuthStore.getState().clearAuth();
+            useAuthStore.getState().setInitialized(true);
+            return;
+        }
+        // Set header immediately for early requests
+        (api as any).defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        // Set token in store so guards allow rendering
+        try {
+            useAuthStore.setState({ token });
+        } catch { }
+        // Try to hydrate user
+        try {
+            const user = await getMe();
+            if (user) {
+                useAuthStore.getState().setAuth(user, token);
+                queryClient.setQueryData(['settings'], user);
+            } else {
+                await setToken(null);
+                useAuthStore.getState().clearAuth();
+            }
+        } catch {
             await setToken(null);
             useAuthStore.getState().clearAuth();
         }
-    } catch {
-        await setToken(null);
-        useAuthStore.getState().clearAuth();
-    }
-    useAuthStore.getState().setInitialized(true);
+        useAuthStore.getState().setInitialized(true);
+    })();
+    return bootstrapPromise;
 }

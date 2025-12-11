@@ -45,14 +45,13 @@ import {
 import { useSettings } from "@/features/settings/api/get-settings.ts";
 import { useUpdateSettings } from "@/features/settings/api/update-settings.ts";
 import { useTheme } from "@/shared/ui/theme.tsx";
-import { useProviderSettings } from "@/features/settings/api/get-provider-settings.ts";
+import { useProviderSettingsWithOptions } from "@/features/settings/api/get-provider-settings.ts";
 import { useUpdateProviderSettings } from "@/features/settings/api/update-provider-settings.ts";
 import { useProviders } from "@/features/settings/api/get-providers.ts";
 import { type ProviderType } from "@/features/chat/types";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { useModelsByProvider } from "@/features/models/api/get-models-by-provider";
+import { useModelsByProviderWithOptions } from "@/features/models/api/get-models-by-provider";
 import { ProviderIconFromKey } from "@/components/ui/provider-icon";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -234,9 +233,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     },
   });
 
-  // Providers list and selected provider state
-  const { data: providers = [] } = useProviders();
-  const queryClient = useQueryClient();
+  // Providers list and selected provider state (lazy while modal closed)
+  const { data: providers = [] } = useProviders({ enabled: open });
   const [selectedProvider, setSelectedProvider] = useState<
     ProviderType | undefined
   >(undefined);
@@ -252,7 +250,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   }, [selectedProvider, initialProvider]);
 
   const { data: providerSettings, isLoading: isLoadingProviderSettings } =
-    useProviderSettings(selectedProvider as ProviderType);
+    useProviderSettingsWithOptions(selectedProvider, { enabled: open && !!selectedProvider });
   const { mutate: saveProviderSettings, isPending: isSavingProvider } =
     useUpdateProviderSettings(selectedProvider as ProviderType);
   const [apiUrl, setApiUrl] = useState<string>("");
@@ -311,19 +309,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   };
 
   useEffect(() => {
-    // Prefetch all providers' settings so sidebar can show configured status consistently
-    if (providers && providers.length > 0) {
-      providers.forEach((p) => {
-        queryClient.prefetchQuery({
-          queryKey: ["providerSettings", p],
-          queryFn: () => api.get(`/providers/me/credentials/${p}`),
-          staleTime: 5 * 60 * 1000,
-        });
-      });
-    }
-  }, [providers, queryClient]);
-
-  useEffect(() => {
     if (providerSettings) {
       setApiUrl(providerSettings.apiUrl ?? "");
       setApiKey(providerSettings.apiKey ?? "");
@@ -344,7 +329,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   }, [activeSection]);
 
   const { data: modelsForProvider = [] } =
-    useModelsByProvider(selectedProvider);
+    useModelsByProviderWithOptions(selectedProvider, { enabled: open && !!selectedProvider });
 
   const handleThemeChange = (t: "light" | "dark" | "system") => {
     // Persist to backend and sync UI theme locally
@@ -549,7 +534,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                             type="button"
                             aria-label={`Use color ${swatch}`}
                             onClick={() => handleCustomColorChange(swatch)}
-                            className="size-8 rounded-full border border-border shadow-sm transition hover:scale-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                            className="size-8 rounded-full border border-border shadow-sm transition hover:scale-[1.02] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                             style={{ backgroundColor: swatch }}
                           />
                         ))}

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { type ProviderType } from '@/features/chat/types';
 
@@ -19,4 +19,16 @@ export const useProviderSettings = (provider: ProviderType) =>
     queryFn: () => getProviderSettings(provider),
     enabled: !!provider, // don’t fire while provider is undefined
     staleTime: 5 * 60 * 1000,
+  });
+
+export const useProviderSettingsWithOptions = (
+  provider: ProviderType | undefined,
+  options?: Partial<UseQueryOptions<ProviderSettings, Error>>
+) =>
+  useQuery<ProviderSettings, Error>({
+    queryKey: ['providerSettings', provider],
+    queryFn: () => getProviderSettings(provider as ProviderType),
+    enabled: !!provider && (options?.enabled ?? true),
+    staleTime: 5 * 60 * 1000,
+    ...options,
   });

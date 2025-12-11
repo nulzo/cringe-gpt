@@ -7,7 +7,7 @@ import {
   useEffect,
   useRef,
 } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 import { ModernChatArea } from "@/features/chat/components/textarea";
 import { Message } from "@/features/chat/components/message";
@@ -27,8 +27,6 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 const COMPOSER_OVERLAP_PX = 55;
 const COMPOSER_WIDTH_CLASSES =
   "[--thread-content-max-width:40rem] @[48rem]:[--thread-content-max-width:44rem] @[64rem]:[--thread-content-max-width:48rem] w-full max-w-(--thread-content-max-width) mx-auto";
-const COMPOSER_TRANSITION = { duration: 0.22, ease: [0.22, 1, 0.36, 1] };
-
 type ChatViewMode = "loading" | "welcome" | "conversation";
 
 export function ChatRoute() {
@@ -135,14 +133,8 @@ export function ChatRoute() {
             <WelcomePanel
               name={settings?.data?.name}
               composer={
-                <motion.div
+                <div
                   key="composer-welcome"
-                  layout
-                  layoutId="chat-composer"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 12 }}
-                  transition={COMPOSER_TRANSITION}
                   className={`${COMPOSER_WIDTH_CLASSES} px-4 @[48rem]:px-6`}
                 >
                   <ChatComposer
@@ -155,7 +147,7 @@ export function ChatRoute() {
                     onRemoveAttachment={handleRemoveAttachment}
                     disabled={isPending || isLoading}
                   />
-                </motion.div>
+                </div>
               }
             />
           )}
@@ -174,12 +166,10 @@ export function ChatRoute() {
 
       <AnimatePresence mode="popLayout" initial={false}>
         {mode !== "welcome" && (
-          <motion.footer
+          <footer
             key="composer-chat"
             className="relative z-10 pt-4 content-fade bg-gradient-to-t from-background via-background to-transparent"
             data-viewtransition="chat-footer"
-            layout
-            transition={COMPOSER_TRANSITION}
           >
             <ScrollToBottomButton
               isVisible={showButton}
@@ -187,14 +177,8 @@ export function ChatRoute() {
               className="absolute -top-10 left-1/2 -translate-x-1/2"
             />
 
-            <motion.div
-              layout
-              layoutId="chat-composer"
-              transition={COMPOSER_TRANSITION}
+            <div
               className={`text-base [--thread-content-margin:--spacing(4)] @[37rem]:[--thread-content-margin:--spacing(6)] @[72rem]:[--thread-content-margin:--spacing(16)] px-(--thread-content-margin) ${COMPOSER_WIDTH_CLASSES}`}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
             >
               <ChatComposer
                 mode="chat"
@@ -209,8 +193,8 @@ export function ChatRoute() {
               <p className="mt-2 mb-1 text-center text-xs text-muted-foreground/70">
                 {APP_AI_WARNING_TEXT}
               </p>
-            </motion.div>
-          </motion.footer>
+            </div>
+          </footer>
         )}
       </AnimatePresence>
     </section>
