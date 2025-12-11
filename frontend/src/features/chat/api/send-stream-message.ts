@@ -39,7 +39,19 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
     finalizeStream,
   } = useChatStore.getState();
 
-  const { selectedModelId, selectedProvider, temperature, topP, maxTokens, isTemporary, systemPrompt } =
+  const {
+    selectedModelId,
+    selectedProvider,
+    temperature,
+    topP,
+    topK,
+    maxTokens,
+    isTemporary,
+    systemPrompt,
+    activePersonaId,
+    activePromptId,
+    promptVariables,
+  } =
     useChatConfigStore.getState();
 
   const { conversationId, content, attachments, onNewConversation, onStreamInterrupted } = variables;
@@ -139,9 +151,13 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
       isTemporary,
       temperature,
       topP,
+      topK,
       maxTokens,
       systemPrompt,
       attachments: attachmentDtos,
+      personaId: activePersonaId,
+      promptId: activePromptId,
+      promptVariables,
     }),
     signal: abortController.signal,
   });

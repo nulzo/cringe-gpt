@@ -135,8 +135,12 @@ export interface ChatRequest {
     isTemporary?: boolean;
     temperature?: number;
     topP?: number;
+    topK?: number;
     maxTokens?: number;
     systemPrompt?: string;
+    personaId?: number;
+    promptId?: number;
+    promptVariables?: Record<string, string>;
 }
 
 // API Response types

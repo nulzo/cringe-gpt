@@ -8,7 +8,7 @@ type PolymorphicComponentProps<T extends ElementType> = {
     tooltipText: string;
     icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
     disabled?: boolean;
-} & Omit<ComponentPropsWithRef<T>, "as" | "children">;
+} & Omit<ComponentPropsWithRef<T>, "as">;
 
 export const ChatAreaActionButton = <T extends ElementType = "button">({
                                                                            as,

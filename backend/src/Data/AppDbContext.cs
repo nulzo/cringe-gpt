@@ -41,6 +41,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
         modelBuilder.Entity<ProviderSettings>().HasQueryFilter(s => !s.User.IsDeleted);
         modelBuilder.Entity<UsageMetric>().HasQueryFilter(m => !m.User.IsDeleted);
         modelBuilder.Entity<Agent>().HasQueryFilter(a => !a.Author.IsDeleted);
+        modelBuilder.Entity<Prompt>().HasQueryFilter(p => !p.User.IsDeleted);
         modelBuilder.Entity<Tool>().HasQueryFilter(t => !t.CreatedBy.IsDeleted);
         modelBuilder.Entity<KnowledgeBase>().HasQueryFilter(k => !k.User.IsDeleted);
         modelBuilder.Entity<AppFile>().HasQueryFilter(f => !f.User.IsDeleted);
@@ -80,6 +81,13 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<int>, int>
             .HasMany(u => u.ProviderSettings)
             .WithOne(s => s.User)
             .HasForeignKey(s => s.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // User -> Prompts
+        modelBuilder.Entity<AppUser>()
+            .HasMany(u => u.Prompts)
+            .WithOne(p => p.User)
+            .HasForeignKey(p => p.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // User -> Agents (as Author)

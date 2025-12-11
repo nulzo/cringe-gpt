@@ -14,6 +14,7 @@ public class AppUser : IdentityUser<int>
     public virtual ICollection<Conversation> Conversations { get; set; } = new List<Conversation>();
     public virtual ICollection<ProviderSettings> ProviderSettings { get; set; } = new List<ProviderSettings>();
     public virtual ICollection<Agent> Agents { get; set; } = new List<Agent>();
+    public virtual ICollection<Prompt> Prompts { get; set; } = new List<Prompt>();
     public virtual ICollection<Tool> Tools { get; set; } = new List<Tool>();
     public virtual ICollection<KnowledgeBase> KnowledgeBases { get; set; } = new List<KnowledgeBase>();
     public virtual ICollection<AppFile> Files { get; set; } = new List<AppFile>();

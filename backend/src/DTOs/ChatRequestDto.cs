@@ -14,10 +14,14 @@ public class ChatRequestDto
     public bool IsTemporary { get; set; } = false;
     public double? Temperature { get; set; }
     public double? TopP { get; set; }
+    public double? TopK { get; set; }
     public int? MaxTokens { get; set; }
     public string? SystemPrompt { get; set; }
     public List<AttachmentDto>? Attachments { get; set; }
     public int? UserId { get; set; }
+    public int? PersonaId { get; set; }
+    public int? PromptId { get; set; }
+    public Dictionary<string, string>? PromptVariables { get; set; }
 }
 
 public class AttachmentDto

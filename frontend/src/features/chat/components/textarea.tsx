@@ -34,6 +34,8 @@ import { ImageGenerationModal } from "@/features/image-generation/components/ima
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { IconPlayerStop } from "@tabler/icons-react";
 import { filterValidAttachments } from "../utils/attachments";
+import { PersonaSelector } from "./persona-selector";
+import { PromptPicker } from "./prompt-picker";
 
 interface ModernChatAreaProps {
   value: string;
@@ -243,6 +245,8 @@ export function ModernChatArea({
                 value={selectedModelId || undefined}
                 onValueChange={handleModelChange}
               />
+              <PersonaSelector />
+              <PromptPicker />
 
               <ChatToolsPopover
                 trigger={

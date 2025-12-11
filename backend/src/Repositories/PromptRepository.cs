@@ -20,6 +20,15 @@ public class PromptRepository : GenericRepository<Prompt>, IPromptRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<Prompt>> GetByTagNameForUserAsync(string tagName, int userId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Tags)
+            .Where(p => p.UserId == userId && p.Tags.Any(t => t.Name == tagName))
+            .ToListAsync();
+    }
+
     public async Task<Prompt?> GetByIdWithTagsAsync(int id)
     {
         return await _dbSet
@@ -27,11 +36,27 @@ public class PromptRepository : GenericRepository<Prompt>, IPromptRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
+    public async Task<Prompt?> GetByIdForUserAsync(int id, int userId)
+    {
+        return await _dbSet
+            .Include(p => p.Tags)
+            .FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+    }
+
     public async Task<IEnumerable<Prompt>> GetAllWithTagsAsync()
     {
         return await _dbSet
             .AsNoTracking()
             .Include(p => p.Tags)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Prompt>> GetAllForUserAsync(int userId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Include(p => p.Tags)
+            .Where(p => p.UserId == userId)
             .ToListAsync();
     }
 

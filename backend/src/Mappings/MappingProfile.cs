@@ -31,7 +31,12 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Model, opt => opt.Ignore()) // Will be provided at runtime
             .ForMember(dest => dest.Messages, opt => opt.Ignore()) // Will be provided at runtime
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-            .ForMember(dest => dest.SystemPrompt, opt => opt.MapFrom(src => src.SystemPrompt));
+            .ForMember(dest => dest.SystemPrompt, opt => opt.MapFrom(src => src.SystemPrompt))
+            .ForMember(dest => dest.Temperature, opt => opt.MapFrom(src => src.Temperature))
+            .ForMember(dest => dest.TopP, opt => opt.MapFrom(src => src.TopP))
+            .ForMember(dest => dest.TopK, opt => opt.MapFrom(src => src.TopK))
+            .ForMember(dest => dest.MaxTokens, opt => opt.MapFrom(src => src.MaxTokens))
+            .ForMember(dest => dest.Stream, opt => opt.MapFrom(src => src.Stream));
 
 
         CreateMap<ChatRequestDto, Message>()

@@ -19,44 +19,46 @@ public class PromptService : IPromptService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<PromptDto>> GetAllAsync()
+    public async Task<IEnumerable<PromptDto>> GetAllAsync(int userId)
     {
-        var prompts = await _promptRepository.GetAllWithTagsAsync();
-        return _mapper.Map<IEnumerable<PromptDto>>(prompts);
+        var prompts = await _promptRepository.GetAllForUserAsync(userId);
+        return prompts.Select(MapPromptDto);
     }
 
-    public async Task<IEnumerable<PromptDto>> GetByTagAsync(string tagName)
+    public async Task<IEnumerable<PromptDto>> GetByTagAsync(string tagName, int userId)
     {
-        var prompts = await _promptRepository.GetByTagNameAsync(tagName);
-        return _mapper.Map<IEnumerable<PromptDto>>(prompts);
+        var prompts = await _promptRepository.GetByTagNameForUserAsync(tagName, userId);
+        return prompts.Select(MapPromptDto);
     }
 
-    public async Task<PromptDto?> GetByIdAsync(int id)
+    public async Task<PromptDto?> GetByIdAsync(int id, int userId)
     {
-        var prompt = await _promptRepository.GetByIdAsNoTrackingWithTagsAsync(id);
-        return _mapper.Map<PromptDto>(prompt);
+        var prompt = await _promptRepository.GetByIdForUserAsync(id, userId);
+        return prompt == null ? null : MapPromptDto(prompt);
     }
 
-    public async Task<PromptDto> CreateAsync(PromptCreateDto createDto)
+    public async Task<PromptDto> CreateAsync(int userId, PromptCreateDto createDto)
     {
         var tags = await _tagRepository.GetOrCreateTagsAsync(createDto.Tags);
 
         var prompt = new Prompt
         {
+            UserId = userId,
             Title = createDto.Title,
             Content = createDto.Content,
+            VariablesJson = SerializeVariables(createDto.Variables),
             Tags = tags
         };
 
         await _promptRepository.AddAsync(prompt);
         await _promptRepository.SaveChangesAsync();
 
-        return _mapper.Map<PromptDto>(prompt);
+        return MapPromptDto(prompt);
     }
 
-    public async Task<PromptDto?> UpdateAsync(int id, PromptUpdateDto updateDto)
+    public async Task<PromptDto?> UpdateAsync(int id, int userId, PromptUpdateDto updateDto)
     {
-        var prompt = await _promptRepository.GetByIdWithTagsAsync(id);
+        var prompt = await _promptRepository.GetByIdForUserAsync(id, userId);
 
         if (prompt == null) return null;
 
@@ -69,18 +71,56 @@ public class PromptService : IPromptService
         if (updateDto.Tags != null)
             prompt.Tags = await _tagRepository.GetOrCreateTagsAsync(updateDto.Tags);
 
+        if (updateDto.Variables != null)
+            prompt.VariablesJson = SerializeVariables(updateDto.Variables);
+
         await _promptRepository.SaveChangesAsync();
 
-        return _mapper.Map<PromptDto>(prompt);
+        return MapPromptDto(prompt);
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int id, int userId)
     {
-        var prompt = await _promptRepository.GetByIdAsync(id);
+        var prompt = await _promptRepository.GetByIdForUserAsync(id, userId);
         if (prompt == null) return false;
 
         _promptRepository.Delete(prompt);
         await _promptRepository.SaveChangesAsync();
         return true;
+    }
+
+    private PromptDto MapPromptDto(Prompt prompt)
+    {
+        return new PromptDto
+        {
+            Id = prompt.Id,
+            UserId = prompt.UserId,
+            Title = prompt.Title,
+            Content = prompt.Content,
+            Tags = _mapper.Map<List<TagDto>>(prompt.Tags),
+            Variables = DeserializeVariables(prompt.VariablesJson)
+        };
+    }
+
+    private static string? SerializeVariables(IEnumerable<PromptVariableDto>? variables)
+    {
+        if (variables == null) return null;
+        var list = variables.ToList();
+        if (list.Count == 0) return null;
+        return System.Text.Json.JsonSerializer.Serialize(list);
+    }
+
+    private static List<PromptVariableDto> DeserializeVariables(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new List<PromptVariableDto>();
+        try
+        {
+            var parsed = System.Text.Json.JsonSerializer.Deserialize<List<PromptVariableDto>>(json);
+            return parsed ?? new List<PromptVariableDto>();
+        }
+        catch
+        {
+            return new List<PromptVariableDto>();
+        }
     }
 }

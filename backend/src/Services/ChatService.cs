@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Net;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using AutoMapper;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
@@ -29,6 +31,8 @@ public class ChatService : IChatService
     private readonly IStreamBufferService _streamBufferService;
     private readonly IFileService _fileService;
     private readonly INotificationService _notificationService;
+    private readonly IAgentRepository _agentRepository;
+    private readonly IPromptRepository _promptRepository;
 
     public ChatService(ILogger<ChatService> logger,
         IConversationService conversationService,
@@ -41,7 +45,9 @@ public class ChatService : IChatService
         IMapper mapper,
         IStreamBufferService streamBufferService,
         IFileService fileService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IAgentRepository agentRepository,
+        IPromptRepository promptRepository)
     {
         _logger = logger;
         _conversationService = conversationService;
@@ -55,6 +61,8 @@ public class ChatService : IChatService
         _streamBufferService = streamBufferService;
         _fileService = fileService;
         _notificationService = notificationService;
+        _agentRepository = agentRepository;
+        _promptRepository = promptRepository;
     }
 
     public async Task<Message> GetCompletionAsync(int userId, ChatRequestDto request, CancellationToken cancellationToken)
@@ -75,18 +83,20 @@ public class ChatService : IChatService
     public async IAsyncEnumerable<StreamEvent> GetCompletionStreamAsync(int userId, ChatRequestDto request,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var providerType = request.Provider ??
+        var normalizedRequest = await EnrichRequestAsync(userId, request, cancellationToken);
+
+        var providerType = normalizedRequest.Provider ??
                            throw new ApiException("Provider is required to start or continue a conversation.",
                                HttpStatusCode.BadRequest);
         var settings = await _settingsService.GetFullSettingsAsync(userId, providerType);
-        var model = request.Model ?? settings.DefaultModel ??
+        var model = normalizedRequest.Model ?? settings.DefaultModel ??
                     throw new ApiException("Model must be selected or have a default.", HttpStatusCode.BadRequest);
 
         _operationalMetricsService.RecordChatCompletion(providerType.ToString(), model, request.Stream);
 
-        var stream = request.IsTemporary
-            ? HandleTemporaryChatAsync(request, settings, model, cancellationToken)
-            : HandlePersistentChatAsync(userId, request, settings, model, cancellationToken);
+        var stream = normalizedRequest.IsTemporary
+            ? HandleTemporaryChatAsync(normalizedRequest, settings, model, cancellationToken)
+            : HandlePersistentChatAsync(userId, normalizedRequest, settings, model, cancellationToken);
 
         await foreach (var item in stream.WithCancellation(cancellationToken)) yield return item;
     }
@@ -254,6 +264,106 @@ public class ChatService : IChatService
                 }
             }
         }
+    }
+
+    private async Task<ChatRequestDto> EnrichRequestAsync(int userId, ChatRequestDto request, CancellationToken cancellationToken)
+    {
+        if (request.PersonaId.HasValue)
+        {
+            var persona = await _agentRepository.GetByIdForUserAsync(request.PersonaId.Value, userId)
+                          ?? throw new ApiException("Persona not found.", HttpStatusCode.NotFound);
+
+            var personaParameters = DeserializePersonaParameters(persona.ModelParametersJson);
+            request.Temperature ??= personaParameters.Temperature;
+            request.TopP ??= personaParameters.TopP;
+            request.TopK ??= personaParameters.TopK;
+            request.MaxTokens ??= personaParameters.MaxTokens;
+            if (personaParameters.IsTemporary == true) request.IsTemporary = true;
+
+            if (!string.IsNullOrWhiteSpace(persona.Instructions))
+            {
+                request.SystemPrompt = string.IsNullOrWhiteSpace(request.SystemPrompt)
+                    ? persona.Instructions
+                    : $"{persona.Instructions}\n\n{request.SystemPrompt}";
+            }
+        }
+
+        if (request.PromptId.HasValue)
+        {
+            var prompt = await _promptRepository.GetByIdForUserAsync(request.PromptId.Value, userId)
+                         ?? throw new ApiException("Prompt not found.", HttpStatusCode.NotFound);
+
+            var providedVariables = request.PromptVariables != null
+                ? new Dictionary<string, string>(request.PromptVariables, StringComparer.OrdinalIgnoreCase)
+                : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            // Pass through the raw user message as a convenience variable
+            if (!providedVariables.ContainsKey("user_input") && !string.IsNullOrWhiteSpace(request.Message))
+            {
+                providedVariables["user_input"] = request.Message;
+            }
+
+            var definedVariables = DeserializePromptVariables(prompt.VariablesJson);
+            ValidatePromptVariables(definedVariables, providedVariables);
+
+            request.Message = RenderPrompt(prompt.Content, providedVariables);
+        }
+
+        return request;
+    }
+
+    private static PersonaParametersDto DeserializePersonaParameters(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new PersonaParametersDto();
+        try
+        {
+            return JsonSerializer.Deserialize<PersonaParametersDto>(json) ?? new PersonaParametersDto();
+        }
+        catch
+        {
+            return new PersonaParametersDto();
+        }
+    }
+
+    private static List<PromptVariableDto> DeserializePromptVariables(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return new List<PromptVariableDto>();
+        try
+        {
+            return JsonSerializer.Deserialize<List<PromptVariableDto>>(json) ?? new List<PromptVariableDto>();
+        }
+        catch
+        {
+            return new List<PromptVariableDto>();
+        }
+    }
+
+    private static void ValidatePromptVariables(IEnumerable<PromptVariableDto> defined, IReadOnlyDictionary<string, string> provided)
+    {
+        var missing = defined
+            .Where(v => v.Required)
+            .Where(v => !provided.ContainsKey(v.Name) || string.IsNullOrWhiteSpace(provided[v.Name]))
+            .Select(v => v.Name)
+            .ToList();
+
+        if (missing.Count > 0)
+        {
+            throw new ApiException(
+                $"Missing required variables: {string.Join(", ", missing)}",
+                HttpStatusCode.BadRequest);
+        }
+    }
+
+    private static string RenderPrompt(string template, IReadOnlyDictionary<string, string> variables)
+    {
+        if (string.IsNullOrWhiteSpace(template)) return string.Empty;
+
+        var regex = new Regex(@"{{\s*(\w+)\s*}}", RegexOptions.Compiled);
+        return regex.Replace(template, match =>
+        {
+            var key = match.Groups[1].Value;
+            return variables.TryGetValue(key, out var value) ? value : match.Value;
+        });
     }
 
     private async IAsyncEnumerable<StreamEvent> StreamProviderContent(

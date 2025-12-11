@@ -227,6 +227,7 @@ builder.Services.AddScoped<IPricingService, PricingService>();
 builder.Services.AddScoped<IMetricsService, MetricsService>();
 builder.Services.AddScoped<IModelService, ModelService>();
 builder.Services.AddScoped<IPromptService, PromptService>();
+builder.Services.AddScoped<IPersonaService, PersonaService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -253,6 +254,8 @@ builder.Services.AddScoped<IGenericRepository<CannedQuestion>, GenericRepository
 builder.Services.AddScoped<ICannedQuestionRepository, CannedQuestionRepository>();
 builder.Services.AddScoped<IGenericRepository<Organization>, GenericRepository<Organization>>();
 builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+builder.Services.AddScoped<IGenericRepository<Agent>, GenericRepository<Agent>>();
+builder.Services.AddScoped<IAgentRepository, AgentRepository>();
 builder.Services.AddScoped<IGenericRepository<ApiKey>, GenericRepository<ApiKey>>();
 builder.Services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
 builder.Services.AddScoped<IGenericRepository<ProviderSettings>, GenericRepository<ProviderSettings>>();

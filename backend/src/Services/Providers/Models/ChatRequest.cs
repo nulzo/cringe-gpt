@@ -17,6 +17,7 @@ public class ChatRequest
     // Optional parameters
     public double? Temperature { get; set; }
     public double? TopP { get; set; }
+    public double? TopK { get; set; }
     public int? MaxTokens { get; set; }
     public string? SystemPrompt { get; set; }
 }

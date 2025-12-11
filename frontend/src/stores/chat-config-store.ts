@@ -13,6 +13,11 @@ interface ChatConfig {
     maxTokens: number | null;
     systemPrompt: string;
     isTemporary: boolean;
+    activePersonaId: number | null;
+    activePersonaName: string | null;
+    activePromptId: number | null;
+    activePromptTitle: string | null;
+    promptVariables: Record<string, string>;
 }
 
 interface ChatConfigActions {
@@ -23,6 +28,11 @@ interface ChatConfigActions {
     setMaxTokens: (maxTokens: number | null) => void;
     setSystemPrompt: (prompt: string) => void;
     setIsTemporary: (isTemporary: boolean) => void;
+    setActivePersona: (id: number | null, name: string | null) => void;
+    clearPersona: () => void;
+    setActivePrompt: (id: number | null, title: string | null) => void;
+    clearPrompt: () => void;
+    setPromptVariables: (vars: Record<string, string>) => void;
     resetConfig: () => void;
 }
 
@@ -37,6 +47,11 @@ export const defaultChatConfig: ChatConfig = {
     maxTokens: null,
     systemPrompt: '',
     isTemporary: false,
+    activePersonaId: null,
+    activePersonaName: null,
+    activePromptId: null,
+    activePromptTitle: null,
+    promptVariables: {},
 };
 
 export const useChatConfigStore = create<ChatConfigStore>()(
@@ -51,6 +66,11 @@ export const useChatConfigStore = create<ChatConfigStore>()(
             setMaxTokens: (maxTokens) => set({ maxTokens }),
             setSystemPrompt: (prompt) => set({ systemPrompt: prompt }),
             setIsTemporary: (isTemporary) => set({ isTemporary }),
+            setActivePersona: (id, name) => set({ activePersonaId: id, activePersonaName: name }),
+            clearPersona: () => set({ activePersonaId: null, activePersonaName: null }),
+            setActivePrompt: (id, title) => set({ activePromptId: id, activePromptTitle: title }),
+            clearPrompt: () => set({ activePromptId: null, activePromptTitle: null, promptVariables: {} }),
+            setPromptVariables: (vars) => set({ promptVariables: vars }),
             resetConfig: () =>
                 set((state) => ({
                     ...state,
@@ -60,6 +80,11 @@ export const useChatConfigStore = create<ChatConfigStore>()(
                     systemPrompt: defaultChatConfig.systemPrompt,
                     maxTokens: defaultChatConfig.maxTokens,
                     isTemporary: defaultChatConfig.isTemporary,
+                    activePersonaId: defaultChatConfig.activePersonaId,
+                    activePersonaName: defaultChatConfig.activePersonaName,
+                    activePromptId: defaultChatConfig.activePromptId,
+                    activePromptTitle: defaultChatConfig.activePromptTitle,
+                    promptVariables: defaultChatConfig.promptVariables,
                 })),
         }),
         {
@@ -73,6 +98,11 @@ export const useChatConfigStore = create<ChatConfigStore>()(
                 maxTokens: state.maxTokens,
                 systemPrompt: state.systemPrompt,
                 isTemporary: state.isTemporary,
+                activePersonaId: state.activePersonaId,
+                activePersonaName: state.activePersonaName,
+                activePromptId: state.activePromptId,
+                activePromptTitle: state.activePromptTitle,
+                promptVariables: state.promptVariables,
             }),
         }
     )

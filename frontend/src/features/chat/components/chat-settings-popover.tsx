@@ -43,6 +43,7 @@ export const ChatSettingsPopover = ({ trigger }: { trigger: ReactElement }) => {
     topP,
     topK,
     systemPrompt,
+    activePersonaId,
     setTemperature,
     setTopP,
     setTopK,
@@ -60,11 +61,13 @@ export const ChatSettingsPopover = ({ trigger }: { trigger: ReactElement }) => {
     },
   });
 
+  const hasPersona = !!activePersonaId;
   const isDirty =
-    temperature !== defaultChatConfig.temperature ||
-    topP !== defaultChatConfig.topP ||
-    topK !== defaultChatConfig.topK ||
-    systemPrompt !== defaultChatConfig.systemPrompt;
+    !hasPersona &&
+    (temperature !== defaultChatConfig.temperature ||
+      topP !== defaultChatConfig.topP ||
+      topK !== defaultChatConfig.topK ||
+      systemPrompt !== defaultChatConfig.systemPrompt);
 
   const onSubmit = (values: ChatConfigFormValues) => {
     setTemperature(values.temperature);
