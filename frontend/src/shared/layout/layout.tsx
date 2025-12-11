@@ -2,7 +2,6 @@ import { useMemo, useState, useDeferredValue } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconChartHistogram,
-  IconArchive,
   IconGhost2,
   IconLayoutSidebar,
   IconLifebuoy,
@@ -10,6 +9,7 @@ import {
   IconMessagePlus,
   IconSearch,
   IconTag,
+  IconArchive,
   IconSettings,
   IconX,
 } from "@tabler/icons-react";
@@ -365,7 +365,7 @@ export function Layout() {
             {/* Main scrollable area (converastions) */}
             <div
             className={cn(
-              "overflow-auto transition-[opacity] ease-in-out",
+              "overflow-auto",
               isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
               style={{
@@ -375,6 +375,7 @@ export function Layout() {
               }}
               aria-hidden={!isSidebarOpen}
             >
+              {isSidebarOpen && (
               <nav className="p-2">
                   <div key="conversations" className="mb-2">
                     <div className="px-3 h-8 flex items-center justify-between">
@@ -383,20 +384,20 @@ export function Layout() {
                       </div>
                     </div>
 
-                    <div className="px-2 py-2 space-y-2">
+                    <div className="px-2 py-2 space-y-2 rounded-md border border-border/40 bg-sidebar/70">
                       <Input
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search chats"
                         className="h-9 text-sm"
                       />
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-8 flex items-center gap-2 px-2"
+                              className="h-8 flex items-center gap-2 px-2 border-border/60 bg-background/60"
                             >
                               <IconTag size={16} />
                               <span className="text-xs">
@@ -427,14 +428,12 @@ export function Layout() {
 
                         <Button
                           variant={showArchived ? "secondary" : "ghost"}
-                          size="sm"
-                          className="h-8 flex items-center gap-1 px-2"
+                          size="icon"
+                          className="h-8 w-8"
                           onClick={() => setShowArchived((prev) => !prev)}
+                          aria-label={showArchived ? "Hide archived" : "Show archived"}
                         >
-                          <IconArchive size={16} />
-                          <span className="text-xs">
-                            {showArchived ? "Showing archived" : "Hide archived"}
-                          </span>
+                          <IconArchive size={16} className={showArchived ? "text-foreground" : "text-muted-foreground"} />
                         </Button>
                       </div>
 
@@ -477,6 +476,7 @@ export function Layout() {
                     </div>
                   </div>
               </nav>
+              )}
             </div>
 
             {/* Footer - Fixed at bottom */}

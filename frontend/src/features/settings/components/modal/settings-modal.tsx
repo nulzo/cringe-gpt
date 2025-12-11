@@ -2,7 +2,6 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -58,7 +57,6 @@ import { ProviderIconFromKey } from "@/components/ui/provider-icon";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { IconDeviceDesktop, IconSun, IconMoon } from "@tabler/icons-react";
 
 // Preset accent colors matching original component
 const presetColors = [
