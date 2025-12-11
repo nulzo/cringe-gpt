@@ -5,6 +5,7 @@ using System.Text;
 using AutoMapper;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
+using OllamaWebuiBackend.Enums;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Repositories.Interfaces;
 using OllamaWebuiBackend.Services.Interfaces;
@@ -170,10 +171,26 @@ public class ChatService : IChatService
         Message? assistantMessage = null;
         UsageData? usageData = null;
 
-        try
+        Exception? streamError = null;
+
+        await using (var enumerator = providerStream.GetAsyncEnumerator(cancellationToken))
         {
-            await foreach (var streamEvent in providerStream)
+            while (true)
             {
+                bool hasNext;
+                try
+                {
+                    hasNext = await enumerator.MoveNextAsync();
+                }
+                catch (Exception ex)
+                {
+                    streamError = ex;
+                    break;
+                }
+
+                if (!hasNext) break;
+
+                var streamEvent = enumerator.Current;
                 yield return streamEvent;
 
                 // Also yield image events if we have images and streaming is enabled
@@ -187,23 +204,26 @@ public class ChatService : IChatService
                     emittedImageCount = streamedImages.Count;
                 }
             }
+        }
 
-            stopwatch.Stop();
+        stopwatch.Stop();
+
+        if (streamError == null)
+        {
             usageData = await providerResponse.GetUsageDataAsync();
             assistantMessage = await BuildAssistantMessageAsync(user, conversation, userMessage, assistantResponse, streamedImages, model, chatRequest.ProviderType, usageData);
         }
-        catch (Exception ex)
+        else
         {
-            stopwatch.Stop();
             _operationalMetricsService.RecordProviderError(chatRequest.ProviderType.ToString(), model);
-            assistantMessage = await BuildErrorAssistantMessageAsync(conversation, userMessage, ex, chatRequest.ProviderType, model);
+            assistantMessage = await BuildErrorAssistantMessageAsync(conversation, userMessage, streamError, chatRequest.ProviderType, model);
             yield return new ErrorStreamEvent
             {
                 Data = new
                 {
                     code = "chat_generation_failed",
                     message = "The assistant failed to generate a reply.",
-                    detail = ex.Message,
+                    detail = streamError.Message,
                     retryable = true
                 }
             };
@@ -289,6 +309,34 @@ public class ChatService : IChatService
                             // The image events will be handled separately in the main stream
                         }
                     }
+                }
+            }
+        }
+
+        // Apply smooth streaming if enabled
+        if (streamEnabled)
+        {
+            var smoothTextStream = _streamBufferService.CreateSmoothStreamAsync(
+                RawTextStream(),
+                cancellationToken: cancellationToken);
+
+            await foreach (var smoothChunk in smoothTextStream)
+            {
+                yield return new ContentStreamEvent { Data = smoothChunk };
+            }
+        }
+        else
+        {
+            // If not streaming, just process the raw content
+            await foreach (var chunk in RawTextStream())
+            {
+                // Raw text is already appended to assistantResponseBuilder above
+            }
+        }
+
+        stopwatch.Stop();
+        _operationalMetricsService.RecordProviderResponseTime(stopwatch.Elapsed.TotalSeconds, providerType, model);
+    }
 
     private async Task<Message> BuildAssistantMessageAsync(AppUser user, Conversation conversation, Message userMessage,
         StringBuilder assistantResponse, List<StreamedImageData> streamedImages, string model, ProviderType providerType, UsageData usageData)
@@ -398,34 +446,6 @@ public class ChatService : IChatService
         conversation.Messages.Add(assistantMessage);
         await _conversationRepository.SaveChangesAsync();
         return assistantMessage;
-    }
-                }
-            }
-        }
-
-        // Apply smooth streaming if enabled
-        if (streamEnabled)
-        {
-            var smoothTextStream = _streamBufferService.CreateSmoothStreamAsync(
-                RawTextStream(),
-                cancellationToken: cancellationToken);
-
-            await foreach (var smoothChunk in smoothTextStream)
-            {
-                yield return new ContentStreamEvent { Data = smoothChunk };
-            }
-        }
-        else
-        {
-            // If not streaming, just process the raw content
-            await foreach (var chunk in RawTextStream())
-            {
-                // Raw text is already appended to assistantResponseBuilder above
-            }
-        }
-
-        stopwatch.Stop();
-        _operationalMetricsService.RecordProviderResponseTime(stopwatch.Elapsed.TotalSeconds, providerType, model);
     }
     
     private (string parsedContent, List<string> imageUrls) ParseMarkdownImages(string content)

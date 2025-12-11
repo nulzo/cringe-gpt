@@ -1,4 +1,5 @@
 using System.Net;
+using System.Linq;
 using AutoMapper;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
@@ -14,12 +15,14 @@ public class ConversationService : IConversationService
     private readonly IConversationRepository _conversationRepository;
     private readonly IMapper _mapper;
     private readonly IFileService _fileService;
+    private readonly ITagRepository _tagRepository;
 
-    public ConversationService(IConversationRepository conversationRepository, IMapper mapper, IFileService fileService)
+    public ConversationService(IConversationRepository conversationRepository, IMapper mapper, IFileService fileService, ITagRepository tagRepository)
     {
         _conversationRepository = conversationRepository;
         _mapper = mapper;
         _fileService = fileService;
+        _tagRepository = tagRepository;
     }
 
     public async Task<IEnumerable<ConversationSummaryDto>> GetAllSummariesAsync(int userId)
@@ -154,6 +157,21 @@ public class ConversationService : IConversationService
             conversation.IsPinned = updateDto.IsPinned.Value;
         if (updateDto.IsHidden.HasValue)
             conversation.IsHidden = updateDto.IsHidden.Value;
+        if (updateDto.Tags != null)
+        {
+            var tagNames = updateDto.Tags
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var tags = await _tagRepository.GetOrCreateTagsAsync(tagNames);
+            conversation.Tags.Clear();
+            foreach (var tag in tags)
+            {
+                conversation.Tags.Add(tag);
+            }
+        }
 
         _conversationRepository.Update(conversation);
         await _conversationRepository.SaveChangesAsync();

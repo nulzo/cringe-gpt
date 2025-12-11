@@ -160,10 +160,22 @@ export const normalizeMessage = (m: any): Message => {
 
 const getConversation = async (conversationId: string): Promise<Conversation> => {
   const res = await api.get(`/conversations/${conversationId}`);
-  if (res && Array.isArray(res.messages)) {
-    res.messages = res.messages.map(normalizeMessage);
+  const normalized: any = {
+    ...res,
+    id: res.id ?? res.Id,
+    conversation_id: res.conversation_id ?? res.conversationId ?? res.conversation_uuid ?? res.conversationId,
+    title: res.title ?? res.Title,
+    created_at: res.created_at ?? res.createdAt,
+    updated_at: res.updated_at ?? res.updatedAt,
+    isPinned: res.isPinned ?? res.is_pinned ?? false,
+    isHidden: res.isHidden ?? res.is_hidden ?? false,
+    tags: res.tags ?? res.Tags ?? [],
+  };
+
+  if (normalized && Array.isArray(normalized.messages)) {
+    normalized.messages = normalized.messages.map(normalizeMessage);
   }
-  return res;
+  return normalized as Conversation;
 };
 
 export const useConversation = (

@@ -1,5 +1,10 @@
 export type ProviderType = 'Ollama' | 'OpenAi' | 'Anthropic' | 'OpenRouter' | 'Google';
 
+export interface Tag {
+    id: number;
+    name: string;
+}
+
 export interface Citation {
     chunk_id: string;
     knowledge_id: string;
@@ -100,8 +105,11 @@ export interface ConversationSummary {
     created_at: string;
     updated_at: string;
     is_pinned?: boolean;
+    isPinned?: boolean;
     is_hidden?: boolean;
+    isHidden?: boolean;
     provider?: ProviderType;
+    tags?: Tag[];
 }
 
 export interface Conversation extends ConversationSummary {

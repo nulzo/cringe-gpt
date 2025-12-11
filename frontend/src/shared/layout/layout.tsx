@@ -1,16 +1,26 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useDeferredValue } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconChartHistogram,
+  IconArchive,
   IconGhost2,
   IconLayoutSidebar,
   IconLifebuoy,
   IconMenu2,
   IconMessagePlus,
   IconSearch,
+  IconTag,
   IconSettings,
+  IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +30,7 @@ import { SettingsModal } from "@/features/settings/components/modal/settings-mod
 import { CommandPalette } from "@/features/command-palette";
 import { APP_NAME, APP_VERSION } from "@/configuration/const";
 import { useConversations } from "@/features/chat/api/get-conversations";
+import { useTags } from "@/features/chat/api/get-tags";
 import { Head } from "@/shared/layout/head";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/features/settings/api/get-settings";
@@ -76,7 +87,10 @@ const SidebarNavButton = ({ item, isOpen }: { item: SidebarItem; isOpen: boolean
       ? location.pathname === "/" && location.search.includes("temp=true")
       : item.path && location.pathname.startsWith(item.path);
 
-  const commonClasses = `group/sidebar-nav-button flex items-center w-full h-9 rounded-md text-sm font-base text-foreground group relative overflow-hidden`;
+  const commonClasses = cn(
+    "group/sidebar-nav-button flex items-center w-full h-9 rounded-md text-sm font-base text-foreground group relative overflow-hidden",
+    isActive && "bg-sidebar-hover/75"
+  );
 
   const element = (
     <Link to={item.path} className={commonClasses}>
@@ -126,6 +140,11 @@ export function Layout() {
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const { animationsEnabled } = useAnimationStore();
   const conversations = useConversations();
+  const tagsQuery = useTags();
+  const [searchTerm, setSearchTerm] = useState("");
+  const deferredSearch = useDeferredValue(searchTerm);
+  const [tagFilters, setTagFilters] = useState<string[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
   const navigate = useNavigate();
   const { data } = useSettings();
 
@@ -147,7 +166,44 @@ export function Layout() {
 
         // Fallback – show app name only
         return undefined;
-    }, [location.pathname, location.search]);
+    }, [location.pathname, location.search, conversations.data]);
+
+  const toggleTag = (tag: string) => {
+    setTagFilters((prev) => {
+      const exists = prev.some((t) => t.toLowerCase() === tag.toLowerCase());
+      return exists
+        ? prev.filter((t) => t.toLowerCase() !== tag.toLowerCase())
+        : [...prev, tag];
+    });
+  };
+
+  const filteredConversations = useMemo(() => {
+    if (!conversations.data) return [];
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
+    const tagSet = new Set(tagFilters.map((t) => t.toLowerCase()));
+
+    return conversations.data
+      .filter((c) => (showArchived ? true : !(c.isHidden ?? c.is_hidden)))
+      .filter((c) => {
+        if (!normalizedSearch) return true;
+        return (c.title ?? "").toLowerCase().includes(normalizedSearch);
+      })
+      .filter((c) => {
+        if (tagSet.size === 0) return true;
+        const names = (c.tags ?? [])
+          .map((t: any) => t?.name?.toLowerCase?.())
+          .filter(Boolean);
+        return names.some((n) => tagSet.has(n as string));
+      })
+      .sort((a, b) => {
+        const pinnedA = (a as any).isPinned ?? (a as any).is_pinned ? 1 : 0;
+        const pinnedB = (b as any).isPinned ?? (b as any).is_pinned ? 1 : 0;
+        if (pinnedA !== pinnedB) return pinnedB - pinnedA;
+        const dateA = new Date((a as any).updated_at ?? (a as any).updatedAt ?? 0).getTime();
+        const dateB = new Date((b as any).updated_at ?? (b as any).updatedAt ?? 0).getTime();
+        return dateB - dateA;
+      });
+  }, [conversations.data, searchTerm, tagFilters, showArchived]);
 
   const openSettingsModal = () => {
     setIsSettingsModalOpen(!isSettingsModalOpen);
@@ -308,18 +364,18 @@ export function Layout() {
 
             {/* Main scrollable area (converastions) */}
             <div
-              className={cn(
-                "overflow-auto transition-[opacity] ease-in-out",
-                isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-              )}
+            className={cn(
+              "overflow-auto transition-[opacity] ease-in-out",
+              isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
               style={{
                 height: "calc(100% - 80px)",
                 maxHeight: "calc(100% - 80px)",
                 transitionDuration: `${transitionDuration}ms`,
               }}
+              aria-hidden={!isSidebarOpen}
             >
-              {isSidebarOpen && (
-                <nav className="p-2">
+              <nav className="p-2">
                   <div key="conversations" className="mb-2">
                     <div className="px-3 h-8 flex items-center justify-between">
                       <div className="overflow-hidden text-[12px] text-muted-foreground/75 whitespace-nowrap select-none">
@@ -327,27 +383,137 @@ export function Layout() {
                       </div>
                     </div>
 
+                    <div className="px-2 py-2 space-y-2">
+                      <Input
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search chats"
+                        className="h-9 text-sm"
+                      />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 flex items-center gap-2 px-2"
+                            >
+                              <IconTag size={16} />
+                              <span className="text-xs">
+                                {tagFilters.length > 0
+                                  ? `${tagFilters.length} tag${tagFilters.length > 1 ? "s" : ""}`
+                                  : "Tags"}
+                              </span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="w-48">
+                            {tagsQuery.isLoading && (
+                              <div className="px-2 py-1 text-xs text-muted-foreground">Loading tags…</div>
+                            )}
+                            {tagsQuery.data?.map((tag) => (
+                              <DropdownMenuCheckboxItem
+                                key={tag.id}
+                                checked={tagFilters.some((t) => t.toLowerCase() === tag.name.toLowerCase())}
+                                onCheckedChange={() => toggleTag(tag.name)}
+                              >
+                                {tag.name}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                            {!tagsQuery.isLoading && (tagsQuery.data?.length ?? 0) === 0 && (
+                              <div className="px-2 py-1 text-xs text-muted-foreground">No tags yet</div>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Button
+                          variant={showArchived ? "secondary" : "ghost"}
+                          size="sm"
+                          className="h-8 flex items-center gap-1 px-2"
+                          onClick={() => setShowArchived((prev) => !prev)}
+                        >
+                          <IconArchive size={16} />
+                          <span className="text-xs">
+                            {showArchived ? "Showing archived" : "Hide archived"}
+                          </span>
+                        </Button>
+                      </div>
+
+                      {tagFilters.length > 0 && (
+                        <div className="flex flex-wrap gap-2 px-1">
+                          {tagFilters.map((tag) => (
+                            <span
+                              key={tag}
+                              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-[3px] text-[11px]"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => toggleTag(tag)}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <IconX className="size-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="space-y-1">
                       {conversations.isLoading && <div className="text-xs text-muted-foreground px-3 py-1">Loading…</div>}
                       {!conversations.isLoading &&
-                        conversations.data &&
-                        conversations.data.map((item) => (
+                        filteredConversations.length === 0 && (
+                          <div className="text-xs text-muted-foreground px-3 py-1">No conversations</div>
+                        )}
+                      {!conversations.isLoading &&
+                        filteredConversations.map((item) => (
                           <SidebarConversationItem
                             conversation={item}
                             key={item.id}
                             isOpen={isSidebarOpen}
-                            isActive={window.location.pathname === `/chat/${item.id}`}
+                            isActive={location.pathname === `/chat/${item.id}`}
                           />
                         ))}
                     </div>
                   </div>
-                </nav>
-              )}
+              </nav>
             </div>
 
             {/* Footer - Fixed at bottom */}
             <div className="bottom-0 z-10 sticky flex-shrink-0 bg-sidebar">
               <div className="mx-2 bg-border h-[1.5px]" />
+
+              <div className="px-2 pt-2 space-y-1">
+                {bottomNavItems.map((item) => {
+                  const Icon = item.icon;
+                  if (item.path) {
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.path}
+                        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-hover"
+                      >
+                        <Icon size={18} />
+                        {isSidebarOpen && <span>{item.name}</span>}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+                      onClick={item.fn}
+                    >
+                      <Icon size={18} />
+                      {isSidebarOpen && <span>{item.name}</span>}
+                    </Button>
+                  );
+                })}
+              </div>
+
+              <div className="mx-2 bg-border h-[1px]" />
 
               <div className={`px-2 pt-2 pb-2 mb-4`}>
 

@@ -16,6 +16,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
     {
         return await _dbSet
             .AsNoTracking()
+            .Include(c => c.Tags)
             .Where(c => c.UserId == userId)
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
@@ -25,6 +26,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
     {
         return await _dbSet
             .AsNoTracking()
+            .Include(c => c.Tags)
             .Where(c => c.UserId == userId && c.IsPinned)
             .OrderByDescending(c => c.UpdatedAt)
             .ToListAsync();
@@ -35,6 +37,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
         return await _dbSet
             .AsNoTracking()
             .Include(c => c.Messages)
+            .Include(c => c.Tags)
             .Where(c => c.Id == conversationId && c.UserId == userId)
             .FirstOrDefaultAsync();
     }
@@ -43,12 +46,14 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
     {
         return await _dbSet
             .Include(c => c.Messages)
+            .Include(c => c.Tags)
             .FirstOrDefaultAsync(c => c.Id == conversationId && c.UserId == userId);
     }
 
     public async Task<Conversation?> GetTrackedByIdAsync(int conversationId, int userId)
     {
         return await _dbSet
+            .Include(c => c.Tags)
             .FirstOrDefaultAsync(c => c.Id == conversationId && c.UserId == userId);
     }
 
@@ -88,6 +93,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
         var conversationsQuery = _dbSet
             .AsNoTracking()
             .Include(c => c.Messages)
+            .Include(c => c.Tags)
             .Where(c => c.UserId == userId);
 
         if (!string.IsNullOrWhiteSpace(query))
@@ -147,6 +153,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
             .AsNoTracking()
             .Include(c => c.Messages)
                 .ThenInclude(m => m.Error)
+            .Include(c => c.Tags)
             .Where(c => c.UserId == userId);
 
         if (from.HasValue)
@@ -321,6 +328,7 @@ public class ConversationRepository : GenericRepository<Conversation>, IConversa
             .AsNoTracking()
             .Include(c => c.Messages)
                 .ThenInclude(m => m.Error)
+            .Include(c => c.Tags)
             .Where(c => c.UserId == userId);
 
         if (from.HasValue)

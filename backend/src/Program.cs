@@ -28,8 +28,6 @@ using Serilog.Events;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 
-const string serviceName = "OllamaWebuiBackend";
-
 // Configure Serilog
 builder.Host.UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
     .ReadFrom.Configuration(context.Configuration)
@@ -305,18 +303,6 @@ app.MapPrometheusScrapingEndpoint("/metrics");
 app.UseSerilogRequestLogging(options =>
 {
     // Drop noisy endpoints from request logging while keeping traces/metrics intact
-    options.Filter = (httpContext, _, _) =>
-    {
-        var path = httpContext.Request.Path;
-        if (path.StartsWithSegments("/hubs/notifications/negotiate", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path.StartsWithSegments("/hubs/notifications", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path.StartsWithSegments("/metrics", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path.StartsWithSegments("/health", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path.StartsWithSegments("/swagger", StringComparison.OrdinalIgnoreCase)) return false;
-        if (path == "/") return false;
-        return true;
-    };
-
     options.GetLevel = (httpContext, elapsedMs, ex) =>
     {
         if (ex != null) return LogEventLevel.Error;

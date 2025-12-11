@@ -1,3 +1,5 @@
+using OllamaWebuiBackend.Enums;
+
 namespace OllamaWebuiBackend.DTOs;
 
 public class ConversationSummaryDto
@@ -7,6 +9,10 @@ public class ConversationSummaryDto
     public required string Title { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public ProviderType Provider { get; set; }
+    public bool IsPinned { get; set; }
+    public bool IsHidden { get; set; }
+    public IEnumerable<TagDto> Tags { get; set; } = new List<TagDto>();
 }
 
 public class ConversationDetailDto : ConversationSummaryDto
