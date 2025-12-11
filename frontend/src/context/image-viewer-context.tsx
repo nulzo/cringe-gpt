@@ -4,7 +4,8 @@ import React, {createContext, type ReactNode, useContext, useState} from 'react'
 
 export interface ImageData {
     id: string | number
-    fileId: string | number
+    fileId?: string | number
+    sourceUrl?: string
     filename?: string
     fileType?: string
     fileSize?: string
@@ -99,12 +100,15 @@ export function useImageViewer() {
 
 // Utility function to create ImageData from file ID
 export function createImageData(
-    fileId: string | number,
+    fileId?: string | number,
     options: Partial<ImageData> = {}
 ): ImageData {
+    const fallbackId = options.sourceUrl || fileId || `image-${Date.now()}`
+
     return {
-        id: options.id || fileId,
+        id: options.id || fallbackId,
         fileId,
+        sourceUrl: options.sourceUrl,
         filename: options.filename,
         fileType: options.fileType,
         fileSize: options.fileSize,

@@ -16,17 +16,7 @@ import {
 } from "@tabler/icons-react";
 import { useGetImage } from "@/features/image-generation/api/get-image";
 import { useAnimationStore } from "@/stores/animation-store";
-
-interface ImageData {
-  id: string | number;
-  fileId: string | number;
-  filename?: string;
-  fileType?: string;
-  fileSize?: string;
-  dimensions?: string;
-  description?: string;
-  altText: string;
-}
+import type { ImageData } from "@/context/image-viewer-context";
 
 interface ImageViewerProps {
   images: ImageData[];
@@ -115,11 +105,18 @@ export function ImageViewer({
     data: imageBlob,
     isLoading: isFetching,
     isError,
-  } = useGetImage(currentImage?.fileId);
+  } = useGetImage(currentImage?.sourceUrl ? undefined : currentImage?.fileId);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   // Memoized image URL creation
   useEffect(() => {
+    // Direct URL (inline/remote)
+    if (currentImage?.sourceUrl) {
+      setImageUrl(currentImage.sourceUrl);
+      setIsLoading(false);
+      return undefined;
+    }
+
     if (imageBlob) {
       const url = URL.createObjectURL(imageBlob);
       setImageUrl(url);
@@ -131,7 +128,7 @@ export function ImageViewer({
         }, 0);
       };
     }
-  }, [imageBlob]);
+  }, [currentImage?.sourceUrl, imageBlob]);
 
   useEffect(() => {
     if (isFetching) {
@@ -217,14 +214,25 @@ export function ImageViewer({
   };
 
   const downloadImage = async () => {
-    if (!imageBlob || !currentImage) return;
+    if (!currentImage) return;
 
     try {
-      const url = URL.createObjectURL(imageBlob);
+      let blob = imageBlob;
+
+      // Fetch remote images when we only have a URL
+      if (!blob && currentImage.sourceUrl) {
+        const response = await fetch(currentImage.sourceUrl);
+        blob = await response.blob();
+      }
+
+      if (!blob) return;
+
+      const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download =
-        currentImage.filename || `image-${currentImage.fileId}.png`;
+        currentImage.filename ||
+        (currentImage.fileId ? `image-${currentImage.fileId}.png` : "image.png");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -423,7 +431,10 @@ export function ImageViewer({
                     {currentIndex + 1} / {images.length}
                   </Badge>
                   <span className="text-sm opacity-80">
-                    {currentImage.filename || `image-${currentImage.fileId}`}
+                    {currentImage.filename ||
+                      (currentImage.fileId
+                        ? `image-${currentImage.fileId}`
+                        : "Image")}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -457,7 +468,7 @@ export function ImageViewer({
                     size="icon"
                     onClick={downloadImage}
                     className="text-white hover:bg-white/20"
-                    disabled={!imageBlob}
+                    disabled={!imageBlob && !currentImage.sourceUrl}
                   >
                     <IconDownload className="h-4 w-4" />
                   </Button>
@@ -554,7 +565,7 @@ export function ImageViewer({
                       onError={() => {
                         console.warn(
                           "Image failed to load:",
-                          currentImage.fileId
+                          currentImage.fileId || currentImage.sourceUrl
                         );
                         setIsLoading(false);
                       }}
@@ -613,10 +624,17 @@ function ImageThumbnail({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const { data: imageBlob } = useGetImage(image.fileId);
+  const { data: imageBlob } = useGetImage(
+    image.sourceUrl ? undefined : image.fileId
+  );
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (image.sourceUrl) {
+      setThumbnailUrl(image.sourceUrl);
+      return;
+    }
+
     if (imageBlob) {
       const url = URL.createObjectURL(imageBlob);
       setThumbnailUrl(url);
@@ -627,7 +645,7 @@ function ImageThumbnail({
         }, 0);
       };
     }
-  }, [imageBlob]);
+  }, [image.sourceUrl, imageBlob]);
 
   return (
     <button

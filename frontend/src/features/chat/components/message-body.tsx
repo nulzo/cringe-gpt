@@ -80,86 +80,77 @@ export const MessageBody = memo(
           return !img?.id && Boolean(u);
         })
       : [];
+    const attachmentImages = Array.isArray(message.attachments)
+      ? message.attachments.filter((att) => att.file_type?.startsWith("image/"))
+      : [];
+    const fileAttachments = Array.isArray(message.attachments)
+      ? message.attachments.filter((att) => !att.file_type?.startsWith("image/"))
+      : [];
+
+    const normalizedImages = [
+      ...processedImages.map((img: any, index) => ({
+        id: img.id || `${message.id}-stored-${index}`,
+        fileId: img.id,
+        altText: img.name || `Image ${index + 1}`,
+        filename: img.name,
+      })),
+      ...inlineImages.map((img: any, idx) => {
+        const url =
+          img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
+        const alt =
+          img?.type === "image_url" ? img?.alt ?? img?.name : `Image ${idx + 1}`;
+        return {
+          id: `${message.id}-inline-${idx}`,
+          src: url,
+          altText: alt,
+          filename: img?.name || undefined,
+        };
+      }),
+      ...attachmentImages.map((att, idx) => ({
+        id: `${message.id}-attachment-${idx}`,
+        src: att.file_path,
+        altText: att.file_name,
+        filename: att.file_name,
+      })),
+    ].filter(Boolean);
 
     // Check if we have any images to display
-    const hasImages =
-      processedImages.length > 0 ||
-      inlineImages.length > 0 ||
-      (Array.isArray(message.attachments) && message.attachments.length > 0);
+    const hasImages = normalizedImages.length > 0;
 
     return (
       <>
         {/* Unified Image Display - Handle all types of images */}
         {hasImages && (
-          <div className="mb-2 flex flex-wrap gap-2">
-            {/* Persisted images (ids map to /files) */}
-            {processedImages.map((img: any, index) => (
+          <div className="mb-3 grid w-full max-w-[46rem] grid-cols-2 gap-3 sm:grid-cols-3">
+            {normalizedImages.map((img, index) => (
               <ImageDisplay
-                key={`processed-image-${img.id || index}`}
-                fileId={img.id}
-                altText={img.name || `Image ${index + 1}`}
-                className="max-w-24"
-                images={processedImages.map((im: any) => ({
-                  fileId: im.id,
-                  altText: im.name,
-                }))}
+                key={img.id}
+                fileId={img.fileId}
+                src={img.src}
+                altText={img.altText}
+                filename={img.filename}
+                className="w-full"
+                images={normalizedImages}
                 imageIndex={index}
                 messageId={message.id}
                 conversationId={message.conversation_uuid}
               />
             ))}
+          </div>
+        )}
 
-            {/* Streaming/remote image URLs (data URLs or hosted) */}
-            {inlineImages.map((img: any, idx) => {
-              const url = img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
-              const alt = img?.type === "image_url" ? img?.alt ?? img?.name : `Image ${idx + 1}`;
-              return (
-                <div
-                  key={`inline-image-${idx}-${url}`}
-                  className="relative max-w-24 rounded-lg overflow-hidden border bg-muted/40"
-                >
-                  <img
-                    src={url}
-                    alt={alt}
-                    className="w-full h-auto object-contain rounded-lg"
-                    onError={(e) => {
-                      console.error("Failed to load streamed image:", url);
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                </div>
-              );
-            })}
-
-            {/* User attachments fallback */}
-            {processedImages.length === 0 &&
-              inlineImages.length === 0 &&
-              Array.isArray(message.attachments) &&
-              message.attachments.map((att) => (
-                <div
-                  key={att.file_name}
-                  className="relative max-w-24 rounded-lg overflow-hidden"
-                >
-                  {att.file_type.startsWith("image/") ? (
-                    <img
-                      src={att.file_path}
-                      alt={att.file_name}
-                      className="w-full h-auto object-contain rounded-lg"
-                      onError={(e) => {
-                        console.error("Failed to load attachment:", att.file_path);
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center gap-2 p-4 bg-muted rounded-lg">
-                      <IconPhoto className="size-8" />
-                      <p className="max-w-20 truncate px-2 text-xs">
-                        {att.file_name}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
+        {/* Non-image attachments */}
+        {fileAttachments.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {fileAttachments.map((att) => (
+              <div
+                key={att.file_name}
+                className="flex min-w-[9rem] items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-foreground shadow-sm"
+              >
+                <IconPhoto className="size-5 text-muted-foreground" />
+                <p className="truncate text-xs">{att.file_name}</p>
+              </div>
+            ))}
           </div>
         )}
 

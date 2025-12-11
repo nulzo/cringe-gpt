@@ -9,11 +9,11 @@ const getImage = async (fileId: string | number): Promise<Blob> => {
     return response as unknown as Blob;
 };
 
-export const useGetImage = (fileId: string | number) => {
+export const useGetImage = (fileId?: string | number) => {
     return useQuery<Blob, Error>({
         queryKey: ["images", fileId],
-        queryFn: () => getImage(fileId),
-        enabled: !!fileId,
+        queryFn: () => getImage(fileId as string | number),
+        enabled: Boolean(fileId),
         staleTime: Infinity,
         gcTime: Infinity,
     });

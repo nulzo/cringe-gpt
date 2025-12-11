@@ -796,3 +796,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+*.db-shm
+*.db-wal
+*.journal
