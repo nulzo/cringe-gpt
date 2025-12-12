@@ -9,7 +9,6 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconDownload,
-  IconRotateClockwise,
   IconX,
   IconZoomIn,
   IconZoomOut,
@@ -17,6 +16,10 @@ import {
 import { useGetImage } from "@/features/image-generation/api/get-image";
 import { useAnimationStore } from "@/stores/animation-store";
 import type { ImageData } from "@/context/image-viewer-context";
+
+const MIN_SCALE = 1;
+const MAX_SCALE = 5;
+const DEFAULT_ZOOM = 2.25;
 
 interface ImageViewerProps {
   images: ImageData[];
@@ -78,7 +81,6 @@ export function ImageViewer({
   const viewerVariants = createViewerVariants(animationsEnabled);
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -93,8 +95,6 @@ export function ImageViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
   const lastPointerRef = useRef<{ x: number; y: number } | null>(null);
-
-  // Removed useTransition for simpler state management
 
   const currentImage = images[currentIndex];
   const minSwipeDistance = 50;
@@ -136,31 +136,91 @@ export function ImageViewer({
     }
   }, [isFetching]);
 
+  // Keep index in sync with caller when reopening viewer
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(initialIndex);
+    }
+  }, [initialIndex, isOpen]);
+
   // Reset zoom and pan when changing images
   useEffect(() => {
     setScale(1);
     setPanX(0);
     setPanY(0);
-    setRotation(0);
   }, [currentIndex]);
+
+  const resetTransform = useCallback(() => {
+    setScale(1);
+    setPanX(0);
+    setPanY(0);
+  }, []);
+
+  const applyZoom = useCallback(
+    (nextScale: number, origin?: { x: number; y: number }) => {
+      const target = Math.min(MAX_SCALE, Math.max(MIN_SCALE, nextScale));
+      const container = containerRef.current;
+
+      if (!container) {
+        setScale(target);
+        if (target === MIN_SCALE) {
+          setPanX(0);
+          setPanY(0);
+        }
+        return;
+      }
+
+      const rect = container.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const originX = (origin?.x ?? centerX) - centerX;
+      const originY = (origin?.y ?? centerY) - centerY;
+
+      setScale((prevScale) => {
+        const ratio = target / prevScale;
+
+        setPanX((prevPanX) =>
+          target === MIN_SCALE ? 0 : prevPanX + originX * (1 - ratio)
+        );
+        setPanY((prevPanY) =>
+          target === MIN_SCALE ? 0 : prevPanY + originY * (1 - ratio)
+        );
+
+        return target;
+      });
+    },
+    []
+  );
 
   const nextImage = useCallback(() => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
-    setScale(1);
-    setPanX(0);
-    setPanY(0);
-    setRotation(0);
+    resetTransform();
     setIsLoading(true);
-  }, [images.length]);
+  }, [images.length, resetTransform]);
 
   const prevImage = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
-    setScale(1);
-    setPanX(0);
-    setPanY(0);
-    setRotation(0);
+    resetTransform();
     setIsLoading(true);
-  }, [images.length]);
+  }, [images.length, resetTransform]);
+
+  // Optimized zoom functions with hardware acceleration
+  const toggleZoom = useCallback(() => {
+    if (scale > 1) {
+      resetTransform();
+    } else {
+      applyZoom(DEFAULT_ZOOM);
+    }
+  }, [applyZoom, resetTransform, scale]);
+
+  const zoomIn = useCallback(() => {
+    applyZoom(scale * 1.35);
+  }, [applyZoom, scale]);
+
+  const zoomOut = useCallback(() => {
+    const newScale = scale / 1.35;
+    applyZoom(newScale <= MIN_SCALE ? MIN_SCALE : newScale);
+  }, [applyZoom, scale]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -180,7 +240,7 @@ export function ImageViewer({
           break;
       }
     },
-    [nextImage, prevImage, onClose, isZoomed, images.length]
+    [images.length, nextImage, onClose, prevImage, toggleZoom]
   );
 
   useEffect(() => {
@@ -241,38 +301,6 @@ export function ImageViewer({
       console.error("Download failed:", error);
     }
   };
-
-  // Optimized zoom functions with hardware acceleration
-  const toggleZoom = useCallback(() => {
-    if (scale > 1) {
-      // Zoom out
-      setScale(1);
-      setPanX(0);
-      setPanY(0);
-    } else {
-      // Zoom in to 2x
-      setScale(2);
-    }
-  }, [scale]);
-
-  const zoomIn = useCallback(() => {
-    setScale((prev) => Math.min(prev * 1.5, 5)); // Max 5x zoom
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    const newScale = scale / 1.5;
-    if (newScale <= 1) {
-      setScale(1);
-      setPanX(0);
-      setPanY(0);
-    } else {
-      setScale(newScale);
-    }
-  }, [scale]);
-
-  const rotateImage = useCallback(() => {
-    setRotation((prev) => (prev + 90) % 360);
-  }, []);
 
   // Simplified and reliable drag handlers
   const handleMouseDown = useCallback(
@@ -338,21 +366,14 @@ export function ImageViewer({
     };
   }, [scale]);
 
-  // Wheel zoom with smooth scaling
+  // Wheel zoom with smooth scaling around cursor
   const handleWheel = useCallback(
     (e: WheelEvent) => {
       e.preventDefault();
-
-      const delta = e.deltaY * -0.01;
-      const newScale = Math.max(1, Math.min(5, scale + delta));
-
-      setScale(newScale);
-      if (newScale <= 1) {
-        setPanX(0);
-        setPanY(0);
-      }
+      const zoomFactor = Math.exp(-e.deltaY * 0.0025);
+      applyZoom(scale * zoomFactor, { x: e.clientX, y: e.clientY });
     },
-    [scale]
+    [applyZoom, scale]
   );
 
   // Add non-passive wheel event listener
@@ -370,12 +391,12 @@ export function ImageViewer({
   // Memoized transform style for maximum performance
   const imageTransform = useMemo(
     () => ({
-      transform: `translate3d(${panX}px, ${panY}px, 0) scale(${scale}) rotate(${rotation}deg)`,
+      transform: `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`,
       willChange: "transform",
       transformOrigin: "center center",
-      transition: isDraggingRef.current ? "none" : "transform 0.2s ease-out",
+      transition: isDraggingRef.current ? "none" : "transform 0.18s ease-out",
     }),
-    [panX, panY, scale, rotation]
+    [panX, panY, scale]
   );
 
   // Cleanup on unmount
@@ -392,7 +413,7 @@ export function ImageViewer({
         currentImage &&
         (isError ? (
           <motion.div
-            className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
@@ -405,68 +426,66 @@ export function ImageViewer({
             role="dialog"
             aria-modal="true"
           >
-            <div className="text-white text-center">
-              <IconX className="w-12 h-12 mx-auto mb-4" />
-              <p>Failed to load image</p>
-              <Button variant="outline" onClick={onClose} className="mt-4">
+            <div className="text-white text-center space-y-3">
+              <IconX className="w-12 h-12 mx-auto" />
+              <p className="text-sm text-white/80">Failed to load image</p>
+              <Button variant="outline" onClick={onClose} className="mt-2">
                 Close
               </Button>
             </div>
           </motion.div>
         ) : (
           <motion.div
-            className="fixed inset-0 bg-black/95 backdrop-blur-sm z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-[#0a0a0f]/90 backdrop-blur-sm z-50 flex items-center justify-center"
             variants={overlayVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            {/* Header */}
+            {/* Top bar */}
             <motion.div
-              className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/50 to-transparent"
+              className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/40 via-black/10 to-transparent px-5 pt-4 pb-8"
               variants={overlayVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
             >
-              <div className="flex items-center justify-between text-white">
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="secondary"
-                    className="bg-white/20 text-white border-white/20"
-                  >
+              <div className="flex items-start justify-between text-white">
+                <div className="pointer-events-auto flex flex-wrap items-center gap-2 max-w-[60vw]">
+                  <Badge className="bg-white/15 text-white border-white/20">
                     {currentIndex + 1} / {images.length}
                   </Badge>
-                  <span className="text-sm opacity-80">
+                  <span className="truncate text-sm text-white/80">
                     {currentImage.filename ||
                       (currentImage.fileId
                         ? `image-${currentImage.fileId}`
                         : "Image")}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={rotateImage}
-                    className="text-white hover:bg-white/20"
-                  >
-                    <IconRotateClockwise className="h-4 w-4" />
-                  </Button>
+                <div className="pointer-events-auto flex items-center gap-1 rounded-full bg-black/30 px-1.5 py-1 backdrop-blur">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={zoomOut}
-                    className="text-white hover:bg-white/20"
-                    disabled={scale <= 1}
+                    className="text-white hover:bg-white/15"
+                    disabled={scale <= MIN_SCALE}
                   >
                     <IconZoomOut className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => applyZoom(MIN_SCALE)}
+                    className="text-white hover:bg-white/15"
+                    disabled={scale === MIN_SCALE}
+                  >
+                    1x
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={zoomIn}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/15"
                   >
                     <IconZoomIn className="h-4 w-4" />
                   </Button>
@@ -474,7 +493,7 @@ export function ImageViewer({
                     variant="ghost"
                     size="icon"
                     onClick={downloadImage}
-                    className="text-white hover:bg-white/20"
+                    className="text-white hover:bg-white/15"
                     disabled={!imageBlob && !currentImage.sourceUrl}
                   >
                     <IconDownload className="h-4 w-4" />
@@ -484,7 +503,7 @@ export function ImageViewer({
                       variant="ghost"
                       size="icon"
                       onClick={onClose}
-                      className="text-white hover:bg-white/20"
+                      className="text-white hover:bg-white/15"
                     >
                       <IconX className="h-4 w-4" />
                     </Button>
@@ -501,13 +520,12 @@ export function ImageViewer({
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  onDoubleClick={toggleZoom}
                 >
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={prevImage}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/15 h-12 w-12"
                   >
                     <IconChevronLeft className="h-6 w-6" />
                   </Button>
@@ -522,7 +540,7 @@ export function ImageViewer({
                     variant="ghost"
                     size="icon"
                     onClick={nextImage}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/15 h-12 w-12"
                   >
                     <IconChevronRight className="h-6 w-6" />
                   </Button>
@@ -532,11 +550,16 @@ export function ImageViewer({
 
             {/* Main Content */}
             <motion.div
-              className="flex-1 flex items-center justify-center p-4 pt-18 h-full pb-4"
+              className="flex-1 flex items-center justify-center p-6 pt-18 h-full pb-8"
               variants={viewerVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
+              onMouseDown={(e) => {
+                if (e.target === e.currentTarget) {
+                  onClose?.();
+                }
+              }}
             >
               <div
                 ref={containerRef}
@@ -551,6 +574,13 @@ export function ImageViewer({
                   }`}
                   style={imageTransform}
                   onClick={!isZoomed ? toggleZoom : undefined}
+                  onDoubleClick={(e) => {
+                    e.preventDefault();
+                    applyZoom(scale > 1 ? MIN_SCALE : DEFAULT_ZOOM, {
+                      x: e.clientX,
+                      y: e.clientY,
+                    });
+                  }}
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
@@ -568,7 +598,7 @@ export function ImageViewer({
                       ref={imageRef}
                       src={imageUrl}
                       alt={currentImage.altText}
-                      className="max-w-[95vw] max-h-[calc(100vh-8rem)] w-auto h-auto object-contain rounded-lg shadow-2xl select-none"
+                      className="max-w-[92vw] max-h-[calc(100vh-9rem)] w-auto h-auto object-contain rounded-lg shadow-2xl select-none"
                       onLoad={() => setIsLoading(false)}
                       onError={() => {
                         console.warn(
@@ -591,13 +621,13 @@ export function ImageViewer({
             {/* Thumbnail Strip */}
             {images.length > 1 && (
               <motion.div
-                className="absolute bottom-4 left-1/2 -translate-x-1/2 md:bottom-auto md:top-20 md:left-4 md:translate-x-0"
+                className="absolute bottom-4 left-1/2 -translate-x-1/2"
                 variants={overlayVariants}
                 initial="hidden"
                 animate="visible"
                 exit="exit"
               >
-                <div className="flex md:flex-col gap-2 p-2 bg-black/50 rounded-lg backdrop-blur-sm max-w-[90vw] md:max-w-none overflow-x-auto md:overflow-y-auto md:max-h-[60vh]">
+                <div className="flex gap-2 p-2 bg-black/40 rounded-full backdrop-blur-sm max-w-[90vw] overflow-x-auto">
                   {images.map((image, index) => (
                     <ImageThumbnail
                       key={image.id}
@@ -605,10 +635,7 @@ export function ImageViewer({
                       isActive={index === currentIndex}
                       onClick={() => {
                         setCurrentIndex(index);
-                        setScale(1);
-                        setPanX(0);
-                        setPanY(0);
-                        setRotation(0);
+                        resetTransform();
                         setIsLoading(true);
                       }}
                     />

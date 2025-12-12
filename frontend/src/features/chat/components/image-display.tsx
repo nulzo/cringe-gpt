@@ -166,7 +166,7 @@ export function ImageDisplay({
       role="button"
       tabIndex={0}
       className={cn(
-        "group relative w-full max-w-[18rem] min-w-[11rem] overflow-hidden rounded-xl border border-border/60 bg-muted/20 shadow-sm transition-all hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group relative w-full max-w-[18rem] min-w-[11rem] overflow-hidden rounded-xl border border-border/60 bg-muted/20 shadow-sm transition-all hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
         className
       )}
       onClick={handleOpenViewer}
