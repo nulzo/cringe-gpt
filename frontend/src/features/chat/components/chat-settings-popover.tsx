@@ -3,11 +3,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -24,6 +19,8 @@ import {
   useChatConfigStore,
 } from "@/stores/chat-config-store";
 import type { ReactElement } from "react";
+import { ChatFeaturePopover } from "./chat-feature-popover";
+import { IconAdjustments } from "@tabler/icons-react";
 
 const chatConfigSchema = z.object({
   temperature: z
@@ -37,7 +34,7 @@ const chatConfigSchema = z.object({
 
 type ChatConfigFormValues = z.infer<typeof chatConfigSchema>;
 
-export const ChatSettingsPopover = ({ trigger }: { trigger: ReactElement }) => {
+export const ChatSettingsPopover = ({ disabled }: { disabled?: boolean }) => {
   const {
     temperature,
     topP,
@@ -82,34 +79,57 @@ export const ChatSettingsPopover = ({ trigger }: { trigger: ReactElement }) => {
   };
 
   return (
-    <Popover>
-      <div className="relative inline-flex">
-        {isDirty && (
-          <div className="absolute size-2 right-1 top-1 bg-primary rounded-full" />
-        )}
-        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-      </div>
-      <PopoverContent className="w-[500px]" side="top">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-2">
-              <h4 className="leading-none font-medium">Chat Configuration</h4>
-              <p className="text-muted-foreground text-sm">
-                Update the configuration for the request.
-              </p>
-            </div>
+    <ChatFeaturePopover
+      icon={IconAdjustments}
+      tooltip="Adjust Settings"
+      isIndicatorActive={isDirty}
+      contentClassName="w-[500px]"
+      side="top"
+      disabled={disabled}
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4">
+          <div className="space-y-2">
+            <h4 className="leading-none font-medium">Chat Configuration</h4>
+            <p className="text-muted-foreground text-sm">
+              Update the configuration for the request.
+            </p>
+          </div>
 
+          <FormField
+            control={form.control}
+            name="systemPrompt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>System Prompt</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="You are a helpful assistant..."
+                    className="min-h-[80px] max-h-[150px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-3 gap-4">
             <FormField
               control={form.control}
-              name="systemPrompt"
+              name="temperature"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>System Prompt</FormLabel>
+                  <FormLabel>Temperature</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="You are a helpful assistant..."
-                      className="min-h-[80px] max-h-[150px]"
+                    <Input
+                      type="number"
+                      step="0.01"
                       {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value))
+                      }
                     />
                   </FormControl>
                   <FormMessage />
@@ -117,83 +137,59 @@ export const ChatSettingsPopover = ({ trigger }: { trigger: ReactElement }) => {
               )}
             />
 
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="temperature"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Temperature</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="topP"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Top P</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value))
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="topP"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Top P</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <FormField
+              control={form.control}
+              name="topK"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Top K</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...field}
+                      value={field.value ?? ""}
+                      onChange={(e) =>
+                        field.onChange(parseFloat(e.target.value))
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-              <FormField
-                control={form.control}
-                name="topK"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Top K</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) =>
-                          field.onChange(parseFloat(e.target.value))
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex justify-between gap-2">
-              <Button type="button" variant="secondary" onClick={handleReset}>
-                Reset
-              </Button>
-              <Button type="submit">Save</Button>
-            </div>
-          </form>
-        </Form>
-      </PopoverContent>
-    </Popover>
+          <div className="flex justify-between gap-2">
+            <Button type="button" variant="secondary" onClick={handleReset}>
+              Reset
+            </Button>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
+      </Form>
+    </ChatFeaturePopover>
   );
 };

@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
+import { Command, CommandInput, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { IconBookmarkPlus, IconHash, IconX } from '@tabler/icons-react';
+import { IconHash, IconX, IconPlus } from '@tabler/icons-react';
 import { usePrompts, useCreatePrompt } from '@/features/prompts/api/get-prompts';
 import type { Prompt, PromptPayload, PromptVariable } from '@/features/prompts/types';
 import { useChatConfigStore } from '@/stores/chat-config-store';
 import { useChatStore } from '@/features/chat/stores/chat-store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ChatFeaturePopover } from './chat-feature-popover';
 
 const renderTemplate = (template: string, values: Record<string, string>) => {
   if (!template) return '';
@@ -101,72 +101,78 @@ export function PromptPicker() {
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            role="combobox"
-            aria-expanded={open}
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md bg-transparent hover:bg-hover transition-all"
-          >
-            <IconHash className="size-4" />
-            <span className="sr-only">Select prompt</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0 w-[420px] shadow-lg border-border/60 bg-popover" align="start" side="bottom">
-          <Command shouldFilter={false}>
-            <div className="flex items-center gap-2 border-b px-3 py-2">
-              <CommandInput
-                placeholder="Search prompts..."
-                value={search}
-                onValueChange={setSearch}
-                className="h-9 flex-1"
-              />
-            </div>
-            <CommandList className="max-h-[360px]">
-              {filtered.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No prompts yet
-                </div>
-              ) : (
-                filtered.map((prompt) => (
-                  <div
-                    key={prompt.id}
-                    role="option"
-                    onClick={() => {
-                      handlePromptSelect(prompt);
-                      setOpen(false);
-                      setSearch('');
-                    }}
-                    className={cn(
-                      "relative flex h-10 w-full cursor-pointer items-center rounded-lg p-2 mx-1 my-0.5 w-[calc(100%-8px)]",
-                      "hover:bg-accent/80 transition-colors"
-                    )}
-                  >
-                    <div className="flex items-center justify-between w-full text-sm font-medium">
-                      <span className="truncate">{prompt.title}</span>
-                      <span className="text-[11px] text-muted-foreground ml-2 shrink-0">
+      <ChatFeaturePopover
+        open={open}
+        onOpenChange={setOpen}
+        icon={IconHash}
+        tooltip="Select prompt"
+        contentClassName="w-[400px] p-0 bg-popover/95 backdrop-blur-sm border-border/50 shadow-2xl rounded-xl overflow-hidden"
+        side="bottom"
+      >
+        <Command shouldFilter={false} className="bg-transparent">
+          <div className="border-b border-border/40 p-1">
+            <CommandInput
+              placeholder="Search prompts..."
+              value={search}
+              onValueChange={setSearch}
+              className="h-10 text-sm"
+            />
+          </div>
+          <CommandList className="max-h-[320px] p-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+            {filtered.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No prompts found
+              </div>
+            ) : (
+              filtered.map((prompt) => (
+                <div
+                  key={prompt.id}
+                  role="option"
+                  onClick={() => {
+                    handlePromptSelect(prompt);
+                    setOpen(false);
+                    setSearch('');
+                  }}
+                  className={cn(
+                    "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
+                    "hover:bg-accent/50"
+                  )}
+                >
+                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium truncate">{prompt.title}</span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
                         {prompt.variables?.length ? `${prompt.variables.length} vars` : 'static'}
                       </span>
                     </div>
-                    <p className="ml-2 text-xs text-muted-foreground line-clamp-1 max-w-[200px] text-right truncate">{prompt.content}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 opacity-80">{prompt.content}</p>
                   </div>
-                ))
-              )}
-            </CommandList>
-            <div className="flex items-center justify-between gap-2 p-3 border-t border-border/60 bg-muted/40">
-              <Button variant="ghost" size="sm" onClick={() => { clearPrompt(); setVariablePrompt(null); setOpen(false); }}>
-                <IconX className="size-4 mr-2" />
-                Clear
-              </Button>
-              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                New prompt
-              </Button>
-            </div>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                </div>
+              ))
+            )}
+          </CommandList>
+          <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" 
+              onClick={() => { clearPrompt(); setVariablePrompt(null); setOpen(false); }}
+            >
+              <IconX className="size-3.5 mr-1.5" />
+              Clear
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost"
+              className="h-8 px-2 text-xs hover:bg-background"
+              onClick={() => setIsCreateOpen(true)}
+            >
+              <IconPlus className="size-3.5 mr-1.5" />
+              New Prompt
+            </Button>
+          </div>
+        </Command>
+      </ChatFeaturePopover>
 
       {/* Variable fill dialog */}
       <Dialog open={Boolean(variablePrompt)} onOpenChange={(open) => !open && setVariablePrompt(null)}>

@@ -1,17 +1,17 @@
 import { useMemo, useState } from 'react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandInput, CommandList } from '@/components/ui/command';
+import { Command, CommandInput, CommandList } from '@/components/ui/command';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IconSparkles, IconUserCircle, IconX, IconCheck } from '@tabler/icons-react';
+import { IconUserCircle, IconX, IconCheck, IconPlus } from '@tabler/icons-react';
 import { usePersonas, useCreatePersona } from '@/features/personas/api/get-personas';
 import type { PersonaPayload } from '@/features/personas/types';
 import { useChatConfigStore } from '@/stores/chat-config-store';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { ChatFeaturePopover } from './chat-feature-popover';
 
 export function PersonaSelector() {
   const personasQuery = usePersonas();
@@ -101,105 +101,96 @@ export function PersonaSelector() {
 
   return (
     <>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            role="combobox"
-            aria-expanded={open}
-            variant="ghost"
-            size="icon"
-            className={cn(
-              "relative h-9 w-9 rounded-md bg-transparent hover:bg-hover transition-all",
-              activePersonaName && "bg-accent/40 text-foreground border border-border/60"
-            )}
-            aria-label={activePersonaName ? `Persona: ${activePersonaName}` : "Select persona"}
-          >
-            {activePersonaName && (
-              <span
-                aria-hidden
-                className="absolute -top-1 -right-1 size-2 rounded-full bg-primary shadow-[0_0_0_2px_var(--popover-background,_#111)]"
-              />
-            )}
-            <IconUserCircle className="size-4" />
-            {!activePersonaName && <span className="sr-only">Select persona</span>}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent
-          className="p-0 w-[520px] shadow-lg border-border/60 bg-popover"
-          align="start"
-          side="bottom"
-        >
-          <Command shouldFilter={false}>
-            <div className="flex items-center gap-2 border-b px-4 py-3">
-              <CommandInput
-                placeholder="Search personas..."
-                value={search}
-                onValueChange={setSearch}
-                className="h-9 flex-1"
-              />
-            </div>
-            <CommandList className="max-h-[420px]">
-              {filtered.length === 0 ? (
-                <div className="py-6 text-center text-sm text-muted-foreground">
-                  No personas yet
-                </div>
-              ) : (
-                filtered.map((persona) => {
-                  const isActive = persona.id === activePersonaId;
-                  return (
-                    <div
-                      key={persona.id}
-                      role="option"
-                      tabIndex={0}
-                      onClick={() => {
+      <ChatFeaturePopover
+        open={open}
+        onOpenChange={setOpen}
+        icon={IconUserCircle}
+        tooltip={activePersonaName ? `Persona: ${activePersonaName}` : "Select persona"}
+        isIndicatorActive={!!activePersonaName}
+        className={cn(
+          activePersonaName && "bg-accent/40 text-foreground border border-border/60"
+        )}
+        contentClassName="w-[400px] p-0 bg-popover/95 backdrop-blur-sm border-border/50 shadow-2xl rounded-xl overflow-hidden"
+      >
+        <Command shouldFilter={false} className="bg-transparent">
+          <div className="border-b border-border/40 p-1">
+            <CommandInput
+              placeholder="Search personas..."
+              value={search}
+              onValueChange={setSearch}
+              className="h-10 text-sm"
+            />
+          </div>
+          <CommandList className="max-h-[360px] p-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+            {filtered.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No personas found
+              </div>
+            ) : (
+              filtered.map((persona) => {
+                const isActive = persona.id === activePersonaId;
+                return (
+                  <div
+                    key={persona.id}
+                    role="option"
+                    tabIndex={0}
+                    onClick={() => {
+                      applyPersona(persona.id);
+                      setOpen(false);
+                      setSearch('');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
                         applyPersona(persona.id);
                         setOpen(false);
                         setSearch('');
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          applyPersona(persona.id);
-                          setOpen(false);
-                          setSearch('');
-                        }
-                      }}
-                      className={cn(
-                        "relative flex h-12 w-full cursor-pointer items-center rounded-lg px-3 mx-1 my-0.5 w-[calc(100%-8px)] transition-colors",
-                        isActive ? "bg-accent text-accent-foreground border border-border/60" : "hover:bg-accent/80"
-                      )}
-                    >
-                      <div className="flex flex-col w-full gap-0.5">
-                        <div className="flex items-center justify-between w-full text-sm font-medium">
-                          <span className="truncate">{persona.name}</span>
-                          <span className="text-[11px] text-muted-foreground ml-2 shrink-0">
-                            {isActive ? "Active" : "Persona"}
-                          </span>
-                        </div>
-                        {persona.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1 w-full">
-                            {persona.description}
-                          </p>
-                        )}
+                      }
+                    }}
+                    className={cn(
+                      "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
+                      "hover:bg-accent/50",
+                      isActive ? "bg-accent/70 text-accent-foreground" : "text-foreground"
+                    )}
+                  >
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium truncate">{persona.name}</span>
                       </div>
-                      {isActive && <IconCheck className="size-4 shrink-0 ml-2" />}
+                      {persona.description && (
+                        <span className="text-xs text-muted-foreground truncate opacity-80">
+                          {persona.description}
+                        </span>
+                      )}
                     </div>
-                  );
-                })
-              )}
-            </CommandList>
-            <div className="flex items-center justify-between gap-2 p-4 border-t border-border/60 bg-muted/40">
-              <Button variant="ghost" size="sm" onClick={() => { clearPersona(); setSystemPrompt(''); setOpen(false); }}>
-                <IconX className="size-4 mr-2" />
-                Clear
-              </Button>
-              <Button size="sm" onClick={() => setIsDialogOpen(true)}>
-                New persona
-              </Button>
-            </div>
-          </Command>
-        </PopoverContent>
-      </Popover>
+                    {isActive && <IconCheck className="ml-3 size-4 shrink-0 text-primary" />}
+                  </div>
+                );
+              })
+            )}
+          </CommandList>
+          <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" 
+              onClick={() => { clearPersona(); setSystemPrompt(''); setOpen(false); }}
+            >
+              <IconX className="size-3.5 mr-1.5" />
+              Clear
+            </Button>
+            <Button 
+              size="sm" 
+              variant="ghost"
+              className="h-8 px-2 text-xs hover:bg-background"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <IconPlus className="size-3.5 mr-1.5" />
+              New Persona
+            </Button>
+          </div>
+        </Command>
+      </ChatFeaturePopover>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-[640px]">

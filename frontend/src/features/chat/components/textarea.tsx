@@ -29,7 +29,6 @@ import {
 import AttachmentPreview from "./attachment-preview";
 import { ChatAreaActionButton } from "./chat-area-action-button";
 import { ChatSettingsPopover } from "./chat-settings-popover";
-import { ChatToolsPopover } from "./chat-tools-popover";
 import { ImageGenerationModal } from "@/features/image-generation/components/image-generation-modal";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { IconPlayerStop } from "@tabler/icons-react";
@@ -245,50 +244,18 @@ export function ModernChatArea({
                 value={selectedModelId || undefined}
                 onValueChange={handleModelChange}
               />
+
+
               <PersonaSelector />
+              
               <PromptPicker />
 
-              <ChatToolsPopover
-                trigger={
-                  <ChatAreaActionButton
-                    tooltipText="Tools"
-                    icon={IconTools}
-                    disabled={disabled}
-                  />
-                }
+              {/* <ChatToolsPopover
                 onImageGeneration={() => setIsImageModalOpen(true)}
-              />
-
-              {/* <ChatSettingsPopover
-                trigger={
-                  <ChatAreaActionButton
-                    tooltipText="Knowledge Sources"
-                    icon={IconFileStack}
-                    disabled={disabled}
-                  />
-                }
-              />
-
-              <ChatSettingsPopover
-                trigger={
-                  <ChatAreaActionButton
-                    tooltipText="Saved Prompts"
-                    icon={IconTags}
-                    disabled={disabled}
-                    onClick={() => console.log("settings opened")}
-                  />
-                }
+                disabled={disabled}
               /> */}
 
-              <ChatSettingsPopover
-                trigger={
-                  <ChatAreaActionButton
-                    tooltipText="Adjust Settings"
-                    icon={IconAdjustments}
-                    disabled={disabled}
-                  />
-                }
-              />
+              <ChatSettingsPopover disabled={disabled} />
 
               {/* File upload */}
               <>

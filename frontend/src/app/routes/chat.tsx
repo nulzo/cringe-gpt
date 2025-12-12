@@ -248,7 +248,7 @@ function WelcomePanel({
   composer: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center">
+    <div className="flex w-full h-full flex-col items-center justify-center">
       <div className="w-full max-w-4xl space-y-2 text-center">
         <header className="space-y-1 pb-4">
           <h1
