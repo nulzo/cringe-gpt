@@ -195,5 +195,3 @@ export function MetricSidebar({
     </div>
   )
 }
-
-

@@ -26,7 +26,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 
 const COMPOSER_OVERLAP_PX = 55;
 const COMPOSER_WIDTH_CLASSES =
-  "[--thread-content-max-width:40rem] @[48rem]:[--thread-content-max-width:44rem] @[64rem]:[--thread-content-max-width:48rem] w-full max-w-(--thread-content-max-width) mx-auto";
+  "";
 type ChatViewMode = "loading" | "welcome" | "conversation";
 
 export function ChatRoute() {

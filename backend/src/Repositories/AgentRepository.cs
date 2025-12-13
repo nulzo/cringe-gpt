@@ -25,5 +25,3 @@ public class AgentRepository : GenericRepository<Agent>, IAgentRepository
             .FirstOrDefaultAsync(a => a.Id == id && a.AuthorId == userId);
     }
 }
-
-

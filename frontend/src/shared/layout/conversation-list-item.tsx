@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -63,6 +62,7 @@ export const SidebarConversationItem = memo(
     const initialTags = useMemo(() => (conversation.tags ?? []).map((t) => t.name), [conversation.tags]);
     const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
     const [tagInput, setTagInput] = useState('');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const updateConversation = useUpdateConversation();
     const deleteConversation = useDeleteConversation();
@@ -72,6 +72,18 @@ export const SidebarConversationItem = memo(
       setDraftTitle(conversation.title);
       setSelectedTags(initialTags);
     }, [conversation.title, initialTags]);
+
+    const toggleTag = (name: string) => {
+      setSelectedTags((prev) => {
+        const lowerName = name.toLowerCase();
+        const exists = prev.some(t => t.toLowerCase() === lowerName);
+        if (exists) {
+            return prev.filter(t => t.toLowerCase() !== lowerName);
+        } else {
+            return [...prev, name];
+        }
+      });
+    };
 
     const addTag = (name: string) => {
       const value = name.trim();
@@ -83,16 +95,10 @@ export const SidebarConversationItem = memo(
       setTagInput('');
     };
 
-    const removeTag = (name: string) => {
-      setSelectedTags((prev) => prev.filter((t) => t.toLowerCase() !== name.toLowerCase()));
-    };
-
     const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter' || e.key === ',') {
+      if (e.key === 'Enter') {
         e.preventDefault();
         addTag(tagInput);
-      } else if (e.key === 'Backspace' && !tagInput && selectedTags.length) {
-        removeTag(selectedTags[selectedTags.length - 1]);
       }
     };
 
@@ -123,77 +129,80 @@ export const SidebarConversationItem = memo(
       }
     };
 
-    const handleRowClick = useCallback(() => {
-      if (!isOpen) return; // disable click when collapsed
-      navigate(to);
-    }, [isOpen, navigate, to]);
-
     const isStreaming = useChatStore((s) => s.isStreamingFor(String(conversation.id)));
     const unread = useChatStore((s) => Boolean(s.unread[String(conversation.id)]));
     const markRead = useChatStore((s) => s.markConversationRead);
 
     const content = (
-      <Link
-        to={isOpen ? to : "#"}
-        tabIndex={isOpen ? 0 : -1}
+      <div
         className={cn(
-          "group flex items-center gap-2 pl-3 pr-3 py-2 min-h-[44px] rounded-md text-sm font-normal relative overflow-hidden",
+          "group flex items-center gap-2 pl-3 pr-3 py-2 h-9 rounded-md text-sm font-normal relative overflow-hidden",
           "hover:bg-sidebar-hover",
-          isActive && "bg-sidebar-hover/75 font-medium"
+          (isActive || isDropdownOpen) && "bg-sidebar-hover/75 font-medium"
         )}
-        onClick={() => markRead(String(conversation.id))}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="truncate text-foreground">{conversation.title}</span>
-          {isStreaming && <span className="size-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />}
-          {unread && !isActive && <span className="size-2 flex-shrink-0 rounded-full bg-blue-400" />}
-        </div>
+        <Link
+          to={isOpen ? to : "#"}
+          tabIndex={isOpen ? 0 : -1}
+          className="flex min-w-0 flex-1 items-center gap-2 h-full cursor-pointer z-10"
+          onClick={(e) => {
+            if (!isOpen) e.preventDefault();
+            markRead(String(conversation.id));
+          }}
+        >
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <span className="truncate text-foreground">{conversation.title}</span>
+            {isStreaming && <span className="size-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />}
+            {unread && !isActive && <span className="size-2 flex-shrink-0 rounded-full bg-blue-400" />}
+          </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {tags.length > 0 && (
-            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <IconTag className="size-3" />
-              {tags.length}
-            </span>
-          )}
-          {isHidden && (
-            <span className="text-[10px] whitespace-nowrap rounded-full bg-muted px-2 py-[2px] text-muted-foreground">
-              Archived
-            </span>
-          )}
-        </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {tags.length > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                <IconTag className="size-3" />
+                {tags.length}
+              </span>
+            )}
+            {isHidden && (
+              <span className="text-[10px] whitespace-nowrap rounded-full bg-muted px-2 py-[2px] text-muted-foreground">
+                Archived
+              </span>
+            )}
+          </div>
+        </Link>
 
         {/* options */}
         <div
           className={cn(
-            "flex items-center self-stretch text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0",
-            !isOpen && "pointer-events-none opacity-0"
+            "flex items-center self-stretch text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 z-20",
+            !isOpen && "pointer-events-none opacity-0",
+            isDropdownOpen && "opacity-100"
           )}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
         >
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 hover:bg-transparent"
+                className="h-6 w-6 hover:bg-transparent hover:text-foreground"
                 aria-label="Open conversation options"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
               >
                 <IconDots className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-40">
+            <DropdownMenuContent align="start" className="w-44">
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
                   setIsEditOpen(true);
                 }}
               >
-                <IconPencil className="size-5" />
-                Rename & tags
+                <IconPencil className="size-4 mr-2" />
+                Rename
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -202,7 +211,7 @@ export const SidebarConversationItem = memo(
                   handleArchiveToggle();
                 }}
               >
-                {isHidden ? <IconArchiveOff className="size-5" /> : <IconArchive className="size-5" />}
+                {isHidden ? <IconArchiveOff className="size-4 mr-2" /> : <IconArchive className="size-4 mr-2" />}
                 {isHidden ? "Unarchive" : "Archive"}
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -212,98 +221,90 @@ export const SidebarConversationItem = memo(
                 }}
                 className="text-destructive focus:text-destructive"
               >
-                <IconTrash className="text-destructive size-5" />
-                Delete
+                <IconTrash className="text-destructive size-4 mr-2" />
+                Delete chat
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </Link>
+      </div>
     );
 
-    /* preserve the previous “click-anywhere” UX */
     return (
-      <div onClick={handleRowClick}>
+      <>
         {content}
 
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Edit conversation</DialogTitle>
-              <DialogDescription>
-                Rename this chat and manage its tags for faster filtering.
-              </DialogDescription>
+              <DialogTitle>Rename chat</DialogTitle>
             </DialogHeader>
 
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-sm font-medium">Title</label>
-                <Input
-                  value={draftTitle}
-                  onChange={(e) => setDraftTitle(e.target.value)}
-                  placeholder="Conversation title"
-                />
-              </div>
+            <div className="space-y-4 py-2">
+               <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground ml-1">Name</label>
+                  <Input
+                    value={draftTitle}
+                    onChange={(e) => setDraftTitle(e.target.value)}
+                    placeholder="Chat name"
+                    className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50"
+                  />
+               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-medium">Tags</label>
-                  {availableTags.data && availableTags.data.length > 0 && (
-                    <span className="text-[11px] text-muted-foreground">
-                      Suggestions:
-                      <span className="ml-2 flex gap-1 flex-wrap">
-                        {availableTags.data.slice(0, 6).map((tag) => (
-                          <button
-                            key={tag.id}
-                            type="button"
-                            onClick={() => addTag(tag.name)}
-                            className="rounded-full border border-border px-2 py-[2px] text-[11px] hover:bg-muted transition-colors"
-                          >
-                            {tag.name}
-                          </button>
-                        ))}
-                      </span>
-                    </span>
-                  )}
+                  <label className="text-xs font-medium text-muted-foreground ml-1">Tags</label>
+                  <span className="text-[10px] text-muted-foreground">Select to apply</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {selectedTags.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No tags yet</span>
-                  )}
-                  {selectedTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-[4px] text-xs"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <IconX className="size-3" />
-                      </button>
-                    </span>
-                  ))}
+                    {/* Render available tags as toggleable chips */}
+                    {availableTags.data?.map((tag) => {
+                        const isSelected = selectedTags.some(t => t.toLowerCase() === tag.name.toLowerCase());
+                        return (
+                            <button
+                                key={tag.id}
+                                type="button"
+                                onClick={() => toggleTag(tag.name)}
+                                className={cn(
+                                    "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                                    isSelected
+                                        ? "bg-foreground text-background border-foreground hover:bg-foreground/90"
+                                        : "bg-background text-foreground border-border hover:bg-muted"
+                                )}
+                            >
+                                {tag.name}
+                            </button>
+                        )
+                    })}
                 </div>
-
-                <div className="flex gap-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={handleTagKeyDown}
-                    placeholder="Add a tag and press Enter"
-                  />
-                  <Button type="button" variant="secondary" onClick={() => addTag(tagInput)}>
-                    Add
-                  </Button>
+                
+                <div className="relative">
+                    <Input
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={handleTagKeyDown}
+                        placeholder="Add new tag..."
+                        className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50 text-xs h-9"
+                    />
+                     {tagInput && (
+                        <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                            <Button 
+                                size="sm" 
+                                variant="ghost" 
+                                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                                onClick={() => addTag(tagInput)}
+                            >
+                                Add
+                            </Button>
+                        </div>
+                    )}
                 </div>
               </div>
             </div>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={() => setIsEditOpen(false)}>
+              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                 Cancel
               </Button>
               <Button onClick={handleSave} disabled={updateConversation.isPending}>
@@ -316,9 +317,9 @@ export const SidebarConversationItem = memo(
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+              <AlertDialogTitle>Delete chat?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will remove the chat and its messages permanently.
+                This will delete <span className="font-medium text-foreground">"{conversation.title}"</span>.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -332,7 +333,7 @@ export const SidebarConversationItem = memo(
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </>
     );
   },
   (a, b) =>

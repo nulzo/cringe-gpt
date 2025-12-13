@@ -1,4 +1,4 @@
-import { useMemo, useState, useDeferredValue } from "react";
+import { useMemo, useState, useDeferredValue, useRef } from "react";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   IconChartHistogram,
@@ -8,29 +8,30 @@ import {
   IconMenu2,
   IconMessagePlus,
   IconSearch,
-  IconTag,
-  IconArchive,
   IconSettings,
+  IconArchive,
+  IconTag,
   IconX,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { useTags } from "@/features/chat/api/get-tags";
 import { SettingsModal } from "@/features/settings/components/modal/settings-modal.tsx";
 import { CommandPalette } from "@/features/command-palette";
 import { APP_NAME, APP_VERSION } from "@/configuration/const";
 import { useConversations } from "@/features/chat/api/get-conversations";
-import { useTags } from "@/features/chat/api/get-tags";
 import { Head } from "@/shared/layout/head";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/features/settings/api/get-settings";
@@ -73,7 +74,13 @@ type SidebarItem = {
   fn?: () => void;
 };
 
-const SidebarNavButton = ({ item, isOpen }: { item: SidebarItem; isOpen: boolean }) => {
+const SidebarNavButton = ({
+  item,
+  isOpen,
+}: {
+  item: SidebarItem;
+  isOpen: boolean;
+}) => {
   if (!item.path) return null;
 
   const Icon = item.icon;
@@ -141,32 +148,35 @@ export function Layout() {
   const { animationsEnabled } = useAnimationStore();
   const conversations = useConversations();
   const tagsQuery = useTags();
+  const navigate = useNavigate();
+  const { data } = useSettings();
+
   const [searchTerm, setSearchTerm] = useState("");
   const deferredSearch = useDeferredValue(searchTerm);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
   const [showArchived, setShowArchived] = useState(false);
-  const navigate = useNavigate();
-  const { data } = useSettings();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  const parentRef = useRef<HTMLDivElement>(null);
 
-    
-    const location = useLocation();
-    const pageTitle = useMemo(() => {
-        if (location.pathname.startsWith("/dashboard")) return "Dashboard";
-        if (location.pathname.startsWith("/image-generation")) return "Image Generation";
-        if (location.pathname.startsWith("/chat")){
-            const id = location.pathname.split("/")[2];
-            const numericId = Number(id);
-            const convo = conversations.data?.find(c => c.id === numericId);
-            return convo?.title ?? "Chat";
-        }
-        if (location.pathname === "/" && location.search.includes("temp=true"))
-            return "Private Chat";
-        if (location.pathname === "/") return "New Chat";
+  const location = useLocation();
+  const pageTitle = useMemo(() => {
+    if (location.pathname.startsWith("/dashboard")) return "Dashboard";
+    if (location.pathname.startsWith("/image-generation"))
+      return "Image Generation";
+    if (location.pathname.startsWith("/chat")) {
+      const id = location.pathname.split("/")[2];
+      const numericId = Number(id);
+      const convo = conversations.data?.find((c) => c.id === numericId);
+      return convo?.title ?? "Chat";
+    }
+    if (location.pathname === "/" && location.search.includes("temp=true"))
+      return "Private Chat";
+    if (location.pathname === "/") return "New Chat";
 
-        // Fallback – show app name only
-        return undefined;
-    }, [location.pathname, location.search, conversations.data]);
+    // Fallback – show app name only
+    return undefined;
+  }, [location.pathname, location.search, conversations.data]);
 
   const toggleTag = (tag: string) => {
     setTagFilters((prev) => {
@@ -199,25 +209,22 @@ export function Layout() {
         const pinnedA = (a as any).isPinned ?? (a as any).is_pinned ? 1 : 0;
         const pinnedB = (b as any).isPinned ?? (b as any).is_pinned ? 1 : 0;
         if (pinnedA !== pinnedB) return pinnedB - pinnedA;
-        const dateA = new Date((a as any).updated_at ?? (a as any).updatedAt ?? 0).getTime();
-        const dateB = new Date((b as any).updated_at ?? (b as any).updatedAt ?? 0).getTime();
+        const dateA = new Date(
+          (a as any).updated_at ?? (a as any).updatedAt ?? 0
+        ).getTime();
+        const dateB = new Date(
+          (b as any).updated_at ?? (b as any).updatedAt ?? 0
+        ).getTime();
         return dateB - dateA;
       });
-  }, [conversations.data, searchTerm, tagFilters, showArchived]);
+  }, [conversations.data, deferredSearch, tagFilters, showArchived]);
 
-  const openSettingsModal = () => {
-    setIsSettingsModalOpen(!isSettingsModalOpen);
-  };
-
-  const bottomNavItems = [
-    {
-      id: "settings_trigger",
-      name: "Settings",
-      icon: IconSettings,
-      fn: openSettingsModal,
-    },
-    { id: "help", name: "Help", icon: IconLifebuoy, path: "/help" },
-  ];
+  const rowVirtualizer = useVirtualizer({
+    count: filteredConversations.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 40, 
+    overscan: 5,
+  });
 
   const transitionDuration = animationsEnabled
     ? SIDEBAR_TRANSITION_DURATION
@@ -230,9 +237,8 @@ export function Layout() {
 
   return (
     <>
-        <Head title={pageTitle} />
+      <Head title={pageTitle} />
       <div className="flex flex-col w-screen h-screen max-h-screen overflow-hidden">
-
         {/* --- Main Content Area --- */}
         <div className="flex flex-1 bg-sidebar overflow-hidden">
           {/* --- SIDEBAR --- */}
@@ -324,8 +330,7 @@ export function Layout() {
                               ? "opacity-100 translate-x-0"
                               : "opacity-0 -translate-x-2"
                           } `}
-                          style={{
-                          }}
+                          style={{}}
                         >
                           <span className={`group-hover:text-foreground`}>
                             {item.name}
@@ -362,120 +367,166 @@ export function Layout() {
               <div className="mx-2 bg-border h-[1px]" />
             </div>
 
-            {/* Main scrollable area (converastions) */}
+            {/* Main scrollable area (conversations) */}
             <div
-            className={cn(
-              "overflow-auto",
-              isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
+              ref={parentRef}
+              className={cn(
+                "overflow-y-auto overflow-x-hidden flex-1",
+                isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+              )}
               style={{
-                height: "calc(100% - 80px)",
-                maxHeight: "calc(100% - 80px)",
                 transitionDuration: `${transitionDuration}ms`,
               }}
               aria-hidden={!isSidebarOpen}
             >
               {isSidebarOpen && (
-              <nav className="p-2">
-                  <div key="conversations" className="mb-2">
-                    <div className="px-3 h-8 flex items-center justify-between">
-                      <div className="overflow-hidden text-[12px] text-muted-foreground/75 whitespace-nowrap select-none">
-                        Conversations
+                <div className="flex flex-col min-h-full">
+                  {/* Search / Filter Header */}
+                  <div className="px-3 py-2 sticky top-0 bg-sidebar z-10 space-y-2">
+                    <div className="flex items-center gap-1">
+                      <div className="relative flex-1">
+                        <IconSearch className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground size-3.5" />
+                        <Input
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          placeholder="Search..."
+                          className="h-7 pl-7 text-xs bg-sidebar-accent/50 border-transparent focus-visible:bg-background focus-visible:border-border transition-colors placeholder:text-muted-foreground/70"
+                        />
+                        {searchTerm && (
+                          <button
+                            onClick={() => setSearchTerm("")}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          >
+                            <IconX className="size-3" />
+                          </button>
+                        )}
                       </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                              "h-7 w-7 text-muted-foreground",
+                              (tagFilters.length > 0 || showArchived) &&
+                                "text-primary bg-sidebar-accent"
+                            )}
+                          >
+                            <IconTag className="size-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuCheckboxItem
+                            checked={showArchived}
+                            onCheckedChange={(c) => setShowArchived(!!c)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <IconArchive className="size-3.5" />
+                              <span>Archived Chats</span>
+                            </div>
+                          </DropdownMenuCheckboxItem>
+                          <div className="h-[1px] bg-border my-1" />
+                          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                            Filter by Tag
+                          </div>
+                          {tagsQuery.data?.map((tag) => (
+                            <DropdownMenuCheckboxItem
+                              key={tag.id}
+                              checked={tagFilters.some(
+                                (t) =>
+                                  t.toLowerCase() === tag.name.toLowerCase()
+                              )}
+                              onCheckedChange={() => toggleTag(tag.name)}
+                            >
+                              {tag.name}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                          {!tagsQuery.isLoading &&
+                            (tagsQuery.data?.length ?? 0) === 0 && (
+                              <div className="px-2 py-1 text-xs text-muted-foreground">
+                                No tags available
+                              </div>
+                            )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
 
-                    <div className="px-2 py-2 space-y-2 rounded-md border border-border/40 bg-sidebar/70">
-                      <Input
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search chats"
-                        className="h-9 text-sm"
-                      />
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 flex items-center gap-2 px-2 border-border/60 bg-background/60"
+                    {tagFilters.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {tagFilters.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 rounded bg-muted/50 px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                          >
+                            {tag}
+                            <button
+                              type="button"
+                              onClick={() => toggleTag(tag)}
+                              className="hover:text-foreground"
                             >
-                              <IconTag size={16} />
-                              <span className="text-xs">
-                                {tagFilters.length > 0
-                                  ? `${tagFilters.length} tag${tagFilters.length > 1 ? "s" : ""}`
-                                  : "Tags"}
-                              </span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="w-48">
-                            {tagsQuery.isLoading && (
-                              <div className="px-2 py-1 text-xs text-muted-foreground">Loading tags…</div>
-                            )}
-                            {tagsQuery.data?.map((tag) => (
-                              <DropdownMenuCheckboxItem
-                                key={tag.id}
-                                checked={tagFilters.some((t) => t.toLowerCase() === tag.name.toLowerCase())}
-                                onCheckedChange={() => toggleTag(tag.name)}
-                              >
-                                {tag.name}
-                              </DropdownMenuCheckboxItem>
-                            ))}
-                            {!tagsQuery.isLoading && (tagsQuery.data?.length ?? 0) === 0 && (
-                              <div className="px-2 py-1 text-xs text-muted-foreground">No tags yet</div>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <Button
-                          variant={showArchived ? "secondary" : "ghost"}
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setShowArchived((prev) => !prev)}
-                          aria-label={showArchived ? "Hide archived" : "Show archived"}
-                        >
-                          <IconArchive size={16} className={showArchived ? "text-foreground" : "text-muted-foreground"} />
-                        </Button>
+                              <IconX className="size-2.5" />
+                            </button>
+                          </span>
+                        ))}
                       </div>
+                    )}
+                  </div>
 
-                      {tagFilters.length > 0 && (
-                        <div className="flex flex-wrap gap-2 px-1">
-                          {tagFilters.map((tag) => (
-                            <span
-                              key={tag}
-                              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-[3px] text-[11px]"
-                            >
-                              {tag}
-                              <button
-                                type="button"
-                                onClick={() => toggleTag(tag)}
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <IconX className="size-3" />
-                              </button>
-                            </span>
-                          ))}
+                  <nav className="px-2 pb-2 flex-1 relative">
+                    {conversations.isLoading && (
+                      <div className="text-xs text-muted-foreground px-3 py-1">
+                        Loading…
+                      </div>
+                    )}
+                    {!conversations.isLoading &&
+                      filteredConversations.length === 0 && (
+                        <div className="text-xs text-muted-foreground px-3 py-1 text-center mt-4">
+                          {searchTerm
+                            ? "No results found"
+                            : "No conversations yet"}
                         </div>
                       )}
-                    </div>
 
-                    <div className="space-y-1">
-                      {conversations.isLoading && <div className="text-xs text-muted-foreground px-3 py-1">Loading…</div>}
-                      {!conversations.isLoading &&
-                        filteredConversations.length === 0 && (
-                          <div className="text-xs text-muted-foreground px-3 py-1">No conversations</div>
-                        )}
-                      {!conversations.isLoading &&
-                        filteredConversations.map((item) => (
-                          <SidebarConversationItem
-                            conversation={item}
-                            key={item.id}
-                            isOpen={isSidebarOpen}
-                            isActive={location.pathname === `/chat/${item.id}`}
-                          />
-                        ))}
-                    </div>
-                  </div>
-              </nav>
+                    {!conversations.isLoading &&
+                      filteredConversations.length > 0 && (
+                        <div
+                          style={{
+                            height: `${rowVirtualizer.getTotalSize()}px`,
+                            width: "100%",
+                            position: "relative",
+                          }}
+                        >
+                          {rowVirtualizer
+                            .getVirtualItems()
+                            .map((virtualItem) => {
+                              const item =
+                                filteredConversations[virtualItem.index];
+                              return (
+                                <div
+                                  key={item.id}
+                                  style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: "100%",
+                                    height: `${virtualItem.size}px`,
+                                    transform: `translateY(${virtualItem.start}px)`,
+                                  }}
+                                >
+                                  <SidebarConversationItem
+                                    conversation={item}
+                                    isOpen={isSidebarOpen}
+                                    isActive={
+                                      location.pathname === `/chat/${item.id}`
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                        </div>
+                      )}
+                  </nav>
+                </div>
               )}
             </div>
 
@@ -483,40 +534,7 @@ export function Layout() {
             <div className="bottom-0 z-10 sticky flex-shrink-0 bg-sidebar">
               <div className="mx-2 bg-border h-[1.5px]" />
 
-              <div className="px-2 pt-2 space-y-1">
-                {bottomNavItems.map((item) => {
-                  const Icon = item.icon;
-                  if (item.path) {
-                    return (
-                      <Link
-                        key={item.id}
-                        to={item.path}
-                        className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-hover"
-                      >
-                        <Icon size={18} />
-                        {isSidebarOpen && <span>{item.name}</span>}
-                      </Link>
-                    );
-                  }
-                  return (
-                    <Button
-                      key={item.id}
-                      variant="ghost"
-                      size="sm"
-                      className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
-                      onClick={item.fn}
-                    >
-                      <Icon size={18} />
-                      {isSidebarOpen && <span>{item.name}</span>}
-                    </Button>
-                  );
-                })}
-              </div>
-
-              <div className="mx-2 bg-border h-[1px]" />
-
               <div className={`px-2 pt-2 pb-2 mb-4`}>
-
                 {/* User Profile */}
                 <NavUser
                   user={{
@@ -539,7 +557,6 @@ export function Layout() {
         </div>
       </div>
 
-      {/* Render Modals and Command Palette (controlled by state within Layout) */}
       <CommandPalette
         open={isCommandPaletteOpen}
         onOpenChange={setIsCommandPaletteOpen}
@@ -552,6 +569,3 @@ export function Layout() {
     </>
   );
 }
-
-// Optional: Export component for App.tsx
-// export default Layout;

@@ -10,5 +10,3 @@ public interface IPersonaService
     Task<PersonaDto?> UpdateAsync(int id, int userId, PersonaUpdateDto updateDto);
     Task<bool> DeleteAsync(int id, int userId);
 }
-
-

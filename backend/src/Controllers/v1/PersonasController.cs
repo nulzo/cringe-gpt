@@ -50,5 +50,3 @@ public class PersonasController : BaseApiController
         return success ? NoContent() : NotFound();
     }
 }
-
-
