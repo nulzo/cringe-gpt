@@ -72,18 +72,18 @@ export function Sparkline({
         d={path}
         fill="none"
         stroke={color}
-        strokeWidth={1.5}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="opacity-70"
+        className="opacity-100"
       />
       {showDot && lastPoint && (
         <circle
           cx={lastPoint.x}
           cy={lastPoint.y}
-          r={3}
+          r={3.5}
           fill={color}
-          className="opacity-90"
+          className="opacity-100"
         />
       )}
     </svg>

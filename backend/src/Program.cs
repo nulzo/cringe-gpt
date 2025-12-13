@@ -337,6 +337,7 @@ if (bool.TryParse(configuration["ENABLE_HTTPS_REDIRECT"], out var httpsRedirect)
 }
 
 // Enable static files serving from wwwroot
+app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseCors("allowOrigin");
@@ -350,7 +351,6 @@ app.MapControllers();
 app.MapHub<NotificationsHub>("/hubs/notifications");
 
 // Add simple routes for convenience
-app.MapGet("/", () => Results.Redirect("/index.html"));
 app.MapGet("/test", () => Results.Redirect("/stream-test.html"));
 
 // Ensure client-side routing works for the SPA

@@ -68,57 +68,46 @@ export function CapabilityCard({
       </div>
 
       {/* Chart */}
-      <div className="mt-4 flex-1">
-        <div className="h-[120px] w-full">
+      <div className="mt-6 flex-1">
+        <div className="h-[100px] w-full">
           {!hasData ? (
-            <div className="flex h-full items-end justify-between gap-px px-1">
-              {Array.from({ length: 30 }).map((_, i) => (
+            <div className="flex h-full items-end justify-between gap-px px-1 opacity-20">
+              {Array.from({ length: 20 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-px w-full bg-border/40"
-                  style={{ marginBottom: "50%" }}
+                  className="h-full w-full rounded-t-sm bg-muted"
+                  style={{ height: `${Math.random() * 60 + 20}%` }}
                 />
               ))}
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis
-                  dataKey="date"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={false}
-                  hide
-                />
+                <XAxis hide />
                 <YAxis hide domain={[0, "auto"]} />
                 <Tooltip
-                  cursor={false}
+                  cursor={{ fill: "hsl(var(--muted) / 0.2)", radius: 2 }}
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
                     const d = payload[0].payload
                     return (
-                      <div className="rounded-lg border bg-popover px-2 py-1.5 text-xs shadow-md">
-                        <p className="text-muted-foreground">
-                          {new Date(d.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </p>
-                        <p className="font-medium">{d.value.toLocaleString()}</p>
+                      <div className="rounded border bg-popover px-2 py-1 text-xs shadow-sm">
+                        <span className="font-medium text-foreground">
+                          {d.value.toLocaleString()}
+                        </span>
+                        <span className="ml-2 text-muted-foreground">
+                          {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
                       </div>
                     )
                   }}
                 />
-                <Bar dataKey="value" radius={[2, 2, 0, 0]} maxBarSize={12}>
-                  {chartData?.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill="hsl(var(--primary))"
-                      fillOpacity={0.7}
-                    />
-                  ))}
-                </Bar>
+                <Bar
+                  dataKey="value"
+                  radius={[2, 2, 2, 2]}
+                  maxBarSize={32}
+                  className="fill-primary"
+                />
               </BarChart>
             </ResponsiveContainer>
           )}

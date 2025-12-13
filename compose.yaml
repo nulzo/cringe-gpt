@@ -12,9 +12,9 @@ services:
     ports:
       - "5278:8080"
     volumes:
-      - chatapp-data:/app/data
-      - storage-data:/app/Storage
-      - logs-data:/app/Logs
+      - ./data:/app/data
+      - ./storage:/app/Storage
+      - ./logs:/app/Logs
     restart: unless-stopped
     depends_on:
       - jaeger

@@ -50,3 +50,13 @@ The manifest:
 - Mounts an `emptyDir` for logs
 - Exposes port 80 via a ClusterIP Service
 - Uses `/health` for readiness/liveness
+
+```bash
+mkdir -p data storage
+
+docker run -d \
+  -p 8080:8080 \
+  -v "$(pwd)/data:/app/data" \
+  -v "$(pwd)/storage:/app/Storage" \
+  ghcr.io/nulzo/cringe-gpt:latest
+```

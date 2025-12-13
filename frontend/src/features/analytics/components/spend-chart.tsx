@@ -126,23 +126,23 @@ export function SpendChart({ data, isLoading, className }: SpendChartProps) {
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                interval="preserveStartEnd"
-                minTickGap={40}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                dy={10}
+                minTickGap={32}
               />
               <YAxis
                 hide
                 domain={[0, "auto"]}
               />
               <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.3)" }}
+                cursor={{ fill: "hsl(var(--muted) / 0.2)", radius: 4 }}
                 content={({ active, payload }) => {
                   if (!active || !payload?.length) return null
                   const d = payload[0].payload
                   return (
-                    <div className="rounded-lg border bg-popover px-3 py-2 text-sm shadow-md">
-                      <p className="font-medium">{d.label}</p>
-                      <p className="text-muted-foreground">
+                    <div className="rounded-md border bg-popover px-3 py-1.5 text-sm shadow-sm">
+                      <p className="mb-0.5 text-xs text-muted-foreground">{d.label}</p>
+                      <p className="font-semibold text-foreground">
                         ${d.cost.toFixed(4)}
                       </p>
                     </div>
@@ -151,24 +151,14 @@ export function SpendChart({ data, isLoading, className }: SpendChartProps) {
               />
               <Bar
                 dataKey="cost"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={48}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.85}
-                  />
-                ))}
-              </Bar>
+                radius={[4, 4, 4, 4]}
+                maxBarSize={40}
+                className="fill-primary"
+              />
             </BarChart>
           </ResponsiveContainer>
         )}
       </div>
-
-      {/* Gradient bar indicator */}
-      <div className="h-2 w-full rounded-full bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
     </div>
   )
 }
