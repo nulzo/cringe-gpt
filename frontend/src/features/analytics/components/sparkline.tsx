@@ -26,10 +26,11 @@ export function Sparkline({
     const max = Math.max(...data, 1)
     const min = Math.min(...data, 0)
     const range = max - min || 1
+    const padding = 4 // Padding to prevent clipping at top/bottom
 
     const points = data.map((value, index) => {
       const x = (index / (data.length - 1 || 1)) * (typeof width === 'number' ? width : 100)
-      const y = height - ((value - min) / range) * height
+      const y = (height - padding) - ((value - min) / range) * (height - 2 * padding)
       return { x, y }
     })
 
@@ -50,11 +51,13 @@ export function Sparkline({
     const max = Math.max(...data, 1)
     const min = Math.min(...data, 0)
     const range = max - min || 1
+    const padding = 4
+    
     const value = data[data.length - 1]
     
     // Calculate last point position
     const x = typeof width === 'number' ? width : 100
-    const y = height - ((value - min) / range) * height
+    const y = (height - padding) - ((value - min) / range) * (height - 2 * padding)
     
     return { x, y }
   }, [data, width, height])
