@@ -15,7 +15,6 @@ import { SpendChart } from "./spend-chart"
 import { CapabilityCard } from "./capability-card"
 import { MetricSidebar } from "./metric-sidebar"
 import { useDashboardAnalytics } from "../api/get-dashboard-analytics"
-import { useTimeSeriesMetrics } from "../api/get-time-series"
 import { useAnalyticsTimeRange, useAnalyticsFilters, useSetTimeRange, useGetQuickTimeRange } from "@/stores/analytics-store"
 import { toQueryParams } from "../utils/params"
 import type { DateRange } from "react-day-picker"
@@ -40,9 +39,7 @@ export function UsageDashboard() {
 
   // Fetch data
   const { data: dashboard, isLoading: dashboardLoading } = useDashboardAnalytics(params)
-  const { data: timeSeries, isLoading: timeSeriesLoading } = useTimeSeriesMetrics(params)
-
-  const isLoading = dashboardLoading || timeSeriesLoading
+  const isLoading = dashboardLoading
 
   // Format date range for display
   const dateRangeLabel = useMemo(() => {
@@ -78,11 +75,12 @@ export function UsageDashboard() {
 
   // Normalize time series to fill missing days within the selected range
   const normalizedSeries = useMemo(() => {
+    const timeSeries = dashboard?.timeSeries
     if (!timeSeries || timeSeries.length === 0) return []
     const start = timeRange.from ? new Date(timeRange.from) : undefined
     const end = timeRange.to ? new Date(timeRange.to) : undefined
-    return fillMissingDates(timeSeries, "date", "day", start, end)
-  }, [timeSeries, timeRange.from, timeRange.to])
+    return fillMissingDates(timeSeries, "date", filters.groupBy === "month" ? "month" : filters.groupBy, start, end)
+  }, [dashboard?.timeSeries, filters.groupBy, timeRange.from, timeRange.to])
 
   const handleExport = useCallback(() => {
     if (!normalizedSeries || normalizedSeries.length === 0) return
@@ -153,12 +151,12 @@ export function UsageDashboard() {
   }, [normalizedSeries, dashboard])
 
   return (
-    <div className="flex h-full flex-col bg-background">
+    <div className="flex h-full flex-col bg-muted/20 dark:bg-background">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 px-8 py-6 border-b">
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border/50 bg-background/70 px-6 py-5 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Usage</h1>
-          <p className="text-sm text-muted-foreground">Track your API usage and spending</p>
+          <h1 className="text-xl font-semibold tracking-tight">Usage</h1>
+          <p className="text-sm text-muted-foreground">Usage & spend analytics</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -215,20 +213,20 @@ export function UsageDashboard() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Charts and capabilities */}
-        <main className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="mx-auto max-w-5xl space-y-8">
+        <main className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="mx-auto max-w-6xl space-y-6">
             {/* Spend Chart */}
             <section>
               <SpendChart
                 data={normalizedSeries}
                 isLoading={isLoading}
-                className="rounded-xl border bg-card p-6 shadow-sm"
+                className="rounded-2xl border border-border/50 bg-card p-6 shadow-sm"
               />
             </section>
 
             {/* Tabs */}
             <Tabs defaultValue="capabilities" className="w-full">
-              <div className="mb-4 border-b">
+              <div className="mb-4 border-b border-border/50">
                 <TabsList className="h-auto w-auto justify-start bg-transparent p-0">
                   <TabsTrigger
                     value="capabilities"
@@ -249,7 +247,7 @@ export function UsageDashboard() {
                 {isLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 4 }).map((_, i) => (
-                      <div key={i} className="rounded-xl border border-border/60 p-4">
+                      <div key={i} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
                         <Skeleton className="mb-2 h-4 w-24" />
                         <Skeleton className="mb-4 h-3 w-16" />
                         <Skeleton className="h-[100px] w-full" />
@@ -274,7 +272,7 @@ export function UsageDashboard() {
                 {isLoading ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     {Array.from({ length: 2 }).map((_, i) => (
-                      <div key={i} className="rounded-xl border border-border/60 p-4">
+                      <div key={i} className="rounded-2xl border border-border/50 bg-card p-4 shadow-sm">
                         <Skeleton className="mb-2 h-4 w-24" />
                         <Skeleton className="mb-4 h-3 w-16" />
                         <Skeleton className="h-[100px] w-full" />
@@ -313,7 +311,7 @@ export function UsageDashboard() {
         </main>
 
         {/* Right: Sidebar metrics */}
-        <aside className="hidden w-80 shrink-0 border-l border-border/40 bg-muted/10 p-6 xl:block">
+        <aside className="hidden w-80 shrink-0 border-l border-border/50 bg-background/60 p-6 backdrop-blur xl:block">
           <Sidebar
             timeSeries={normalizedSeries}
             byModel={dashboard?.byModel}

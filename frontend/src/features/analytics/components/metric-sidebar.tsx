@@ -126,13 +126,13 @@ export function MetricSidebar({
         <TabsList className="h-8 w-full justify-start border-b bg-transparent p-0">
           <TabsTrigger
             value="models"
-            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
           >
             Models
           </TabsTrigger>
           <TabsTrigger
             value="providers"
-            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs data-[state=active]:border-foreground data-[state=active]:bg-transparent"
+            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
           >
             Providers
           </TabsTrigger>

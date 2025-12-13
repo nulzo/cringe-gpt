@@ -7,6 +7,7 @@ const getDashboardAnalytics = (params: AnalyticsQueryParams = {}): Promise<Analy
 
   if (params.from) searchParams.append('from', params.from);
   if (params.to) searchParams.append('to', params.to);
+  if (params.groupBy) searchParams.append('groupBy', params.groupBy);
 
   return api.get(`/metrics/dashboard?${searchParams.toString()}`);
 };

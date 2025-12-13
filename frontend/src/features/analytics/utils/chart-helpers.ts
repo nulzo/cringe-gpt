@@ -7,7 +7,7 @@ import type { TimeSeriesMetrics } from '../types';
 export function fillMissingDates<T extends TimeSeriesMetrics>(
   data: T[],
   dateKey: keyof T = 'date',
-  groupBy: 'day' | 'hour' = 'day',
+  groupBy: 'day' | 'hour' | 'month' = 'day',
   startDate?: Date,
   endDate?: Date
 ): T[] {
@@ -23,20 +23,40 @@ export function fillMissingDates<T extends TimeSeriesMetrics>(
   const filledData: T[] = [];
   const dateMap = new Map<string, T>();
 
-  // Create a map of existing data using normalized date keys (YYYY-MM-DD)
+  function normalizeKey(d: Date): string {
+    if (groupBy === 'hour') {
+      // YYYY-MM-DDTHH
+      const iso = d.toISOString();
+      return iso.slice(0, 13);
+    }
+    if (groupBy === 'month') {
+      // YYYY-MM
+      const iso = d.toISOString();
+      return iso.slice(0, 7);
+    }
+    // day -> YYYY-MM-DD
+    return d.toISOString().split('T')[0];
+  }
+
+  // Create a map of existing data using normalized keys
   sortedData.forEach(item => {
     const dateStr = item[dateKey] as string;
-    // Normalize to YYYY-MM-DD format for consistent comparison, preserving original data
     const date = new Date(dateStr);
-    const normalizedDate = date.toISOString().split('T')[0];
-    dateMap.set(normalizedDate, item);
+    dateMap.set(normalizeKey(date), item);
   });
 
   // Fill in missing dates
   const currentDate = new Date(firstDate);
+  if (groupBy === 'hour') {
+    currentDate.setMinutes(0, 0, 0);
+  }
+  if (groupBy === 'month') {
+    currentDate.setDate(1);
+    currentDate.setHours(0, 0, 0, 0);
+  }
   while (currentDate <= lastDate) {
-    const normalizedDateStr = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format for lookup
-    const fullDateStr = currentDate.toISOString(); // Full ISO format for data entry
+    const normalizedDateStr = normalizeKey(currentDate);
+    const fullDateStr = currentDate.toISOString();
 
     if (dateMap.has(normalizedDateStr)) {
       filledData.push(dateMap.get(normalizedDateStr)!);
@@ -55,8 +75,14 @@ export function fillMissingDates<T extends TimeSeriesMetrics>(
       filledData.push(zeroEntry);
     }
 
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
+    // Move to next bucket
+    if (groupBy === 'hour') {
+      currentDate.setHours(currentDate.getHours() + 1);
+    } else if (groupBy === 'month') {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+    } else {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
   }
 
   return filledData;
