@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts"
+import { useMemo, useState, memo } from "react"
+import { BarChart, Bar, XAxis, CartesianGrid } from "recharts"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import type { TimeSeriesMetrics } from "../types"
 
 interface SpendChartProps {
@@ -13,7 +14,14 @@ interface SpendChartProps {
   className?: string
 }
 
-export function SpendChart({ data, isLoading, className }: SpendChartProps) {
+const chartConfig = {
+  cost: {
+    label: "Cost",
+    color: "hsl(var(--primary))",
+  },
+}
+
+export const SpendChart = memo(function SpendChart({ data, isLoading, className }: SpendChartProps) {
   const [groupBy, setGroupBy] = useState<"1d" | "7d" | "30d">("1d")
 
   const chartData = useMemo(() => {
@@ -61,11 +69,6 @@ export function SpendChart({ data, isLoading, className }: SpendChartProps) {
     return data.reduce((acc, d) => acc + d.cost, 0)
   }, [data])
 
-  const maxValue = useMemo(() => {
-    if (!chartData.length) return 0
-    return Math.max(...chartData.map((d) => d.cost))
-  }, [chartData])
-
   if (isLoading) {
     return (
       <div className={cn("space-y-4", className)}>
@@ -91,11 +94,6 @@ export function SpendChart({ data, isLoading, className }: SpendChartProps) {
             <span className="text-3xl font-semibold tracking-tight">
               ${totalSpend.toFixed(2)}
             </span>
-            {maxValue > 0 && (
-              <span className="text-sm text-primary">
-                ${maxValue.toFixed(2)}
-              </span>
-            )}
           </div>
         </div>
 
@@ -120,48 +118,36 @@ export function SpendChart({ data, isLoading, className }: SpendChartProps) {
             No spend data available
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <BarChart accessibilityLayer data={chartData}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
               <XAxis
                 dataKey="label"
                 axisLine={false}
                 tickLine={false}
+                tickMargin={10}
                 tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                dy={10}
                 minTickGap={32}
               />
-              <YAxis
-                hide
-                domain={[0, "auto"]}
-              />
-              <Tooltip
-                cursor={{ fill: "hsl(var(--muted) / 0.2)", radius: 4 }}
-                content={({ active, payload }) => {
-                  if (!active || !payload?.length) return null
-                  const d = payload[0].payload
-                  return (
-                    <div className="rounded-md border bg-popover px-3 py-1.5 text-sm shadow-sm">
-                      <p className="mb-0.5 text-xs text-muted-foreground">{d.label}</p>
-                      <p className="font-semibold text-foreground">
-                        ${d.cost.toFixed(4)}
-                      </p>
-                    </div>
-                  )
-                }}
+              <ChartTooltip
+                cursor={{ fill: "hsl(var(--muted) / 0.1)" }}
+                content={<ChartTooltipContent indicator="line" />}
               />
               <Bar
                 dataKey="cost"
-                radius={[4, 4, 4, 4]}
-                maxBarSize={40}
-                className="fill-primary"
+                fill="var(--color-cost)"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={50}
               />
             </BarChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </div>
     </div>
   )
-}
+})
+
+
 
 
 

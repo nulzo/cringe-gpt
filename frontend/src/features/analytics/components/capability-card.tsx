@@ -1,9 +1,10 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, memo } from "react"
 import { IconChevronRight } from "@tabler/icons-react"
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts"
+import { BarChart, Bar, XAxis } from "recharts"
 import { cn } from "@/lib/utils"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface CapabilityCardProps {
   title: string
@@ -13,7 +14,14 @@ interface CapabilityCardProps {
   className?: string
 }
 
-export function CapabilityCard({
+const chartConfig = {
+  value: {
+    label: "Value",
+    color: "hsl(var(--primary))",
+  },
+}
+
+export const CapabilityCard = memo(function CapabilityCard({
   title,
   metrics,
   chartData,
@@ -23,11 +31,6 @@ export function CapabilityCard({
   const hasData = useMemo(() => {
     if (!chartData) return false
     return chartData.some((d) => d.value > 0)
-  }, [chartData])
-
-  const maxValue = useMemo(() => {
-    if (!chartData || chartData.length === 0) return 0
-    return Math.max(...chartData.map((d) => d.value))
   }, [chartData])
 
   return (
@@ -81,35 +84,21 @@ export function CapabilityCard({
               ))}
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <XAxis hide />
-                <YAxis hide domain={[0, "auto"]} />
-                <Tooltip
-                  cursor={{ fill: "hsl(var(--muted) / 0.2)", radius: 2 }}
-                  content={({ active, payload }) => {
-                    if (!active || !payload?.length) return null
-                    const d = payload[0].payload
-                    return (
-                      <div className="rounded border bg-popover px-2 py-1 text-xs shadow-sm">
-                        <span className="font-medium text-foreground">
-                          {d.value.toLocaleString()}
-                        </span>
-                        <span className="ml-2 text-muted-foreground">
-                          {new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </span>
-                      </div>
-                    )
-                  }}
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <XAxis hide dataKey="date" />
+                <ChartTooltip
+                  cursor={{ fill: "hsl(var(--muted) / 0.1)" }}
+                  content={<ChartTooltipContent hideLabel indicator="line" />}
                 />
                 <Bar
                   dataKey="value"
-                  radius={[2, 2, 2, 2]}
+                  fill="var(--color-value)"
+                  radius={[2, 2, 0, 0]}
                   maxBarSize={32}
-                  className="fill-primary"
                 />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           )}
         </div>
       </div>
@@ -133,4 +122,5 @@ export function CapabilityCard({
       )}
     </div>
   )
-}
+})
+

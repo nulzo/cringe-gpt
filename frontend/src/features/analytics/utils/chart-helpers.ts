@@ -50,6 +50,7 @@ export function fillMissingDates<T extends TimeSeriesMetrics>(
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
+        averageDurationMs: 0,
       } as T;
       filledData.push(zeroEntry);
     }

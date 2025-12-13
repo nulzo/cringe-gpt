@@ -1,9 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { IconDownload, IconCalendar, IconX } from "@tabler/icons-react"
+import { useMemo, useState, useCallback, memo } from "react"
+import { IconDownload, IconCalendar } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import {
   Popover,
   PopoverContent,
@@ -21,6 +20,8 @@ import { useAnalyticsTimeRange, useAnalyticsFilters, useSetTimeRange, useGetQuic
 import { toQueryParams } from "../utils/params"
 import type { DateRange } from "react-day-picker"
 import { fillMissingDates } from "@/features/analytics/utils/chart-helpers"
+
+const Sidebar = memo(MetricSidebar)
 
 export function UsageDashboard() {
   const timeRange = useAnalyticsTimeRange()
@@ -83,6 +84,34 @@ export function UsageDashboard() {
     return fillMissingDates(timeSeries, "date", "day", start, end)
   }, [timeSeries, timeRange.from, timeRange.to])
 
+  const handleExport = useCallback(() => {
+    if (!normalizedSeries || normalizedSeries.length === 0) return
+
+    const headers = ["Date", "Requests", "Prompt Tokens", "Completion Tokens", "Cost", "Avg Duration (ms)"]
+    const rows = normalizedSeries.map(d => [
+      d.date,
+      d.requests,
+      d.promptTokens,
+      d.completionTokens,
+      d.cost.toFixed(6),
+      d.averageDurationMs.toFixed(2)
+    ])
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.join(","))
+    ].join("\n")
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `usage_export_${new Date().toISOString().split('T')[0]}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }, [normalizedSeries])
+
   // Prepare capability card data
   const capabilityData = useMemo(() => {
     if (!normalizedSeries) return []
@@ -126,7 +155,7 @@ export function UsageDashboard() {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 px-8 py-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 px-8 py-6 border-b">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Usage</h1>
           <p className="text-sm text-muted-foreground">Track your API usage and spending</p>
@@ -176,7 +205,7 @@ export function UsageDashboard() {
           </Popover>
 
           {/* Export button */}
-          <Button variant="outline" size="sm" className="h-8 gap-2 text-xs">
+          <Button variant="outline" size="sm" className="h-8 gap-2 text-xs" onClick={handleExport}>
             <IconDownload className="h-3.5 w-3.5" />
             Export
           </Button>
@@ -186,7 +215,7 @@ export function UsageDashboard() {
       {/* Main content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Charts and capabilities */}
-        <main className="flex-1 overflow-y-auto px-8 pb-8">
+        <main className="flex-1 overflow-y-auto px-8 py-8">
           <div className="mx-auto max-w-5xl space-y-8">
             {/* Spend Chart */}
             <section>
@@ -285,7 +314,7 @@ export function UsageDashboard() {
 
         {/* Right: Sidebar metrics */}
         <aside className="hidden w-80 shrink-0 border-l border-border/40 bg-muted/10 p-6 xl:block">
-          <MetricSidebar
+          <Sidebar
             timeSeries={normalizedSeries}
             byModel={dashboard?.byModel}
             byProvider={dashboard?.byProvider}

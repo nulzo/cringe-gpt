@@ -30,7 +30,7 @@ export function MetricSidebar({
   isLoading,
   className,
 }: MetricSidebarProps) {
-  // Sparkline data
+  
   const tokenSparkline = useMemo(() => {
     if (!timeSeries) return []
     return timeSeries.map((d) => d.promptTokens + d.completionTokens)
@@ -101,7 +101,7 @@ export function MetricSidebar({
         <p className="text-2xl font-semibold">{totalTokens.toLocaleString()}</p>
         <Sparkline
           data={tokenSparkline}
-          width={200}
+          width="100%"
           height={32}
           color="hsl(var(--chart-1))"
           className="w-full"
@@ -114,7 +114,7 @@ export function MetricSidebar({
         <p className="text-2xl font-semibold">{totalRequests.toLocaleString()}</p>
         <Sparkline
           data={requestSparkline}
-          width={200}
+          width="100%"
           height={32}
           color="hsl(var(--primary))"
           className="w-full"
@@ -195,3 +195,5 @@ export function MetricSidebar({
     </div>
   )
 }
+
+
