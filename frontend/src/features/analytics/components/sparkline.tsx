@@ -20,61 +20,71 @@ export function Sparkline({
   color = "currentColor",
   showDot = true,
 }: SparklineProps) {
+  const widthNum = typeof width === "number" ? width : 100
+
+  const stats = useMemo(() => {
+    if (!data || data.length === 0) return { min: 0, max: 1 }
+    let min = Number.POSITIVE_INFINITY
+    let max = Number.NEGATIVE_INFINITY
+    for (let i = 0; i < data.length; i++) {
+      const v = data[i]
+      if (!Number.isFinite(v)) continue
+      if (v < min) min = v
+      if (v > max) max = v
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return { min: 0, max: 1 }
+    // Avoid zero-range charts
+    if (min === max) return { min: min - 1, max: max + 1 }
+    return { min, max }
+  }, [data])
+
   const path = useMemo(() => {
     if (!data || data.length === 0) return ""
 
-    const max = Math.max(...data, 1)
-    const min = Math.min(...data, 0)
-    const range = max - min || 1
-    const padding = 4 // Padding to prevent clipping at top/bottom
+    const padding = 4 // prevents clipping
+    const range = stats.max - stats.min || 1
+    const innerH = Math.max(1, height - 2 * padding)
+    const xDenom = Math.max(1, data.length - 1)
 
-    const points = data.map((value, index) => {
-      const x = (index / (data.length - 1 || 1)) * (typeof width === 'number' ? width : 100)
-      const y = (height - padding) - ((value - min) / range) * (height - 2 * padding)
-      return { x, y }
-    })
+    // Special case: a single point should still render a visible line
+    if (data.length === 1) {
+      const v = Number.isFinite(data[0]) ? data[0] : 0
+      const y = (height - padding) - ((v - stats.min) / range) * innerH
+      return `M 0 ${y} L ${widthNum} ${y}`
+    }
 
-    const d = points.reduce((acc, point, i) => {
-      if (i === 0) return `M ${point.x} ${point.y}`
-      
-      // Smooth curve using quadratic bezier
-      const prev = points[i - 1]
-      const cpX = (prev.x + point.x) / 2
-      return `${acc} Q ${cpX} ${prev.y} ${point.x} ${point.y}`
-    }, "")
-
+    let d = ""
+    for (let i = 0; i < data.length; i++) {
+      const v = Number.isFinite(data[i]) ? data[i] : stats.min
+      const x = (i / xDenom) * widthNum
+      const y = (height - padding) - ((v - stats.min) / range) * innerH
+      d += i === 0 ? `M ${x} ${y}` : ` L ${x} ${y}`
+    }
     return d
-  }, [data, width, height])
+  }, [data, height, stats.max, stats.min, widthNum])
 
   const lastPoint = useMemo(() => {
     if (!data || data.length === 0) return null
-    const max = Math.max(...data, 1)
-    const min = Math.min(...data, 0)
-    const range = max - min || 1
     const padding = 4
-    
-    const value = data[data.length - 1]
-    
-    // Calculate last point position
-    const x = typeof width === 'number' ? width : 100
-    const y = (height - padding) - ((value - min) / range) * (height - 2 * padding)
-    
-    return { x, y }
-  }, [data, width, height])
+    const range = stats.max - stats.min || 1
+    const innerH = Math.max(1, height - 2 * padding)
+    const value = Number.isFinite(data[data.length - 1]) ? data[data.length - 1] : stats.min
+    return {
+      x: widthNum,
+      y: (height - padding) - ((value - stats.min) / range) * innerH,
+    }
+  }, [data, height, stats.max, stats.min, widthNum])
 
   if (!data || data.length === 0) {
     return <div className={cn("opacity-30", className)} style={{ width, height }} />
   }
 
-  // If width is a string (e.g. "100%"), we need to use a viewBox that matches the coordinate system
-  const viewBoxWidth = typeof width === 'number' ? width : 100
-
   return (
     <svg
       width={width}
       height={height}
-      className={cn("overflow-visible", className)}
-      viewBox={`0 0 ${viewBoxWidth} ${height}`}
+      className={cn("block overflow-visible", className)}
+      viewBox={`0 0 ${widthNum} ${height}`}
       preserveAspectRatio="none"
     >
       <path
@@ -85,7 +95,7 @@ export function Sparkline({
         strokeLinecap="round"
         strokeLinejoin="round"
         className="opacity-100"
-        vectorEffect="non-scaling-stroke" 
+        vectorEffect="non-scaling-stroke"
       />
       {showDot && lastPoint && (
         <circle
