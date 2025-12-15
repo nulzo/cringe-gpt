@@ -386,6 +386,18 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
       scheduleSmartUpdate(true);
     }
 
+    // If canceled by user, the store handles the cleanup via cancelStreamFor
+    if (error?.name === "AbortError") {
+      // Ensure we clean up any dangling state if not already handled
+      const targetId = getTargetConversationId();
+      if (targetId && useChatStore.getState().streams[targetId]) {
+        useChatStore.getState().cancelStreamFor(targetId);
+      } else {
+        clearStreaming();
+      }
+      return;
+    }
+
     clearStreaming();
 
     // Call onStreamInterrupted if provided
@@ -396,10 +408,6 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
       });
     }
 
-    // Swallow abort errors to avoid surfacing as user-visible errors
-    if (error?.name === "AbortError") {
-      return;
-    }
     throw error;
   }
 };

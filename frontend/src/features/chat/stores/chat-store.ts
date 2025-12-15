@@ -158,10 +158,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setAbortController: (controller) => set({ abortController: controller }),
 
   cancelStream: () => {
-    const { abortController, streamedMessage } = get();
+    const { abortController, streamedMessage, currentConversationId, streams } = get();
     // Abort the network request if available
     if (abortController) {
       abortController.abort();
+    }
+
+    // New Multi-stream logic:
+    // If we have an active stream for the current conversation, cancel it using the new logic
+    if (currentConversationId && streams[currentConversationId]) {
+        get().cancelStreamFor(currentConversationId);
+        return;
     }
 
     // If we have a partial streamed message, commit it as interrupted
