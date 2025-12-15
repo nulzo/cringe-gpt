@@ -10,7 +10,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/shared/ui/theme";
 import { GlobalErrorAlert } from "@/shared/errors/error-alert";
 import { ImageViewerProvider } from "@/context/image-viewer-context";
-import { GlobalImageViewer } from "@/features/chat/components/global-image-viewer";
+import { GlobalImageViewer } from "@/features/messages/components/image-viewer";
 import { AnimationSyncEffect } from "@/shared/ui/animation-sync";
 import { bootstrapAuthFromStorage } from "@/lib/auth";
 import { useEffect } from "react";

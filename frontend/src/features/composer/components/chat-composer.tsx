@@ -25,11 +25,11 @@ import {
 } from "@/components/ui/tooltip";
 import AttachmentPreview from "./attachment-preview";
 import { ChatAreaActionButton } from "@/components/shared/action-button";
-import { ChatSettingsPopover } from "./chat-settings-popover";
+import { ChatSettingsPopover } from "@/features/chat/components/chat-settings-popover";
 import { ImageGenerationModal } from "@/features/image-generation/components/image-generation-modal";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { IconPlayerStop, IconPaperclip } from "@tabler/icons-react";
-import { filterValidAttachments } from "../utils/attachments";
+import { filterValidAttachments } from "@/features/composer/utils/attachments";
 import { PersonaSelector } from "@/features/personas/components/persona-selector";
 import { PromptPicker } from "@/features/prompts/components/prompt-picker";
 

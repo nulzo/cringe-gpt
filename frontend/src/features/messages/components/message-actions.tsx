@@ -8,15 +8,14 @@ import {
 } from "@/components/ui/tooltip";
 import { useClipboard } from "@/hooks/use-clipboard";
 import { MessageDetails } from "./message-details";
-import type { Message } from "../types";
+import type { Message } from "@/features/chat/types";
 import {
-  Copy01Icon,
-  FavouriteIcon,
-  Refresh01Icon,
-  Tick02Icon,
-  VolumeHighIcon,
-} from "@hugeicons/core-free-icons";
-import { Icon } from "@/components/ui/icon";
+  IconCopy,
+  IconHeart,
+  IconRefresh,
+  IconCheck,
+  IconVolume,
+} from "@tabler/icons-react";
 
 interface MessageActionsProps {
   message: Message;
@@ -33,7 +32,7 @@ export const MessageActions = memo(
         <div className="flex mt-0 rounded-lg w-fit">
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -41,10 +40,9 @@ export const MessageActions = memo(
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
                   {isLiked ? (
-                    <Icon icon={FavouriteIcon} size="icon" className="fill-current text-red-500" />
-                    
+                    <IconHeart className="size-5 fill-current text-red-500" />
                   ) : (
-                    <Icon icon={FavouriteIcon} size="icon" />
+                    <IconHeart className="size-5" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -56,7 +54,7 @@ export const MessageActions = memo(
 
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -64,9 +62,9 @@ export const MessageActions = memo(
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
                   {copied ? (
-                    <Icon icon={Tick02Icon} size="icon" />
+                    <IconCheck className="size-5" />
                   ) : (
-                    <Icon icon={Copy01Icon} size="icon" />
+                    <IconCopy className="size-5" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -78,36 +76,36 @@ export const MessageActions = memo(
 
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => copy(message.content)}
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
-                  <Icon icon={VolumeHighIcon} size="icon" />
+                  <IconVolume className="size-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Copy message</p>
+                <p>Read aloud</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
 
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => copy(message.content)}
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
-                  <Icon icon={Refresh01Icon} size="icon" />
+                  <IconRefresh className="size-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Copy message</p>
+                <p>Regenerate response</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

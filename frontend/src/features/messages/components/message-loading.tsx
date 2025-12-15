@@ -1,7 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { BotIcon } from "./bot-icon";
 import { MessageHeader } from "./message-header";
-import type { Message } from "../types";
+import type { Message } from "@/features/chat/types";
 
 interface MessageLoadingProps {
   message: Message;

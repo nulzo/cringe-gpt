@@ -19,7 +19,7 @@ import {
   defaultChatConfig,
   useChatConfigStore,
 } from "@/stores/chat-config-store";
-import { ChatFeaturePopover } from "./chat-feature-popover";
+import { ChatFeaturePopover } from "@/components/shared/feature-popover";
 import { IconAdjustments } from "@tabler/icons-react";
 
 const chatConfigSchema = z.object({

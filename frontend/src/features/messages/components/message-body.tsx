@@ -10,8 +10,8 @@ import MarkdownRenderer from "@/features/markdown/components/markdown-renderer";
 import { SimpleMarkdownRenderer } from "@/features/markdown/components/simple-markdown";
 import * as React from "react";
 
-import type { Message } from "../types";
-import { addInlineCitations } from "../utils/process-citations";
+import type { Message } from "@/features/chat/types";
+import { addInlineCitations } from "@/features/messages/utils/process-citations";
 
 interface MessageImage {
   id: number;
@@ -76,54 +76,57 @@ export const MessageBody = memo(
 
     const isUser = message.role === "user";
 
-    // Normalized image buckets
-    const processedImages = Array.isArray(message.images)
-      ? message.images.filter((img: any) => Boolean((img as any)?.id))
-      : [];
-    const inlineImages = Array.isArray(message.images)
-      ? message.images.filter((img: any) => {
-          const u =
-            img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
-          return !img?.id && Boolean(u);
-        })
-      : [];
-    const attachmentImages = Array.isArray(message.attachments)
-      ? message.attachments.filter((att) => att.file_type?.startsWith("image/"))
-      : [];
     const fileAttachments = Array.isArray(message.attachments)
       ? message.attachments.filter(
           (att) => !att.file_type?.startsWith("image/"),
         )
       : [];
 
-    const normalizedImages = [
-      ...processedImages.map((img: any, index) => ({
-        id: img.id || `${message.id}-stored-${index}`,
-        fileId: img.id,
-        altText: img.name || `Image ${index + 1}`,
-        filename: img.name,
-      })),
-      ...inlineImages.map((img: any, idx) => {
-        const url =
-          img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
-        const alt =
-          img?.type === "image_url"
-            ? (img?.alt ?? img?.name)
-            : `Image ${idx + 1}`;
-        return {
-          id: `${message.id}-inline-${idx}`,
-          src: url,
-          altText: alt,
-          filename: img?.name || undefined,
-        };
-      }),
-      ...attachmentImages.map((att, idx) => ({
-        id: `${message.id}-attachment-${idx}`,
-        src: att.file_path,
-        altText: att.file_name,
-        filename: att.file_name,
-      })),
-    ].filter(Boolean);
+    const normalizedImages = useMemo(() => {
+      const allImages = [
+        ...(Array.isArray(message.images) ? message.images : []),
+        ...(Array.isArray(message.attachments)
+          ? message.attachments
+              .filter((att) => att.file_type?.startsWith("image/"))
+              .map((att, idx) => ({
+                id: `${message.id}-attachment-${idx}`,
+                url: att.file_path, // Base64 or URL
+                name: att.file_name,
+                type: "attachment",
+              }))
+          : []),
+      ];
+
+      return allImages
+        .map((img: any, index) => {
+          const id = img.id || img.Id;
+          const url =
+            img.url ??
+            img.Url ??
+            img.image_url?.url ??
+            img.image_url?.Url ??
+            img.src;
+          const name = img.name ?? img.Name ?? img.altText ?? `Image ${index + 1}`;
+          const isPersisted = Boolean(id && typeof id !== "string"); // Assuming numeric ID for DB files
+          
+          // Determine if we should use fileId (for authenticated fetch) or src (for direct/base64)
+          // For persisted local files, we must use fileId to go through useGetImage
+          // For streams (base64) or remote URLs, we use src
+          
+          // Heuristic: If it has a numeric ID, treat as persisted file.
+          // If it has a 'data:' URL, treat as inline.
+          // If it has a remote URL, treat as inline.
+          
+          return {
+            id: id || `${message.id}-img-${index}`,
+            fileId: isPersisted ? id : undefined,
+            src: isPersisted ? undefined : url, // Only pass src if NOT using fileId fetcher
+            altText: name,
+            filename: name,
+          };
+        })
+        .filter((img) => img.fileId || img.src);
+    }, [message.images, message.attachments, message.id]);
 
     // Check if we have any images to display
     const hasImages = normalizedImages.length > 0;

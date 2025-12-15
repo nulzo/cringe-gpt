@@ -36,7 +36,7 @@ public class MetricsStreamEvent : StreamEvent
 public class FinalMessageStreamEvent : StreamEvent
 {
     public override string Event => Constants.SseEvents.FinalMessage;
-    public Message Data { get; set; } = null!;
+    public object Data { get; set; } = null!;
 }
 
 public class ErrorStreamEvent : StreamEvent

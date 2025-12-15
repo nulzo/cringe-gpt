@@ -3,7 +3,7 @@ import { memo } from "react";
 import { useTokens } from "@/features/markdown/hooks/use-tokens";
 import CodeBlock from "./code-block";
 import KatexRenderer from "./katex-renderer";
-import { ImageDisplay } from "@/features/chat/components/image-display";
+// import { ImageDisplay } from "@/features/chat/components/image-display";
 import he from "he";
 import DOMPurify from "dompurify";
 
@@ -75,11 +75,11 @@ const renderTokens = (tokens: any[]): React.ReactNode[] => {
         if (fileId) {
           return (
             <div key={index} className="my-4 max-w-md">
-              <ImageDisplay
+              {/* <ImageDisplay
                 fileId={fileId}
                 altText={token.text}
                 className="max-w-md"
-              />
+              /> */}
             </div>
           );
         } else {

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { type Message } from "../types";
-import { filterValidAttachments } from "../utils/attachments";
+import { filterValidAttachments } from "@/features/composer/utils/attachments";
 
 interface ConversationStreamState {
   message: Message;
@@ -202,6 +202,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // Multi-conversation streaming actions impl
   startStream: (key, initialAssistant, abortController) =>
     set((state) => ({
+      isStreaming: true,
       currentConversationId: key,
       streams: {
         ...state.streams,
@@ -280,7 +281,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const { [key]: _, ...rest } = state.streams;
       const finishedId = String(finalMessage.conversation_uuid || key);
       const isActive = state.currentConversationId === finishedId;
+      const isAnyStreamActive = Object.values(rest).some((s) => s.isStreaming);
       return {
+        isStreaming: isAnyStreamActive,
         messages: isActive ? [...state.messages, finalMessage] : state.messages,
         streams: rest,
         unread: isActive
@@ -296,7 +299,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (s.abortController) s.abortController.abort();
       const interrupted = { ...s.message, is_interrupted: true } as Message;
       const { [key]: _, ...rest } = state.streams;
+      const isAnyStreamActive = Object.values(rest).some((s) => s.isStreaming);
       return {
+        isStreaming: isAnyStreamActive,
         messages: [...state.messages, interrupted],
         streams: rest,
       } as any;

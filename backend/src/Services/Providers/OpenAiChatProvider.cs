@@ -56,14 +56,20 @@ public class OpenAiChatProvider : BaseChatProvider
             if (hasAttachments)
             {
                 // Handle image generation with reference images
-                var imageResult = await HandleImageGenerationWithReferencesAsync(request, apiKey, apiUrl, cancellationToken);
-                yield return new StreamedContentChunk { TextContent = imageResult };
+                var images = await HandleImageGenerationWithReferencesAsync(request, apiKey, apiUrl, cancellationToken);
+                yield return new StreamedContentChunk 
+                { 
+                    Images = images
+                };
             }
             else
             {
                 // Handle image generation from scratch
-                var imageResult = await HandleImageGenerationFromScratchAsync(request, apiKey, apiUrl, cancellationToken);
-                yield return new StreamedContentChunk { TextContent = imageResult };
+                var images = await HandleImageGenerationFromScratchAsync(request, apiKey, apiUrl, cancellationToken);
+                yield return new StreamedContentChunk 
+                { 
+                    Images = images
+                };
             }
 
             // Set usage data (image generation typically doesn't provide token counts)
@@ -77,7 +83,7 @@ public class OpenAiChatProvider : BaseChatProvider
         };
     }
 
-    private async Task<string> HandleImageGenerationWithReferencesAsync(ChatRequest request, string? apiKey, string? apiUrl, CancellationToken cancellationToken)
+    private async Task<List<StreamedImageData>> HandleImageGenerationWithReferencesAsync(ChatRequest request, string? apiKey, string? apiUrl, CancellationToken cancellationToken)
     {
         var lastUserMessage = request.Messages.LastOrDefault(m => m.Role == "user");
         var prompt = lastUserMessage?.Content ?? "";
@@ -127,13 +133,23 @@ public class OpenAiChatProvider : BaseChatProvider
 
             var imageResponse = await _imageGenerationProvider.EditImageAsync(imageGenerationRequest, apiKey, apiUrl, cancellationToken);
 
-            // Process the generated image
-            var userId = request.UserId ?? 1;
-            var fileName = $"{Guid.NewGuid()}.png";
-            var appFile = await _fileService.SaveFileAsync(userId, imageResponse.Images[0].Base64Data!, fileName, "image/png");
+            var images = new List<StreamedImageData>();
+            for (int i = 0; i < imageResponse.Images.Count; i++)
+            {
+                var img = imageResponse.Images[i];
+                if (img.Base64Data != null)
+                {
+                    var dataUrl = $"data:image/png;base64,{Convert.ToBase64String(img.Base64Data)}";
+                    images.Add(new StreamedImageData
+                    {
+                        Type = "image_url",
+                        Url = dataUrl,
+                        Index = i
+                    });
+                }
+            }
 
-            var imageUrl = $"/api/v1/files/{appFile.Id}";
-            return $"![{fileName}]({imageUrl})";
+            return images;
         }
         catch (Exception ex)
         {
@@ -142,7 +158,7 @@ public class OpenAiChatProvider : BaseChatProvider
         }
     }
 
-    private async Task<string> HandleImageGenerationFromScratchAsync(ChatRequest request, string? apiKey, string? apiUrl, CancellationToken cancellationToken)
+    private async Task<List<StreamedImageData>> HandleImageGenerationFromScratchAsync(ChatRequest request, string? apiKey, string? apiUrl, CancellationToken cancellationToken)
     {
         var lastUserMessage = request.Messages.LastOrDefault(m => m.Role == "user");
         var prompt = lastUserMessage?.Content ?? "";
@@ -159,13 +175,23 @@ public class OpenAiChatProvider : BaseChatProvider
 
         var imageResponse = await _imageGenerationProvider.GenerateImageAsync(imageRequest, apiKey, apiUrl, cancellationToken);
 
-        // Process the generated image
-        var userId = request.UserId ?? 1;
-        var fileName = $"{Guid.NewGuid()}.png";
-        var appFile = await _fileService.SaveFileAsync(userId, imageResponse.Images[0].Base64Data!, fileName, "image/png");
+        var images = new List<StreamedImageData>();
+        for (int i = 0; i < imageResponse.Images.Count; i++)
+        {
+            var img = imageResponse.Images[i];
+            if (img.Base64Data != null)
+            {
+                var dataUrl = $"data:image/png;base64,{Convert.ToBase64String(img.Base64Data)}";
+                images.Add(new StreamedImageData
+                {
+                    Type = "image_url",
+                    Url = dataUrl,
+                    Index = i
+                });
+            }
+        }
 
-        var imageUrl = $"/api/v1/files/{appFile.Id}";
-        return $"![{fileName}]({imageUrl})";
+        return images;
     }
 
     public override StreamedChatResponse StreamChatAsync(ChatRequest request, string? apiKey, string? apiUrl,

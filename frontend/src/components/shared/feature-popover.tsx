@@ -4,7 +4,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { ElementType, ReactNode } from "react";
-import { ChatAreaActionButton } from "./chat-area-action-button";
+import { ChatAreaActionButton } from "./action-button";
 import { cn } from "@/lib/utils";
 
 interface ChatFeaturePopoverProps {

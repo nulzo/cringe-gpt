@@ -1,6 +1,6 @@
 import { forwardRef, memo, useEffect, useMemo, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { Message as MessageType } from "../types";
+import type { Message as MessageType } from "@/features/chat/types";
 import { BotIcon } from "./bot-icon";
 import { motion } from "framer-motion";
 

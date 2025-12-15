@@ -18,7 +18,7 @@ import type { PersonaPayload } from "@/features/personas/types";
 import { useChatConfigStore } from "@/stores/chat-config-store";
 import { Button } from "@/components/ui/button";
 import { IconUser } from "@tabler/icons-react";
-import { GenericResourceSelector } from "./generic-resource-selector";
+import { GenericResourceSelector } from "@/components/shared/generic-resource-selector";
 
 export function PersonaSelector() {
   const personasQuery = usePersonas();

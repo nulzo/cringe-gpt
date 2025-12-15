@@ -22,7 +22,7 @@ import type {
 import { useChatConfigStore } from "@/stores/chat-config-store";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { Button } from "@/components/ui/button";
-import { GenericResourceSelector } from "./generic-resource-selector";
+import { GenericResourceSelector } from "@/components/shared/generic-resource-selector";
 
 const renderTemplate = (template: string, values: Record<string, string>) => {
   if (!template) return "";

@@ -65,12 +65,12 @@ export const normalizeMessage = (m: any): Message => {
   const addProcessedImages = (imgs?: any[]) => {
     if (!Array.isArray(imgs)) return;
     imgs.forEach((p: any, index: number) => {
-      if (p?.id) {
+      if (p?.id || p?.Id) {
         mergedImages.push({
-          id: p.id,
-          name: p.name ?? `Image ${index + 1}`,
-          url: p.url,
-          mimeType: p.mimeType,
+          id: p.id ?? p.Id,
+          name: p.name ?? p.Name ?? `Image ${index + 1}`,
+          url: p.url ?? p.Url,
+          mimeType: p.mimeType ?? p.MimeType,
         });
       }
     });
@@ -127,12 +127,12 @@ export const normalizeMessage = (m: any): Message => {
       if (Array.isArray(parsed)) {
         // Could be list of ids or list of objects
         parsed.forEach((p: any, idx: number) => {
-          if (p?.id) {
+          if (p?.id || p?.Id) {
             mergedImages.push({
-              id: p.id,
-              name: p.name ?? `Image ${idx + 1}`,
-              url: p.url,
-              mimeType: p.mimeType,
+              id: p.id ?? p.Id,
+              name: p.name ?? p.Name ?? `Image ${idx + 1}`,
+              url: p.url ?? p.Url,
+              mimeType: p.mimeType ?? p.MimeType,
             });
           } else if (typeof p === "number" || typeof p === "string") {
             mergedImages.push({ id: p });

@@ -7,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Badge } from "@/components/ui/badge";
-import type { Message } from "../types";
+import type { Message } from "@/features/chat/types";
 
 interface ToolCallListProps {
   message: Message;

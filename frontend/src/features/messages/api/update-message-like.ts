@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
-import { type Message } from "../types";
+import { type Message } from "@/features/chat/types";
 
 interface UpdateLikeStatusParams {
   messageId: string;

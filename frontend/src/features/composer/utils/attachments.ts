@@ -1,4 +1,5 @@
-import { CHAT_MAX_ATTACHMENTS, CHAT_MAX_FILE_SIZE_BYTES } from "../config";
+import { CHAT_MAX_FILE_SIZE_BYTES, CHAT_MAX_ATTACHMENTS } from "@/features/chat/config";
+
 
 export const filterValidAttachments = (
   files: File[],

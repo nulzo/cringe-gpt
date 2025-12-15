@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { formatCost, formatDate, formatNumber } from "@/utils/format";
-import type { Message } from "../types";
+import type { Message } from "@/features/chat/types";
 import {
   IconInfoCircle,
   IconHeart,
@@ -21,8 +21,6 @@ import {
   IconFile,
 } from "@tabler/icons-react";
 import { useMessageDetails } from "../api/get-message-details";
-import { Icon } from "@/components/ui/icon";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 // Combined type for message data that can come from either the API or the message object
 type MessageData = {
@@ -143,7 +141,7 @@ export const MessageDetails: React.FC<MessageDetailsProps> = ({
           className="size-9 text-muted-foreground hover:text-foreground transition-colors"
           title="Message details"
         >
-          <Icon icon={InformationCircleIcon} size="icon" />
+          <IconInfoCircle className="size-5" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 max-h-96 overflow-y-auto">

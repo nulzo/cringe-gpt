@@ -1,5 +1,5 @@
 import { formatDetailedDate } from "@/utils/format";
-import type { Message } from "../types";
+import type { Message } from "@/features/chat/types";
 
 interface MessageHeaderProps {
   message: Message;

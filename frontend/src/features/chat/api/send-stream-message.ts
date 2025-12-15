@@ -7,7 +7,7 @@ import { normalizeMessage } from "./get-conversation";
 import { env } from "@/configuration/env";
 import useNotificationStore from "@/stores/notification-store";
 import { CHAT_MAX_ATTACHMENTS } from "../config";
-import { fileToBase64, filterValidAttachments } from "../utils/attachments";
+import { fileToBase64, filterValidAttachments } from "@/features/composer/utils/attachments";
 
 // Define the attachment interface
 interface AttachmentDto {

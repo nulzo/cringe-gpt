@@ -7,8 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Message } from "../types";
-import { processCitations } from "../utils/process-citations";
+import type { Message } from "@/features/chat/types";
+import { processCitations } from "@/features/messages/utils/process-citations";
 
 interface CitationListProps {
   message: Message;

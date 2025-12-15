@@ -9,8 +9,8 @@ import {
 } from "react";
 import { AnimatePresence } from "framer-motion";
 
-import { ModernChatArea } from "@/features/chat/components/textarea";
-import { Message } from "@/features/chat/components/message";
+import { ModernChatArea } from "@/features/composer/components/chat-composer";
+import { Message } from "@/features/messages/components/message";
 import { APP_AI_WARNING_TEXT, APP_NAME } from "@/configuration/const";
 import { getTimeToGreeting } from "@/utils/format";
 

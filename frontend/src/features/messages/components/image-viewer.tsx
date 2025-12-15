@@ -68,6 +68,21 @@ const createViewerVariants = (animationsEnabled: boolean) => ({
   },
 });
 
+import { useImageViewer } from "@/context/image-viewer-context";
+
+export function GlobalImageViewer() {
+  const { isOpen, images, currentIndex, closeViewer } = useImageViewer();
+
+  return (
+    <ImageViewer
+      images={images}
+      initialIndex={currentIndex}
+      onClose={closeViewer}
+      isOpen={isOpen}
+    />
+  );
+}
+
 export function ImageViewer({
   images,
   initialIndex = 0,

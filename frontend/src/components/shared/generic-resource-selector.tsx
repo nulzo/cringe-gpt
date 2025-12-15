@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Command, CommandInput, CommandList } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ChatFeaturePopover } from "./chat-feature-popover";
+import { ChatFeaturePopover } from "./feature-popover";
 import { IconX, IconPlus, IconCheck } from "@tabler/icons-react";
 import type { Icon as TablerIcon } from "@tabler/icons-react";
 

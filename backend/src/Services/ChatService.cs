@@ -65,16 +65,21 @@ public class ChatService : IChatService
         _promptRepository = promptRepository;
     }
 
-    public async Task<Message> GetCompletionAsync(int userId, ChatRequestDto request, CancellationToken cancellationToken)
+    public async Task<MessageDto> GetCompletionAsync(int userId, ChatRequestDto request, CancellationToken cancellationToken)
     {
         request.Stream = false;
 
-        Message? finalMessage = null;
+        MessageDto? finalMessage = null;
 
         var stream = GetCompletionStreamAsync(userId, request, cancellationToken);
         await foreach (var item in stream.WithCancellation(cancellationToken))
             if (item is FinalMessageStreamEvent finalMessageEvent)
-                finalMessage = finalMessageEvent.Data;
+            {
+                if (finalMessageEvent.Data is MessageDto dto)
+                {
+                    finalMessage = dto;
+                }
+            }
 
         return finalMessage ??
                throw new ApiException("Failed to get a response from the provider.", HttpStatusCode.InternalServerError);
@@ -128,7 +133,7 @@ public class ChatService : IChatService
             Model = model
         };
 
-        yield return new FinalMessageStreamEvent { Data = assistantMessage };
+        yield return new FinalMessageStreamEvent { Data = _mapper.Map<MessageDto>(assistantMessage) };
     }
 
     private async IAsyncEnumerable<StreamEvent> HandlePersistentChatAsync(int userId, ChatRequestDto request,
@@ -192,6 +197,11 @@ public class ChatService : IChatService
                 {
                     hasNext = await enumerator.MoveNextAsync();
                 }
+                catch (OperationCanceledException)
+                {
+                    // Handle cancellation by breaking the loop gracefully
+                    break;
+                }
                 catch (Exception ex)
                 {
                     streamError = ex;
@@ -220,8 +230,16 @@ public class ChatService : IChatService
 
         if (streamError == null)
         {
-            usageData = await providerResponse.GetUsageDataAsync();
-            assistantMessage = await BuildAssistantMessageAsync(user, conversation, userMessage, assistantResponse, streamedImages, model, chatRequest.ProviderType, usageData);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                // Handle cancelled generation - save partial content
+                assistantMessage = await BuildAssistantMessageAsync(user, conversation, userMessage, assistantResponse, streamedImages, model, chatRequest.ProviderType, null, "cancelled");
+            }
+            else
+            {
+                usageData = await providerResponse.GetUsageDataAsync();
+                assistantMessage = await BuildAssistantMessageAsync(user, conversation, userMessage, assistantResponse, streamedImages, model, chatRequest.ProviderType, usageData);
+            }
         }
         else
         {
@@ -245,7 +263,7 @@ public class ChatService : IChatService
                 await _conversationRepository.AddAsync(conversation);
             await _conversationRepository.SaveChangesAsync();
 
-            yield return new FinalMessageStreamEvent { Data = assistantMessage };
+            yield return new FinalMessageStreamEvent { Data = _mapper.Map<MessageDto>(assistantMessage) };
 
             if (usageData != null && !assistantMessage.IsError)
             {
@@ -449,36 +467,34 @@ public class ChatService : IChatService
     }
 
     private async Task<Message> BuildAssistantMessageAsync(AppUser user, Conversation conversation, Message userMessage,
-        StringBuilder assistantResponse, List<StreamedImageData> streamedImages, string model, ProviderType providerType, UsageData usageData)
+        StringBuilder assistantResponse, List<StreamedImageData> streamedImages, string model, ProviderType providerType, UsageData? usageData, string finishReason = "complete")
     {
         if (assistantResponse.Length == 0 && !streamedImages.Any())
-            throw new ApiException("Provider returned no content.", HttpStatusCode.BadGateway);
+        {
+            if (finishReason == "cancelled")
+            {
+                assistantResponse.Append("[Cancelled]");
+            }
+            else
+            {
+                throw new ApiException("Provider returned no content.", HttpStatusCode.BadGateway);
+            }
+        }
 
         var content = assistantResponse.ToString();
-        var (parsedContent, imageUrls) = ParseMarkdownImages(content);
 
         var assistantMessage = new Message
         {
             Role = "assistant",
-            Content = parsedContent,
+            Content = content,
             Provider = providerType,
             Model = model,
             ParentMessageId = userMessage.MessageId,
-            TokenCount = usageData.CompletionTokens,
-            FinishReason = "complete",
+            TokenCount = usageData?.CompletionTokens ?? 0,
+            FinishReason = finishReason,
             ConversationId = conversation.Id,
-            HasImages = streamedImages.Any() || imageUrls.Any()
+            HasImages = streamedImages.Any()
         };
-
-        // Store image URLs in ToolCallsJson for non-streamed images
-        if (imageUrls.Any() && !streamedImages.Any())
-        {
-            var fileIds = ExtractFileIdsFromUrls(imageUrls);
-            if (fileIds.Any())
-            {
-                assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(fileIds);
-            }
-        }
 
         // Save streamed images as files (or keep remote URLs)
         if (streamedImages.Any())
@@ -538,7 +554,10 @@ public class ChatService : IChatService
 
             if (savedImages.Any())
             {
-                assistantMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(savedImages);
+                assistantMessage.ToolCallsJson = JsonSerializer.Serialize(savedImages, new JsonSerializerOptions 
+                { 
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase 
+                });
             }
         }
 
@@ -570,44 +589,6 @@ public class ChatService : IChatService
         conversation.Messages.Add(assistantMessage);
         await _conversationRepository.SaveChangesAsync();
         return assistantMessage;
-    }
-
-    private (string parsedContent, List<string> imageUrls) ParseMarkdownImages(string content)
-    {
-        var imageUrls = new List<string>();
-        var regex = new System.Text.RegularExpressions.Regex(@"!\[([^\]]*)\]\(([^)]+)\)");
-        var matches = regex.Matches(content);
-
-        foreach (System.Text.RegularExpressions.Match match in matches)
-        {
-            if (match.Groups.Count >= 3)
-            {
-                var url = match.Groups[2].Value;
-                if (url.StartsWith("/api/v1/files/"))
-                {
-                    imageUrls.Add(url);
-                }
-            }
-        }
-
-        return (content, imageUrls);
-    }
-
-    private List<int> ExtractFileIdsFromUrls(List<string> imageUrls)
-    {
-        var fileIds = new List<int>();
-        foreach (var url in imageUrls)
-        {
-            if (url.StartsWith("/api/v1/files/"))
-            {
-                var parts = url.Split('/');
-                if (parts.Length >= 4 && int.TryParse(parts[3], out var fileId))
-                {
-                    fileIds.Add(fileId);
-                }
-            }
-        }
-        return fileIds;
     }
 
     private async Task<(Conversation, Message)> PrepareConversationState(int userId, ChatRequestDto request)

@@ -265,8 +265,13 @@ public class MappingProfile : Profile
         {
             try
             {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
                 // First try to deserialize as MessageImageDto objects (processed by service)
-                var processedImages = System.Text.Json.JsonSerializer.Deserialize<List<MessageImageDto>>(message.ToolCallsJson);
+                var processedImages = System.Text.Json.JsonSerializer.Deserialize<List<MessageImageDto>>(message.ToolCallsJson, options);
                 if (processedImages != null && processedImages.Any())
                 {
                     return processedImages;
@@ -292,7 +297,7 @@ public class MappingProfile : Profile
                 else
                 {
                     // Try to deserialize as StreamedImageData format (from OpenRouter streaming)
-                    var streamedImages = System.Text.Json.JsonSerializer.Deserialize<List<StreamedImageData>>(message.ToolCallsJson);
+                    var streamedImages = System.Text.Json.JsonSerializer.Deserialize<List<StreamedImageData>>(message.ToolCallsJson, options);
                     if (streamedImages != null && streamedImages.Any())
                     {
                         foreach (var streamedImage in streamedImages)
