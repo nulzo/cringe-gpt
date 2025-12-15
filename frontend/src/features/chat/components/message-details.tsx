@@ -21,6 +21,8 @@ import {
   IconFile,
 } from "@tabler/icons-react";
 import { useMessageDetails } from "../api/get-message-details";
+import { Icon } from "@/components/ui/icon";
+import { InformationCircleIcon } from "@hugeicons/core-free-icons";
 
 // Combined type for message data that can come from either the API or the message object
 type MessageData = {
@@ -141,7 +143,7 @@ export const MessageDetails: React.FC<MessageDetailsProps> = ({
           className="size-9 text-muted-foreground hover:text-foreground transition-colors"
           title="Message details"
         >
-          <IconInfoCircle className="size-5" />
+          <Icon icon={InformationCircleIcon} size="icon" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-96 max-h-96 overflow-y-auto">

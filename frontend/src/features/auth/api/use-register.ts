@@ -15,4 +15,3 @@ export const useRegister = (
     mutationFn: async (input: RegisterInput) => registerService(input),
     ...options,
   });
-

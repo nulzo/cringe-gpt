@@ -2,13 +2,7 @@ import type { Conversation } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useChatStore } from "@/features/chat/stores/chat-store";
-import {
-  memo,
-  useEffect,
-  useMemo,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { memo, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 
 import {
   DropdownMenu,

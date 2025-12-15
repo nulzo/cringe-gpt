@@ -1,7 +1,6 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { IconPhoto } from "@tabler/icons-react";
 
 import { CitationList } from "./citation-list";
 import { ToolCallList } from "./tool-call-list";
@@ -13,7 +12,6 @@ import * as React from "react";
 
 import type { Message } from "../types";
 import { addInlineCitations } from "../utils/process-citations";
-// import { useGetImage } from "@/features/image-generation/api/get-image";
 
 interface MessageImage {
   id: number;
@@ -160,7 +158,6 @@ export const MessageBody = memo(
                 key={att.file_name}
                 className="flex min-w-[9rem] items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-foreground shadow-sm"
               >
-                <IconPhoto className="size-5 text-muted-foreground" />
                 <p className="truncate text-xs">{att.file_name}</p>
               </div>
             ))}

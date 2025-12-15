@@ -10,14 +10,13 @@ import { useClipboard } from "@/hooks/use-clipboard";
 import { MessageDetails } from "./message-details";
 import type { Message } from "../types";
 import {
-  IconCheck,
-  IconCopy,
-  IconHeart,
-  IconRefresh,
-  IconThumbDown,
-  IconThumbUp,
-  IconVolume,
-} from "@tabler/icons-react";
+  Copy01Icon,
+  FavouriteIcon,
+  Refresh01Icon,
+  Tick02Icon,
+  VolumeHighIcon,
+} from "@hugeicons/core-free-icons";
+import { Icon } from "@/components/ui/icon";
 
 interface MessageActionsProps {
   message: Message;
@@ -47,7 +46,7 @@ export const MessageActions = memo(
                       strokeWidth={2}
                     />
                   ) : (
-                    <IconHeart className="size-5" strokeWidth={2} />
+                    <Icon icon={FavouriteIcon} size="icon" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -67,9 +66,9 @@ export const MessageActions = memo(
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
                   {copied ? (
-                    <IconCheck className="size-5" strokeWidth={2} />
+                    <Icon icon={Tick02Icon} size="icon" />
                   ) : (
-                    <IconCopy className="size-5" strokeWidth={2} />
+                    <Icon icon={Copy01Icon} size="icon" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -88,7 +87,7 @@ export const MessageActions = memo(
                   onClick={() => copy(message.content)}
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
-                  <IconVolume className="size-5" strokeWidth={2} />
+                  <Icon icon={VolumeHighIcon} size="icon" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -106,7 +105,7 @@ export const MessageActions = memo(
                   onClick={() => copy(message.content)}
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
-                  <IconRefresh className="size-5" strokeWidth={2} />
+                  <Icon icon={Refresh01Icon} size="icon" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

@@ -348,7 +348,7 @@ function ConversationView({
     }
   }, []);
 
-  const bottomPadPx = composerOverlapPx + 10; // extra padding for message actions
+  const bottomPadPx = composerOverlapPx - 12;
   const totalSizeWithPad = rowVirtualizer.getTotalSize() + bottomPadPx;
 
   return (

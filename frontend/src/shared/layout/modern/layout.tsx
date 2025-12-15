@@ -7,29 +7,29 @@ import { SettingsModal } from "@/features/settings/components/modal/settings-mod
 import { Head } from "@/shared/layout/head";
 import { useConversations } from "@/features/chat/api/get-conversations";
 import { useMemo } from "react";
-import { APP_NAME } from "@/configuration/const";
 
 export function Layout() {
   const {
     isMobileMenuOpen,
     closeMobileMenu,
     isCommandPaletteOpen,
-    setIsCommandPaletteOpen, // Assuming this exists or using openCommandPalette/closeCommandPalette
-    handleCommandPaletteNavigation, // Need to check this from context
     isSettingsModalOpen,
-    setIsSettingsModalOpen, // Assuming this exists
     openSettingsModal,
     closeSettingsModal,
     openCommandPalette,
     closeCommandPalette,
-    navigateTo
+    navigateTo,
   } = useUIState();
 
   const conversations = useConversations();
   const location = useLocation();
 
   const pageTitle = useMemo(() => {
-    if (location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/analytics")) return "Dashboard";
+    if (
+      location.pathname.startsWith("/dashboard") ||
+      location.pathname.startsWith("/analytics")
+    )
+      return "Dashboard";
     if (location.pathname.startsWith("/image-generation"))
       return "Image Generation";
     if (location.pathname.startsWith("/chat")) {
@@ -70,9 +70,9 @@ export function Layout() {
 
         <div className="flex flex-col flex-1 h-full overflow-hidden min-w-0">
           {/* Header Container with margin to match sidebar */}
-          <div className="px-3 pt-3 pb-0">
+          {/* <div className="px-3 pt-3 pb-0">
             <Header />
-          </div>
+          </div> */}
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-3 scrollbar">
@@ -85,14 +85,17 @@ export function Layout() {
 
       <CommandPalette
         open={isCommandPaletteOpen}
-        onOpenChange={(open) => open ? openCommandPalette() : closeCommandPalette()}
+        onOpenChange={(open) =>
+          open ? openCommandPalette() : closeCommandPalette()
+        }
         setActiveView={navigateTo}
       />
       <SettingsModal
         open={isSettingsModalOpen}
-        onOpenChange={(open) => open ? openSettingsModal() : closeSettingsModal()}
+        onOpenChange={(open) =>
+          open ? openSettingsModal() : closeSettingsModal()
+        }
       />
     </>
   );
 }
-

@@ -6,6 +6,8 @@
       "name": "ollamawebui",
       "dependencies": {
         "@hookform/resolvers": "^5.2.2",
+        "@hugeicons/core-free-icons": "^3.0.0",
+        "@hugeicons/react": "^1.1.2",
         "@lobehub/icons": "^2.45.0",
         "@microsoft/signalr": "^9.0.6",
         "@radix-ui/react-accordion": "^1.2.12",
@@ -315,6 +317,10 @@
     "@giscus/react": ["@giscus/react@3.1.0", "", { "dependencies": { "giscus": "^1.6.0" }, "peerDependencies": { "react": "^16 || ^17 || ^18 || ^19", "react-dom": "^16 || ^17 || ^18 || ^19" } }, "sha512-0TCO2TvL43+oOdyVVGHDItwxD1UMKP2ZYpT6gXmhFOqfAJtZxTzJ9hkn34iAF/b6YzyJ4Um89QIt9z/ajmAEeg=="],
 
     "@hookform/resolvers": ["@hookform/resolvers@5.2.2", "", { "dependencies": { "@standard-schema/utils": "^0.3.0" }, "peerDependencies": { "react-hook-form": "^7.55.0" } }, "sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA=="],
+
+    "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@3.0.0", "", {}, "sha512-ujB8fh7dVj506bvOcZwTLS/r8T/Ev6rCLvgpdwKPHAFdBuNTbyuppTFX7n1vWnmqvJzh//giN9dqjHjyu1o+5w=="],
+
+    "@hugeicons/react": ["@hugeicons/react@1.1.2", "", { "peerDependencies": { "react": ">=16.0.0" } }, "sha512-lkwpRbGAEs6OK5qc2mrTJTA4WfhBhn5shrtq5zlmj6JDdAAMmsD97ASCRLrLbw0VT/Nb+Rk8SAUiemIXshyg/g=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 

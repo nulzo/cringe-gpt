@@ -15,13 +15,17 @@ export function useConsolidatedChatState() {
   // Explicitly select all necessary state reactively so the React Compiler (and manual useMemo)
   // knows exactly what this component depends on.
   const messages = useChatStore((state) => state.messages);
-  const currentConversationId = useChatStore((state) => state.currentConversationId);
+  const currentConversationId = useChatStore(
+    (state) => state.currentConversationId,
+  );
   const streams = useChatStore((state) => state.streams);
   const streamedMessage = useChatStore((state) => state.streamedMessage);
   const isStreaming = useChatStore((state) => state.isStreaming);
-  const visibleMessageRange = useChatStore((state) => state.visibleMessageRange);
+  const visibleMessageRange = useChatStore(
+    (state) => state.visibleMessageRange,
+  );
   const maxVisibleMessages = useChatStore((state) => state.maxVisibleMessages);
-  
+
   const inputValue = useChatStore((state) => state.inputValue);
   const attachments = useChatStore((state) => state.attachments);
 
@@ -184,7 +188,7 @@ export function useConsolidatedChatState() {
     currentConversationId,
     visibleMessageRange,
     maxVisibleMessages,
-    isStreaming
+    isStreaming,
   ]);
 
   const hasMessages = allMessages.length > 0;

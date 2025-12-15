@@ -19,4 +19,3 @@ export const useTags = () => {
     staleTime: 5 * 60 * 1000,
   });
 };
-

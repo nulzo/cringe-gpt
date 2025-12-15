@@ -63,7 +63,12 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
       closeMobileMenu: () => setIsMobileMenuOpen(false),
       toggleMobileMenu: () => setIsMobileMenuOpen((v) => !v),
     }),
-    [isSettingsModalOpen, isCommandPaletteOpen, isSidebarOpen, isMobileMenuOpen],
+    [
+      isSettingsModalOpen,
+      isCommandPaletteOpen,
+      isSidebarOpen,
+      isMobileMenuOpen,
+    ],
   );
 
   return (

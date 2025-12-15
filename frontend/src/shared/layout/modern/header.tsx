@@ -5,7 +5,7 @@ import {
   Sun,
   Moon,
   MessageSquare,
-  Monitor
+  Monitor,
 } from "lucide-react";
 import { useUIState } from "@/shared/layout/ui-state-provider";
 import { useTheme } from "@/shared/ui/theme";
@@ -16,7 +16,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
@@ -62,9 +62,24 @@ export function Header() {
           aria-label="Toggle theme"
           className="relative"
         >
-          <Sun className={cn("absolute inset-0 m-auto h-5 w-5 transition-all", theme === 'light' ? "scale-100 rotate-0" : "scale-0 rotate-90")} />
-          <Moon className={cn("absolute inset-0 m-auto h-5 w-5 transition-all", theme === 'dark' ? "scale-100 rotate-0" : "scale-0 rotate-90")} />
-          <Monitor className={cn("absolute inset-0 m-auto h-5 w-5 transition-all", theme === 'system' ? "scale-100 rotate-0" : "scale-0 rotate-90")} />
+          <Sun
+            className={cn(
+              "absolute inset-0 m-auto h-5 w-5 transition-all",
+              theme === "light" ? "scale-100 rotate-0" : "scale-0 rotate-90",
+            )}
+          />
+          <Moon
+            className={cn(
+              "absolute inset-0 m-auto h-5 w-5 transition-all",
+              theme === "dark" ? "scale-100 rotate-0" : "scale-0 rotate-90",
+            )}
+          />
+          <Monitor
+            className={cn(
+              "absolute inset-0 m-auto h-5 w-5 transition-all",
+              theme === "system" ? "scale-100 rotate-0" : "scale-0 rotate-90",
+            )}
+          />
         </Button>
 
         {/* Notifications */}
@@ -107,7 +122,9 @@ export function Header() {
               <SelectItem value="banana">Banana</SelectItem>
               <SelectItem value="orange">Orange</SelectItem>
               <SelectItem value="grape">Grape</SelectItem>
-              <SelectItem value="mango" disabled>Mango (Disabled)</SelectItem>
+              <SelectItem value="mango" disabled>
+                Mango (Disabled)
+              </SelectItem>
             </SelectContent>
           </Select>
         </section>
@@ -115,4 +132,3 @@ export function Header() {
     </header>
   );
 }
-
