@@ -12,7 +12,7 @@ public class OrganizationDto
 
 public class OrganizationCreateDto
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 }
 
 public class OrganizationMemberDto
@@ -36,5 +36,5 @@ public class ProjectDto
 
 public class ProjectCreateDto
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 }

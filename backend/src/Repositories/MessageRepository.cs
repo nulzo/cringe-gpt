@@ -1,8 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using OllamaWebuiBackend.Data;
+using OllamaWebuiBackend.DTOs;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Repositories.Interfaces;
-using OllamaWebuiBackend.DTOs;
-using Microsoft.EntityFrameworkCore;
 
 namespace OllamaWebuiBackend.Repositories;
 

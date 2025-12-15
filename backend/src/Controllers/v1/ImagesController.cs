@@ -26,4 +26,4 @@ public class ImagesController : BaseApiController
         var response = await _imageGenerationService.GenerateImageAsync(GetUserId(), request, cancellationToken);
         return Ok(response);
     }
-} 
+}

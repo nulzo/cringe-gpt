@@ -64,7 +64,7 @@ public class OpenRouterChatProvider(
             var response =
                 await client.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
-            
+
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var reader = new StreamReader(stream);
 
@@ -223,10 +223,10 @@ public class OpenRouterChatProvider(
             {
                 // For vision models, format message with images
                 var contentParts = new List<object>();
-                
+
                 // Add text content
                 contentParts.Add(new { type = "text", text = message.Content });
-                
+
                 // Add images for the user message
                 foreach (var attachment in attachments)
                 {
@@ -241,9 +241,9 @@ public class OpenRouterChatProvider(
                             base64Data = $"data:{mimeType};base64,{base64Data}";
                         }
 
-                        contentParts.Add(new 
-                        { 
-                            type = "image_url", 
+                        contentParts.Add(new
+                        {
+                            type = "image_url",
                             image_url = new { url = base64Data }
                         });
                     }
@@ -253,19 +253,19 @@ public class OpenRouterChatProvider(
                     }
                 }
 
-                openRouterMessages.Add(new 
-                { 
-                    role = message.Role, 
+                openRouterMessages.Add(new
+                {
+                    role = message.Role,
                     content = contentParts.ToArray()
                 });
             }
             else
             {
                 // Standard text-only message
-                openRouterMessages.Add(new 
-                { 
-                    role = message.Role, 
-                    content = message.Content 
+                openRouterMessages.Add(new
+                {
+                    role = message.Role,
+                    content = message.Content
                 });
             }
         }

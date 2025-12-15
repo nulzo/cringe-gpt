@@ -13,7 +13,7 @@ public class ImageGenerationRequestDto
     public string? Size { get; set; } = "1024x1024";
     public string? Style { get; set; } = "vivid";
     public string? ConversationId { get; set; }
-    
+
     // gpt-image-1 specific options
     public string? Background { get; set; } = "opaque"; // "opaque" or "transparent"
     public string? OutputFormat { get; set; } = "png"; // "png", "jpeg", "webp"

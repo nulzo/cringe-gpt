@@ -108,7 +108,7 @@ public class ChatService : IChatService
         var chatRequest = _mapper.Map<ChatRequest>(request);
         chatRequest.Model = model;
         chatRequest.Messages = messages;
-        
+
         var provider = _providerFactory.CreateProvider(chatRequest.ProviderType);
 
         var assistantResponse = new StringBuilder();
@@ -136,14 +136,14 @@ public class ChatService : IChatService
     {
         var user = await _userRepository.GetByIdAsync(userId) ?? throw new ApiException("User not found", HttpStatusCode.NotFound);
         var (conversation, userMessage) = await PrepareConversationState(userId, request);
-        
+
         // Send conversation ID as the FIRST event for new conversations
         if (conversation.Id == 0)
         {
             // Save conversation first to get the ID
             await _conversationRepository.AddAsync(conversation);
             await _conversationRepository.SaveChangesAsync();
-        
+
             // Send conversation ID immediately
             yield return new ConversationChunkStreamEvent { Data = conversation.Id.ToString() };
         }
@@ -160,13 +160,13 @@ public class ChatService : IChatService
                 Content = chatRequest.SystemPrompt,
                 ConversationId = conversation.Id
             };
-            
+
             // Insert system message at the beginning
             var messagesList = chatRequest.Messages.ToList();
             messagesList.Insert(0, systemMessage);
             chatRequest.Messages = messagesList;
         }
-        
+
         var provider = _providerFactory.CreateProvider(chatRequest.ProviderType);
         var assistantResponse = new StringBuilder();
         var streamedImages = new List<StreamedImageData>();
@@ -571,7 +571,7 @@ public class ChatService : IChatService
         await _conversationRepository.SaveChangesAsync();
         return assistantMessage;
     }
-    
+
     private (string parsedContent, List<string> imageUrls) ParseMarkdownImages(string content)
     {
         var imageUrls = new List<string>();
@@ -611,64 +611,64 @@ public class ChatService : IChatService
     }
 
     private async Task<(Conversation, Message)> PrepareConversationState(int userId, ChatRequestDto request)
-{
-    Conversation conversation;
-    var userMessage = _mapper.Map<Message>(request);
-
-    // Handle attachments manually since AutoMapper can't map them
-    if (request.Attachments?.Any() == true)
     {
-        userMessage.HasImages = true;
-        
-        // Save each attachment and create file records
-        var savedFiles = new List<AppFile>();
-        foreach (var attachment in request.Attachments)
+        Conversation conversation;
+        var userMessage = _mapper.Map<Message>(request);
+
+        // Handle attachments manually since AutoMapper can't map them
+        if (request.Attachments?.Any() == true)
         {
-            try
+            userMessage.HasImages = true;
+
+            // Save each attachment and create file records
+            var savedFiles = new List<AppFile>();
+            foreach (var attachment in request.Attachments)
             {
-                // Decode base64 data
-                var imageBytes = Convert.FromBase64String(attachment.Base64Data);
-                
-                // Save file to filesystem and database
-                var appFile = await _fileService.SaveFileAsync(userId, imageBytes, attachment.FileName, attachment.ContentType);
-                savedFiles.Add(appFile);
+                try
+                {
+                    // Decode base64 data
+                    var imageBytes = Convert.FromBase64String(attachment.Base64Data);
+
+                    // Save file to filesystem and database
+                    var appFile = await _fileService.SaveFileAsync(userId, imageBytes, attachment.FileName, attachment.ContentType);
+                    savedFiles.Add(appFile);
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't fail the entire request
+                    _logger.LogError(ex, "Failed to save attachment {FileName}", attachment.FileName);
+                    userMessage.Content += $"\n\n[Failed to save attachment: {attachment.FileName}]";
+                }
             }
-            catch (Exception ex)
+
+            // Store file IDs in ToolCallsJson for easy retrieval
+            if (savedFiles.Any())
             {
-                // Log the error but don't fail the entire request
-                _logger.LogError(ex, "Failed to save attachment {FileName}", attachment.FileName);
-                userMessage.Content += $"\n\n[Failed to save attachment: {attachment.FileName}]";
+                var fileIds = savedFiles.Select(f => f.Id).ToList();
+                userMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(fileIds);
             }
         }
-        
-        // Store file IDs in ToolCallsJson for easy retrieval
-        if (savedFiles.Any())
+
+        if (request.ConversationId.HasValue)
         {
-            var fileIds = savedFiles.Select(f => f.Id).ToList();
-            userMessage.ToolCallsJson = System.Text.Json.JsonSerializer.Serialize(fileIds);
+            conversation = await _conversationService.GetFullConversationAsync(request.ConversationId.Value, userId);
+            var lastMessage = conversation.Messages.LastOrDefault();
+            userMessage.ParentMessageId = lastMessage?.MessageId;
+            userMessage.ConversationId = conversation.Id;
         }
-    }
-
-    if (request.ConversationId.HasValue)
-    {
-        conversation = await _conversationService.GetFullConversationAsync(request.ConversationId.Value, userId);
-        var lastMessage = conversation.Messages.LastOrDefault();
-        userMessage.ParentMessageId = lastMessage?.MessageId;
-        userMessage.ConversationId = conversation.Id;
-    }
-    else
-    {
-        var title = request.Message.Length > 50 ? request.Message.Substring(0, 50) + "..." : request.Message;
-        conversation = new Conversation
+        else
         {
-            UserId = userId,
-            Title = title,
-            Provider = request.Provider!.Value
-        };
-    }
-    
-    conversation.Messages.Add(userMessage);
+            var title = request.Message.Length > 50 ? request.Message.Substring(0, 50) + "..." : request.Message;
+            conversation = new Conversation
+            {
+                UserId = userId,
+                Title = title,
+                Provider = request.Provider!.Value
+            };
+        }
 
-    return (conversation, userMessage);
-}
+        conversation.Messages.Add(userMessage);
+
+        return (conversation, userMessage);
+    }
 }

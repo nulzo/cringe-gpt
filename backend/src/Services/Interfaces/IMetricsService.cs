@@ -15,7 +15,7 @@ public interface IMetricsService
     Task<IEnumerable<MetricsByProviderDto>> GetSummaryByProviderAsync(int userId, DateTime? from = null, DateTime? to = null);
 
     // Advanced Analytics Methods
-    Task<AnalyticsDashboardDto> GetDashboardAnalyticsAsync(int userId, DateTime? from = null, DateTime? to = null, string groupBy = "day");
+    Task<AnalyticsDashboardDto> GetDashboardAnalyticsAsync(int userId, DateTime? from = null, DateTime? to = null);
     Task<IEnumerable<TimeSeriesMetricsDto>> GetTimeSeriesMetricsAsync(int userId, DateTime? from = null, DateTime? to = null, string groupBy = "day");
     Task<PerformanceMetricsDto> GetPerformanceMetricsAsync(int userId, DateTime? from = null, DateTime? to = null);
     Task<CostBreakdownDto> GetCostBreakdownAsync(int userId, DateTime? from = null, DateTime? to = null);

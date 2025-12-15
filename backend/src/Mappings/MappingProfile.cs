@@ -48,7 +48,8 @@ public class MappingProfile : Profile
         // Message and Conversation Mappings
         CreateMap<Message, MessageDto>()
     .ForMember(dest => dest.Images, opt => opt.MapFrom(src => MapMessageImages(src)))
-    .AfterMap((src, dest) => {
+    .AfterMap((src, dest) =>
+    {
         // If we have processed images, replace the regular images array
         var processedImages = MapMessageImages(src);
         if (processedImages != null && processedImages.Any())
@@ -404,13 +405,13 @@ public class MappingProfile : Profile
         return src.Type switch
         {
             "claude-3-5-sonnet" => new ModelPricingDto
-                { PromptCostPerMillionTokens = 3.00m, CompletionCostPerMillionTokens = 15.00m },
+            { PromptCostPerMillionTokens = 3.00m, CompletionCostPerMillionTokens = 15.00m },
             "claude-3-opus" => new ModelPricingDto
-                { PromptCostPerMillionTokens = 15.00m, CompletionCostPerMillionTokens = 75.00m },
+            { PromptCostPerMillionTokens = 15.00m, CompletionCostPerMillionTokens = 75.00m },
             "claude-3-sonnet" => new ModelPricingDto
-                { PromptCostPerMillionTokens = 3.00m, CompletionCostPerMillionTokens = 15.00m },
+            { PromptCostPerMillionTokens = 3.00m, CompletionCostPerMillionTokens = 15.00m },
             "claude-3-haiku" => new ModelPricingDto
-                { PromptCostPerMillionTokens = 0.25m, CompletionCostPerMillionTokens = 1.25m },
+            { PromptCostPerMillionTokens = 0.25m, CompletionCostPerMillionTokens = 1.25m },
             _ => new ModelPricingDto()
         };
     }

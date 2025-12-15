@@ -1,9 +1,9 @@
+using System.Net;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OllamaWebuiBackend.Services.Interfaces;
-using OllamaWebuiBackend.Repositories.Interfaces;
 using OllamaWebuiBackend.Models;
-using System.Net;
+using OllamaWebuiBackend.Repositories.Interfaces;
+using OllamaWebuiBackend.Services.Interfaces;
 
 namespace OllamaWebuiBackend.Controllers.v1;
 
@@ -35,7 +35,7 @@ public class FilesController : BaseApiController
         try
         {
             var userId = GetUserId();
-            
+
             // Get files for the current user with pagination
             var files = await _fileRepository.FindAsync(f => f.UserId == userId);
             var userFiles = files.ToList();
@@ -44,7 +44,7 @@ public class FilesController : BaseApiController
             var totalCount = userFiles.Count;
             var skip = (page - 1) * pageSize ?? 0;
             var take = pageSize ?? 20;
-            
+
             var paginatedFiles = userFiles
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)
@@ -147,7 +147,7 @@ public class FilesController : BaseApiController
         try
         {
             var userId = GetUserId();
-            
+
             // Get only image files for the current user
             var files = await _fileRepository.FindAsync(f => f.UserId == userId && f.MimeType.StartsWith("image/"));
             var imageFiles = files.ToList();
@@ -156,7 +156,7 @@ public class FilesController : BaseApiController
             var totalCount = imageFiles.Count;
             var skip = (page - 1) * pageSize ?? 0;
             var take = pageSize ?? 20;
-            
+
             var paginatedImages = imageFiles
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)
@@ -203,31 +203,31 @@ public class FilesController : BaseApiController
         try
         {
             var userId = GetUserId();
-            
+
             // Build search query
             var files = await _fileRepository.FindAsync(f => f.UserId == userId);
             var userFiles = files.ToList();
 
             // Apply filters
             var filteredFiles = userFiles.AsQueryable();
-            
+
             if (!string.IsNullOrWhiteSpace(query))
             {
                 filteredFiles = filteredFiles.Where(f => f.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
             }
-            
+
             if (!string.IsNullOrWhiteSpace(mimeType))
             {
                 filteredFiles = filteredFiles.Where(f => f.MimeType.StartsWith(mimeType));
             }
 
             var filteredList = filteredFiles.ToList();
-            
+
             // Apply pagination
             var totalCount = filteredList.Count;
             var skip = (page - 1) * pageSize ?? 0;
             var take = pageSize ?? 20;
-            
+
             var paginatedFiles = filteredList
                 .OrderByDescending(f => f.CreatedAt)
                 .Skip(skip)

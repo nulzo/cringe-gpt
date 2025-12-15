@@ -98,7 +98,7 @@ public class AnthropicChatProvider : BaseChatProvider
                                 {
                                     var promptTokens = usageElement.TryGetProperty("input_tokens", out var pt) ? pt.GetInt32() : 0;
                                     var completionTokens = usageElement.TryGetProperty("output_tokens", out var ct) ? ct.GetInt32() : 0;
-                                    
+
                                     var usage = new UsageData
                                     {
                                         PromptTokens = promptTokens,
@@ -116,7 +116,7 @@ public class AnthropicChatProvider : BaseChatProvider
                     Logger.LogError(ex, "Failed to deserialize Anthropic stream response chunk: {data}", data);
                 }
 
-                if (textChunk != null) 
+                if (textChunk != null)
                     yield return new StreamedContentChunk { TextContent = textChunk };
             }
 

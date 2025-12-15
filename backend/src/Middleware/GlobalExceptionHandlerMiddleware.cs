@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.Services.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 
 namespace OllamaWebuiBackend.Middleware;
 

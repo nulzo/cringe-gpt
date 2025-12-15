@@ -9,7 +9,7 @@ public class ImageGenerationRequest
     public string? ResponseFormat { get; set; } = "url";
     public string? Size { get; set; } = "1024x1024";
     public string? Style { get; set; } = "vivid";
-    
+
     // gpt-image-1 specific options
     public string? Background { get; set; } = "opaque"; // "opaque" or "transparent"
     public string? OutputFormat { get; set; } = "png"; // "png", "jpeg", "webp"

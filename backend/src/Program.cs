@@ -179,7 +179,7 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimTypes.Name,
             RoleClaimType = ClaimTypes.Role
         };
-        
+
         // Allow SignalR to authenticate via query string for WebSockets/SSE when using access_token
         options.Events = new JwtBearerEvents
         {

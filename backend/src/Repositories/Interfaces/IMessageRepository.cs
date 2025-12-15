@@ -1,5 +1,5 @@
-using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.DTOs;
+using OllamaWebuiBackend.Models;
 
 namespace OllamaWebuiBackend.Repositories.Interfaces;
 

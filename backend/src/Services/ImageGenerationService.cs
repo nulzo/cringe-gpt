@@ -1,12 +1,12 @@
-using OllamaWebuiBackend.DTOs;
-using OllamaWebuiBackend.Services.Interfaces;
-using OllamaWebuiBackend.Services.Providers;
 using System.Net;
-using OllamaWebuiBackend.Common;
-using OllamaWebuiBackend.Services.Providers.Models;
 using AutoMapper;
+using OllamaWebuiBackend.Common;
+using OllamaWebuiBackend.DTOs;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Repositories.Interfaces;
+using OllamaWebuiBackend.Services.Interfaces;
+using OllamaWebuiBackend.Services.Providers;
+using OllamaWebuiBackend.Services.Providers.Models;
 
 namespace OllamaWebuiBackend.Services;
 
@@ -72,7 +72,7 @@ public class ImageGenerationService : IImageGenerationService
             InputFidelity = request.InputFidelity,
             Moderation = request.Moderation
         };
-        
+
         var providerResponse = await provider.GenerateImageAsync(providerRequest, settings.ApiKey, settings.ApiUrl, cancellationToken);
 
         var assistantMessageContent = "";

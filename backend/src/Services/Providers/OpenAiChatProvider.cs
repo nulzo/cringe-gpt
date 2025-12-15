@@ -1,16 +1,16 @@
-using System.Net;
 using System.ClientModel;
+using System.Net;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
+using OllamaWebuiBackend.Enums;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Services.Interfaces;
-using OllamaWebuiBackend.Services.Providers.Models;
 using OllamaWebuiBackend.Services.Pricing;
+using OllamaWebuiBackend.Services.Providers.Interfaces;
+using OllamaWebuiBackend.Services.Providers.Models;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Models;
-using OllamaWebuiBackend.Services.Providers.Interfaces;
-using OllamaWebuiBackend.Enums;
 
 namespace OllamaWebuiBackend.Services.Providers;
 
@@ -52,7 +52,7 @@ public class OpenAiChatProvider : BaseChatProvider
 
             // Check if we have attachments for reference-based generation
             var hasAttachments = request.Attachments != null && request.Attachments.Any();
-            
+
             if (hasAttachments)
             {
                 // Handle image generation with reference images
@@ -103,7 +103,7 @@ public class OpenAiChatProvider : BaseChatProvider
                             base64Data = base64Data.Substring(commaIndex + 1);
                         }
                     }
-                    
+
                     var imageBytes = Convert.FromBase64String(base64Data);
                     referenceImages.Add(imageBytes);
                 }
@@ -248,7 +248,7 @@ public class OpenAiChatProvider : BaseChatProvider
                 }
             }
 
-            foreach (var content in contentUpdates) 
+            foreach (var content in contentUpdates)
                 yield return new StreamedContentChunk { TextContent = content };
         }
 

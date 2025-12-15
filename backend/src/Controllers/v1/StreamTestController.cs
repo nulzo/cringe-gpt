@@ -1,9 +1,9 @@
 #if DEBUG
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Mvc;
 using OllamaWebuiBackend.DTOs;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Services.Interfaces;
-using System.Runtime.CompilerServices;
 
 namespace OllamaWebuiBackend.Controllers.v1;
 
@@ -28,46 +28,46 @@ public class StreamTestController(
                               "a smooth typing effect for the user experience.";
 
         var cancellationToken = HttpContext.RequestAborted;
-        
+
         // Simulate irregular input chunks (like from AI providers)
         var irregularStream = CreateIrregularStream(testText, cancellationToken);
-        
+
         // Create smooth stream
         var smoothStream = _streamBufferService.CreateSmoothStreamAsync(
-            irregularStream, 
-            chunkSize, 
-            intervalMs, 
+            irregularStream,
+            chunkSize,
+            intervalMs,
             cancellationToken);
 
         // Convert to SSE events
         var sseStream = ConvertToSseEvents(smoothStream, cancellationToken);
-        
+
         await _sseService.ExecuteStreamAsync(sseStream, cancellationToken);
     }
 
     private async IAsyncEnumerable<string> CreateIrregularStream(
-        string text, 
+        string text,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var random = new Random();
         var position = 0;
-        
+
         while (position < text.Length && !cancellationToken.IsCancellationRequested)
         {
             // Simulate irregular chunk sizes (1-15 characters)
             var chunkSize = random.Next(1, 16);
             var actualChunkSize = Math.Min(chunkSize, text.Length - position);
-            
+
             var chunk = text.AsSpan(position, actualChunkSize).ToString();
             position += actualChunkSize;
-            
+
             // Simulate irregular timing (10-200ms delays)
             var delay = random.Next(10, 201);
             await Task.Delay(delay, cancellationToken);
-            
-            _logger.LogDebug("Irregular chunk: '{Chunk}' (size: {Size}, delay: {Delay}ms)", 
+
+            _logger.LogDebug("Irregular chunk: '{Chunk}' (size: {Size}, delay: {Delay}ms)",
                 chunk, actualChunkSize, delay);
-            
+
             yield return chunk;
         }
     }
@@ -77,13 +77,13 @@ public class StreamTestController(
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         var fullContent = new System.Text.StringBuilder();
-        
+
         await foreach (var chunk in smoothStream.WithCancellation(cancellationToken))
         {
             fullContent.Append(chunk);
             yield return new ContentStreamEvent { Data = chunk };
         }
-        
+
         // Create a proper Message object for the final event
         var finalMessage = new Message
         {
@@ -93,7 +93,7 @@ public class StreamTestController(
             ConversationId = 0, // Test conversation
             FinishReason = "complete"
         };
-        
+
         yield return new FinalMessageStreamEvent { Data = finalMessage };
     }
 }

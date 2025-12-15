@@ -56,7 +56,7 @@ public class OllamaPricingService : IProviderPricingService
         ["moondream"] = ModelPricingDto.Create(0, 0, "Moondream vision models")
     };
 
-    private Dictionary<string, ModelPricingDto> _customPricing;
+    private readonly Dictionary<string, ModelPricingDto> _customPricing;
     private readonly object _pricingLock = new();
 
     public OllamaPricingService(ILogger<OllamaPricingService> logger)

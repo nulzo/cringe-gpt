@@ -7,12 +7,12 @@ namespace OllamaWebuiBackend.Common;
 /// </summary>
 public class BadRequestException : ApiException
 {
-    public BadRequestException(string message) 
+    public BadRequestException(string message)
         : base(message, HttpStatusCode.BadRequest)
     {
     }
 
-    public BadRequestException(string message, Exception innerException) 
+    public BadRequestException(string message, Exception innerException)
         : base(message, innerException, HttpStatusCode.BadRequest)
     {
     }

@@ -17,7 +17,7 @@ public class ImageGenerationProviderFactory
     public IImageGenerationProvider CreateProvider(ProviderType providerType, string modelId)
     {
         var providers = _serviceProvider.GetServices<IImageGenerationProvider>().ToList();
-        
+
         var provider = providers.FirstOrDefault(p => p.Type == providerType);
 
         if (provider == null)
@@ -25,4 +25,4 @@ public class ImageGenerationProviderFactory
 
         return provider;
     }
-} 
+}

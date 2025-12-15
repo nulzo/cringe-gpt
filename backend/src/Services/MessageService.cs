@@ -1,8 +1,8 @@
+using AutoMapper;
 using OllamaWebuiBackend.DTOs;
 using OllamaWebuiBackend.Models;
 using OllamaWebuiBackend.Repositories.Interfaces;
 using OllamaWebuiBackend.Services.Interfaces;
-using AutoMapper;
 
 namespace OllamaWebuiBackend.Services;
 
@@ -115,7 +115,7 @@ public class MessageService : IMessageService
                         image.MimeType = file.MimeType;
                         image.Url = $"/api/v1/files/{file.Id}";
                     }
-                    else 
+                    else
                     {
                         _logger.LogWarning("File {FileId} not found for user {UserId}", image.Id, userId);
                     }

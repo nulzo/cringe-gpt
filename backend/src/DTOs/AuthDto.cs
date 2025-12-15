@@ -15,9 +15,9 @@ public class LoginDto
 
 public class AuthResponseDto
 {
-    public required int    Id       { get; set; }
+    public required int Id { get; set; }
     public required string Username { get; set; }
-    public required string Email    { get; set; }
-    public string?         Avatar   { get; set; }
-    public required string Token    { get; set; }
+    public required string Email { get; set; }
+    public string? Avatar { get; set; }
+    public required string Token { get; set; }
 }

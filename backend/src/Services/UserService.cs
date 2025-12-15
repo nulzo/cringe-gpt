@@ -66,7 +66,7 @@ public class UserService(
         if (updateDto.Settings != null)
         {
             var settings = await _userRepository.GetUserSettingsByUserIdAsync(userId);
-            
+
             if (settings == null)
             {
                 settings = new UserSettings
@@ -147,11 +147,11 @@ public class UserService(
 
         return await _userManager.IsInRoleAsync(user, role);
     }
-    
+
     public async Task<UserSettingsDto> GetUserSettingsAsync(int userId)
     {
         var settings = await _userRepository.GetUserSettingsByUserIdAsync(userId);
-        
+
         if (settings == null)
         {
             return new UserSettingsDto
@@ -160,30 +160,30 @@ public class UserService(
                 PreferredModel = null
             };
         }
-        
+
         return new UserSettingsDto
         {
             Theme = settings.Theme,
             PreferredModel = settings.PreferredModel
         };
     }
-    
+
     public async Task<UserSettingsDto> UpdateUserSettingsAsync(int userId, UserSettingsDto settingsDto)
     {
         var settings = await _userRepository.GetUserSettingsByUserIdAsync(userId);
-        
+
         if (settings == null)
         {
             var user = await _userRepository.GetTrackedProfileByIdAsync(userId);
             if (user == null) throw new ApiException("User not found.", HttpStatusCode.NotFound);
-            
+
             settings = new UserSettings
             {
                 UserId = userId,
                 Theme = settingsDto.Theme ?? "dark",
                 PreferredModel = settingsDto.PreferredModel
             };
-            
+
             user.Settings = settings;
             _userRepository.Update(user);
         }
@@ -193,9 +193,9 @@ public class UserService(
             settings.PreferredModel = settingsDto.PreferredModel;
             _userRepository.UpdateSettings(settings);
         }
-        
+
         await _userRepository.SaveChangesAsync();
-        
+
         return new UserSettingsDto
         {
             Theme = settings.Theme,

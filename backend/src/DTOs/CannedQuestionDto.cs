@@ -14,9 +14,9 @@ public class CannedQuestionDto
 
 public class CannedQuestionCreateDto
 {
-    [Required] [StringLength(200)] public required string Title { get; set; }
+    [Required][StringLength(200)] public required string Title { get; set; }
 
-    [Required] [StringLength(1000)] public required string Text { get; set; }
+    [Required][StringLength(1000)] public required string Text { get; set; }
 
     public int Order { get; set; } = 0;
 }

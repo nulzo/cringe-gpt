@@ -89,7 +89,7 @@ public class OllamaChatProvider : BaseChatProvider
                     Logger.LogError(ex, "Failed to deserialize Ollama stream response chunk: {line}", line);
                 }
 
-                if (contentChunk != null) 
+                if (contentChunk != null)
                     yield return new StreamedContentChunk { TextContent = contentChunk };
 
                 if (isDone)

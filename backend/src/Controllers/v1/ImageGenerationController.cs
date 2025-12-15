@@ -1,8 +1,8 @@
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using OllamaWebuiBackend.DTOs;
 using OllamaWebuiBackend.Services.Interfaces;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace OllamaWebuiBackend.Controllers.v1;
 
@@ -26,4 +26,4 @@ public class ImageGenerationController : BaseApiController
         var result = await _imageGenerationService.GenerateImageAsync(userId, request, cancellationToken);
         return Ok(result);
     }
-} 
+}

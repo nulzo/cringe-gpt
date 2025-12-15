@@ -123,13 +123,12 @@ public class MetricsService : IMetricsService
 
     // Advanced Analytics Methods Implementation
 
-    public async Task<AnalyticsDashboardDto> GetDashboardAnalyticsAsync(int userId, DateTime? from = null, DateTime? to = null,
-        string groupBy = "day")
+    public async Task<AnalyticsDashboardDto> GetDashboardAnalyticsAsync(int userId, DateTime? from = null, DateTime? to = null)
     {
         var overall = await GetSummaryAsync(userId, from, to);
         var byProvider = await GetProviderUsageAsync(userId, from, to);
         var byModel = await GetTopModelsAsync(userId, 10, from, to);
-        var timeSeries = await GetTimeSeriesMetricsAsync(userId, from, to, groupBy);
+        var timeSeries = await GetTimeSeriesMetricsAsync(userId, from, to);
         var performance = await GetPerformanceMetricsAsync(userId, from, to);
         var costBreakdown = await GetCostBreakdownAsync(userId, from, to);
         var usageHabits = await GetUsageHabitsAsync(userId, from, to);
@@ -182,78 +181,58 @@ public class MetricsService : IMetricsService
 
     public async Task<PerformanceMetricsDto> GetPerformanceMetricsAsync(int userId, DateTime? from = null, DateTime? to = null)
     {
-        var query = _metricsRepository.GetFiltered(userId, from, to);
-        var totalRequests = await query.CountAsync();
+        var metrics = await _metricsRepository.GetFiltered(userId, from, to).ToListAsync();
 
-        if (totalRequests == 0)
+        if (!metrics.Any())
             return new PerformanceMetricsDto();
 
-        // Multiple small aggregate queries are significantly cheaper than materializing all rows.
-        var avgResponseTime = await query.AverageAsync(m => m.DurationMs);
-        var totalTokens = await query.SumAsync(m => m.PromptTokens + m.CompletionTokens);
-        var totalDuration = await query.SumAsync(m => m.DurationMs);
+        var sortedDurations = metrics.OrderBy(m => m.DurationMs).ToList();
+        var medianIndex = sortedDurations.Count / 2;
+        var p95Index = (int)(sortedDurations.Count * 0.95);
 
-        var medianSkip = totalRequests / 2;
-        var p95Skip = Math.Min((int)Math.Floor(totalRequests * 0.95), totalRequests - 1);
-
-        var medianResponseTime = await query.OrderBy(m => m.DurationMs)
-            .Select(m => m.DurationMs)
-            .Skip(medianSkip)
-            .FirstAsync();
-
-        var p95ResponseTime = await query.OrderBy(m => m.DurationMs)
-            .Select(m => m.DurationMs)
-            .Skip(p95Skip)
-            .FirstAsync();
+        var totalTokens = metrics.Sum(m => m.PromptTokens + m.CompletionTokens);
+        var totalDuration = metrics.Sum(m => m.DurationMs);
 
         return new PerformanceMetricsDto
         {
-            AverageResponseTime = avgResponseTime,
-            MedianResponseTime = medianResponseTime,
-            P95ResponseTime = p95ResponseTime,
+            AverageResponseTime = metrics.Average(m => m.DurationMs),
+            MedianResponseTime = sortedDurations[medianIndex].DurationMs,
+            P95ResponseTime = sortedDurations[Math.Min(p95Index, sortedDurations.Count - 1)].DurationMs,
             SuccessRate = 100.0, // Assuming all recorded metrics are successful
             TotalErrors = 0, // Need to implement error tracking
-            TotalRequests = totalRequests,
+            TotalRequests = metrics.Count,
             TokensPerSecond = totalDuration > 0 ? totalTokens / (totalDuration / 1000.0) : 0
         };
     }
 
     public async Task<CostBreakdownDto> GetCostBreakdownAsync(int userId, DateTime? from = null, DateTime? to = null)
     {
-        var query = _metricsRepository.GetFiltered(userId, from, to);
-        var totalRequests = await query.CountAsync();
+        var metrics = await _metricsRepository.GetFiltered(userId, from, to).ToListAsync();
 
-        if (totalRequests == 0)
+        if (!metrics.Any())
             return new CostBreakdownDto();
 
-        var totalCost = await query.SumAsync(m => m.CostInUSD);
-        var totalTokens = await query.SumAsync(m => m.PromptTokens + m.CompletionTokens);
-
-        // Estimate prompt/completion split (placeholder heuristic)
-        var totalPromptCost = totalCost * 0.7m;
+        var totalCost = metrics.Sum(m => m.CostInUSD);
+        var totalPromptCost = metrics.Sum(m => m.CostInUSD * 0.7m); // Estimate prompt cost ratio
         var totalCompletionCost = totalCost - totalPromptCost;
 
-        var mostExpensiveModel = await query
+        var mostExpensiveModel = metrics
             .GroupBy(m => m.Model)
-            .Select(g => new { Model = g.Key, Cost = g.Sum(x => x.CostInUSD) })
-            .OrderByDescending(x => x.Cost)
-            .Select(x => x.Model)
-            .FirstOrDefaultAsync();
+            .OrderByDescending(g => g.Sum(m => m.CostInUSD))
+            .FirstOrDefault()?.Key;
 
-        var mostExpensiveProvider = await query
+        var mostExpensiveProvider = metrics
             .GroupBy(m => m.Provider)
-            .Select(g => new { Provider = g.Key, Cost = g.Sum(x => x.CostInUSD) })
-            .OrderByDescending(x => x.Cost)
-            .Select(x => x.Provider.ToString())
-            .FirstOrDefaultAsync();
+            .OrderByDescending(g => g.Sum(m => m.CostInUSD))
+            .FirstOrDefault()?.Key.ToString();
 
         return new CostBreakdownDto
         {
             TotalCost = totalCost,
             PromptCost = totalPromptCost,
             CompletionCost = totalCompletionCost,
-            AverageCostPerRequest = totalRequests > 0 ? totalCost / totalRequests : 0,
-            AverageCostPerToken = totalCost / Math.Max(1, totalTokens),
+            AverageCostPerRequest = metrics.Count > 0 ? totalCost / metrics.Count : 0,
+            AverageCostPerToken = totalCost / Math.Max(1, metrics.Sum(m => m.PromptTokens + m.CompletionTokens)),
             MostExpensiveModel = mostExpensiveModel,
             MostExpensiveProvider = mostExpensiveProvider
         };
@@ -261,40 +240,34 @@ public class MetricsService : IMetricsService
 
     public async Task<UsageHabitsDto> GetUsageHabitsAsync(int userId, DateTime? from = null, DateTime? to = null)
     {
-        var query = _metricsRepository.GetFiltered(userId, from, to);
-        var totalRequests = await query.CountAsync();
+        var metrics = await _metricsRepository.GetFiltered(userId, from, to).ToListAsync();
 
-        if (totalRequests == 0)
+        if (!metrics.Any())
             return new UsageHabitsDto();
 
-        var peakHour = await query
+        var peakHour = metrics
             .GroupBy(m => m.CreatedAt.Hour)
             .OrderByDescending(g => g.Count())
-            .Select(g => g.Key)
-            .FirstAsync();
+            .First().Key;
 
-        var mostActiveDay = await query
+        var mostActiveDay = metrics
             .GroupBy(m => m.CreatedAt.DayOfWeek)
             .OrderByDescending(g => g.Count())
-            .Select(g => g.Key.ToString())
-            .FirstOrDefaultAsync();
+            .First().Key.ToString();
 
-        var mostUsedModel = await query
+        var mostUsedModel = metrics
             .GroupBy(m => m.Model)
             .OrderByDescending(g => g.Count())
-            .Select(g => g.Key)
-            .FirstOrDefaultAsync();
+            .First().Key;
 
-        var mostUsedProvider = await query
+        var mostUsedProvider = metrics
             .GroupBy(m => m.Provider)
             .OrderByDescending(g => g.Count())
-            .Select(g => g.Key.ToString())
-            .FirstOrDefaultAsync();
+            .First().Key.ToString();
 
-        var averageSessionLength = (int)Math.Round(await query
-            .GroupBy(m => m.ConversationId)
-            .Select(g => g.Count())
-            .AverageAsync());
+        // Calculate average session length (assuming conversations are sessions)
+        var conversationsById = metrics.GroupBy(m => m.ConversationId);
+        var averageSessionLength = (int)conversationsById.Average(g => g.Count());
 
         return new UsageHabitsDto
         {

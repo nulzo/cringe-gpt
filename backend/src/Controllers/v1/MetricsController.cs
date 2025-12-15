@@ -62,10 +62,9 @@ public class MetricsController : BaseApiController
     // Advanced Analytics Endpoints
 
     [HttpGet("dashboard")]
-    public async Task<IActionResult> GetDashboardAnalytics([FromQuery] DateTime? from, [FromQuery] DateTime? to,
-        [FromQuery] string groupBy = "day")
+    public async Task<IActionResult> GetDashboardAnalytics([FromQuery] DateTime? from, [FromQuery] DateTime? to)
     {
-        var analytics = await _metricsService.GetDashboardAnalyticsAsync(GetUserId(), from, to, groupBy);
+        var analytics = await _metricsService.GetDashboardAnalyticsAsync(GetUserId(), from, to);
         return Ok(analytics);
     }
 

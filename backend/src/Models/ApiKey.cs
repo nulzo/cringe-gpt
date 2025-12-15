@@ -4,11 +4,11 @@ namespace OllamaWebuiBackend.Models;
 
 public class ApiKey : BaseEntity
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 
     [Required] public required string HashedKey { get; set; }
 
-    [Required] [StringLength(10)] public required string KeyPrefix { get; set; } // e.g., "sk-..."
+    [Required][StringLength(10)] public required string KeyPrefix { get; set; } // e.g., "sk-..."
 
     public DateTime? ExpiresAt { get; set; }
 

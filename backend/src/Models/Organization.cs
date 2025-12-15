@@ -4,7 +4,7 @@ namespace OllamaWebuiBackend.Models;
 
 public class Organization : BaseEntity
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 
     public virtual ICollection<OrganizationMember> Members { get; set; } = new List<OrganizationMember>();
     public virtual ICollection<Project> Projects { get; set; } = new List<Project>();

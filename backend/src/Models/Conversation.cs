@@ -23,7 +23,7 @@ public class Conversation : BaseEntity
             Provider = provider
         };
     }
-    
+
     // DDD: attach an existing message to this conversation
     public Message AddMessage(Message message)
     {

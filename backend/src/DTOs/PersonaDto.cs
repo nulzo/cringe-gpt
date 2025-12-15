@@ -45,3 +45,4 @@ public class PersonaUpdateDto
     public string? Model { get; set; }
     public PersonaParametersDto? Parameters { get; set; }
 }
+

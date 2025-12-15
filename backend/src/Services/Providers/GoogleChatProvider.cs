@@ -110,7 +110,7 @@ public class GoogleChatProvider : BaseChatProvider
 
             var promptTokens = 0;
             var completionTokens = 0;
-            
+
             if (finalChunk?["usageMetadata"] is { } usageMetadata)
             {
                 promptTokens = usageMetadata["promptTokenCount"]?.GetValue<int>() ?? 0;

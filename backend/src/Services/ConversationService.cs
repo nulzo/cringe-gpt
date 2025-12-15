@@ -1,5 +1,5 @@
-using System.Net;
 using System.Linq;
+using System.Net;
 using AutoMapper;
 using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.DTOs;
@@ -87,7 +87,7 @@ public class ConversationService : IConversationService
 
     public async Task<Conversation> GetFullConversationAsync(int conversationId, int userId)
     {
-    var conversation = await _conversationRepository.GetTrackedByIdWithMessagesAsync(conversationId, userId);
+        var conversation = await _conversationRepository.GetTrackedByIdWithMessagesAsync(conversationId, userId);
         if (conversation == null || conversation.UserId != userId)
             throw new ApiException("Conversation not found", HttpStatusCode.NotFound);
 

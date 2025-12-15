@@ -1,11 +1,11 @@
+using System.ClientModel;
+using System.Net;
+using OllamaWebuiBackend.Common;
 using OllamaWebuiBackend.Enums;
 using OllamaWebuiBackend.Services.Providers.Interfaces;
 using OllamaWebuiBackend.Services.Providers.Models;
-using System.Net;
-using OllamaWebuiBackend.Common;
-using OpenAI.Images;
-using System.ClientModel;
 using OpenAI;
+using OpenAI.Images;
 
 namespace OllamaWebuiBackend.Services.Providers;
 
@@ -86,7 +86,7 @@ public class OpenAiImageGenerationProvider : IImageGenerationProvider
             throw new ApiException("Model is required for OpenAI image generation.", HttpStatusCode.BadRequest);
         if (string.IsNullOrWhiteSpace(apiKey))
             throw new ApiException("API key is required for OpenAI.", HttpStatusCode.BadRequest);
-        
+
         if (request.ReferenceImages == null || !request.ReferenceImages.Any())
             throw new ApiException("At least one reference image is required for generation.", HttpStatusCode.BadRequest);
 
@@ -98,13 +98,13 @@ public class OpenAiImageGenerationProvider : IImageGenerationProvider
             httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
 
             using var formData = new MultipartFormDataContent();
-            
+
             // Add the model
             formData.Add(new StringContent(request.Model), "model");
-            
+
             // Add the prompt
             formData.Add(new StringContent(request.Prompt), "prompt");
-            
+
             // Add all reference images - these are REFERENCES for generation, not images to edit
             for (int i = 0; i < request.ReferenceImages.Count; i++)
             {
@@ -116,7 +116,7 @@ public class OpenAiImageGenerationProvider : IImageGenerationProvider
 
             // Use the /v1/images/edits endpoint for gpt-image-1 with reference images
             var response = await httpClient.PostAsync("https://api.openai.com/v1/images/edits", formData, cancellationToken);
-            
+
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -125,19 +125,19 @@ public class OpenAiImageGenerationProvider : IImageGenerationProvider
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             var responseJson = System.Text.Json.JsonDocument.Parse(responseContent);
-            
+
             // Extract the generated image data
             var dataArray = responseJson.RootElement.GetProperty("data");
             var firstImage = dataArray.EnumerateArray().First();
             var b64Json = firstImage.GetProperty("b64_json").GetString();
-            
+
             if (string.IsNullOrEmpty(b64Json))
             {
                 throw new ApiException("No image data received from OpenAI API.", HttpStatusCode.InternalServerError);
             }
 
             var imageBytes = Convert.FromBase64String(b64Json);
-            
+
             return new ImageGenerationResponse
             {
                 Images = new List<ImageData>

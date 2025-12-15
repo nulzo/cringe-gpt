@@ -14,14 +14,14 @@ public class ApiKeyDto
 
 public class ApiKeyCreateDto
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 
     public DateTime? ExpiresAt { get; set; }
 }
 
 public class ApiKeyUpdateDto
 {
-    [Required] [StringLength(100)] public required string Name { get; set; }
+    [Required][StringLength(100)] public required string Name { get; set; }
 }
 
 public class NewApiKeyDto

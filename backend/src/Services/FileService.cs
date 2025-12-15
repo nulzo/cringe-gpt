@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using OllamaWebuiBackend.Data;
 using OllamaWebuiBackend.Models;
-using OllamaWebuiBackend.Services.Interfaces;
 using OllamaWebuiBackend.Repositories.Interfaces;
+using OllamaWebuiBackend.Services.Interfaces;
 
 namespace OllamaWebuiBackend.Services;
 
@@ -15,7 +15,7 @@ public class FileService : IFileService
     {
         _fileRepository = fileRepository;
         _storagePath = Path.Combine(AppContext.BaseDirectory, "Storage");
-        
+
         if (!Directory.Exists(_storagePath))
         {
             Directory.CreateDirectory(_storagePath);
@@ -27,7 +27,7 @@ public class FileService : IFileService
         var fileId = Guid.NewGuid();
         var fileExtension = Path.GetExtension(fileName);
         var newFileName = $"{fileId}{fileExtension}";
-        
+
         var absoluteFilePath = Path.Combine(_storagePath, newFileName);
         await File.WriteAllBytesAsync(absoluteFilePath, content);
 
@@ -52,7 +52,7 @@ public class FileService : IFileService
         var result = await _fileRepository.FindAsync(f => f.Id == id && f.UserId == userId);
         return result.FirstOrDefault();
     }
-    
+
     public async Task<byte[]?> GetFileContentAsync(AppFile file)
     {
         var filePath = Path.Combine(AppContext.BaseDirectory, file.FilePath);
@@ -62,4 +62,4 @@ public class FileService : IFileService
         }
         return null;
     }
-} 
+}

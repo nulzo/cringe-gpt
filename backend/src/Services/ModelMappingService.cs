@@ -68,7 +68,7 @@ public class ModelMappingService : IModelMappingService
         try
         {
             var providerModels = JsonSerializer.Deserialize<IEnumerable<TProviderModel>>(jsonContent, _jsonOptions);
-            if (providerModels == null) 
+            if (providerModels == null)
                 return Task.FromResult(Enumerable.Empty<ModelResponseDto>());
 
             return Task.FromResult(providerModels.Select(model => _mapper.Map<ModelResponseDto>(model)));

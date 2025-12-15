@@ -27,7 +27,7 @@ public class ChatCompletionsController : BaseApiController
     public async Task Post([FromBody] ChatRequestDto request)
     {
         var cancellationToken = HttpContext.RequestAborted;
-        
+
         if (request.Stream)
         {
             var stream = _chatService.GetCompletionStreamAsync(GetUserId(), request, cancellationToken);
