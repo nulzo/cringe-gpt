@@ -3,17 +3,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { type Icon, type IconProps } from "@tabler/icons-react";
-import type {
-  ForwardRefExoticComponent,
-  RefAttributes,
-  ReactNode,
-} from "react";
+import type { ElementType, ReactNode } from "react";
 import { ChatAreaActionButton } from "./chat-area-action-button";
 import { cn } from "@/lib/utils";
 
 interface ChatFeaturePopoverProps {
-  icon: ForwardRefExoticComponent<IconProps & RefAttributes<Icon>>;
+  icon: ElementType;
   tooltip?: string;
   children: ReactNode;
   isIndicatorActive?: boolean;

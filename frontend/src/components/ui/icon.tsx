@@ -1,12 +1,7 @@
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import { cva, type VariantProps } from "class-variance-authority";
-
-interface IconType {
-  className?: string;
-  icon: IconSvgElement;
-  stroke?: number;
-}
+import { type ComponentProps, type Ref } from "react";
 
 const iconVariants = cva("inline-flex shrink-0 text-foreground", {
   variants: {
@@ -27,18 +22,28 @@ const iconVariants = cva("inline-flex shrink-0 text-foreground", {
   },
 });
 
+interface IconProps
+  extends
+    Omit<ComponentProps<"svg">, "ref" | "icon">,
+    VariantProps<typeof iconVariants> {
+  icon: IconSvgElement;
+  ref?: Ref<SVGSVGElement>;
+}
+
 function Icon({
   className,
   icon,
   variant,
   size,
-  stroke = 2,
+  strokeWidth = 2,
+  ref,
   ...props
-}: IconType & VariantProps<typeof iconVariants>) {
+}: IconProps) {
   return (
     <HugeiconsIcon
+      ref={ref}
       icon={icon}
-      strokeWidth={2}
+      strokeWidth={strokeWidth as number}
       className={cn(iconVariants({ variant, size, className }))}
       {...props}
     />

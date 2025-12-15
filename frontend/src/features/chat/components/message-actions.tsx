@@ -41,10 +41,8 @@ export const MessageActions = memo(
                   className="size-9 text-muted-foreground hover:text-foreground "
                 >
                   {isLiked ? (
-                    <IconHeart
-                      className="size-5 fill-current text-red-500"
-                      strokeWidth={2}
-                    />
+                    <Icon icon={FavouriteIcon} size="icon" className="fill-current text-red-500" />
+                    
                   ) : (
                     <Icon icon={FavouriteIcon} size="icon" />
                   )}

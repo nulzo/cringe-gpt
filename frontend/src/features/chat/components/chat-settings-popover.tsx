@@ -1,6 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useEffect } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,7 +19,6 @@ import {
   defaultChatConfig,
   useChatConfigStore,
 } from "@/stores/chat-config-store";
-import type { ReactElement } from "react";
 import { ChatFeaturePopover } from "./chat-feature-popover";
 import { IconAdjustments } from "@tabler/icons-react";
 
@@ -26,8 +26,8 @@ const chatConfigSchema = z.object({
   temperature: z
     .number()
     .min(0, { message: "Min 0" })
-    .max(100, { message: "Max 100" }),
-  topP: z.number().min(0).max(100),
+    .max(2, { message: "Max 2" }), // Updated max to 2 for common LLM temps
+  topP: z.number().min(0).max(1), // Top P is usually 0-1
   topK: z.number().min(0).max(100),
   systemPrompt: z.string().max(20000).optional(),
 });
@@ -58,13 +58,25 @@ export const ChatSettingsPopover = ({ disabled }: { disabled?: boolean }) => {
     },
   });
 
+  // Sync form with store changes
+  useEffect(() => {
+    form.reset({
+      temperature,
+      topP,
+      topK,
+      systemPrompt: systemPrompt || "",
+    });
+  }, [temperature, topP, topK, systemPrompt, form]);
+
   const hasPersona = !!activePersonaId;
+  
+  // Indicator is active if there is a persona OR if values differ from defaults
   const isDirty =
     !hasPersona &&
     (temperature !== defaultChatConfig.temperature ||
       topP !== defaultChatConfig.topP ||
       topK !== defaultChatConfig.topK ||
-      systemPrompt !== defaultChatConfig.systemPrompt);
+      (systemPrompt && systemPrompt !== defaultChatConfig.systemPrompt));
 
   const onSubmit = (values: ChatConfigFormValues) => {
     setTemperature(values.temperature);
@@ -75,14 +87,14 @@ export const ChatSettingsPopover = ({ disabled }: { disabled?: boolean }) => {
 
   const handleReset = () => {
     resetConfig();
-    form.reset(defaultChatConfig);
+    // Form will automatically reset via useEffect
   };
 
   return (
     <ChatFeaturePopover
       icon={IconAdjustments}
       tooltip="Adjust Settings"
-      isIndicatorActive={isDirty}
+      isIndicatorActive={!!isDirty}
       contentClassName="w-[500px]"
       side="top"
       disabled={disabled}
@@ -184,9 +196,9 @@ export const ChatSettingsPopover = ({ disabled }: { disabled?: boolean }) => {
 
           <div className="flex justify-between gap-2">
             <Button type="button" variant="secondary" onClick={handleReset}>
-              Reset
+              Reset to Defaults
             </Button>
-            <Button type="submit">Save</Button>
+            <Button type="submit">Save Changes</Button>
           </div>
         </form>
       </Form>

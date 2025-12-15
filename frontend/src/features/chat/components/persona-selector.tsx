@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Command, CommandInput, CommandList } from "@/components/ui/command";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -12,20 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  IconUserCircle,
-  IconX,
-  IconCheck,
-  IconPlus,
-} from "@tabler/icons-react";
-import {
   usePersonas,
   useCreatePersona,
 } from "@/features/personas/api/get-personas";
 import type { PersonaPayload } from "@/features/personas/types";
 import { useChatConfigStore } from "@/stores/chat-config-store";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ChatFeaturePopover } from "./chat-feature-popover";
+import { IconUser } from "@tabler/icons-react";
+import { GenericResourceSelector } from "./generic-resource-selector";
 
 export function PersonaSelector() {
   const personasQuery = usePersonas();
@@ -45,9 +38,7 @@ export function PersonaSelector() {
     selectedModelId,
   } = useChatConfigStore();
 
-  const [open, setOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
   const [draft, setDraft] = useState<PersonaPayload>({
     name: "",
@@ -62,20 +53,7 @@ export function PersonaSelector() {
     },
   });
 
-  const filtered = useMemo(() => {
-    const term = search.toLowerCase().trim();
-    if (!term) return personasQuery.data ?? [];
-    return (personasQuery.data ?? []).filter(
-      (persona) =>
-        persona.name.toLowerCase().includes(term) ||
-        persona.description?.toLowerCase().includes(term),
-    );
-  }, [search, personasQuery.data]);
-
-  const applyPersona = (personaId: number) => {
-    const persona = (personasQuery.data ?? []).find((p) => p.id === personaId);
-    if (!persona) return;
-
+  const applyPersona = (persona: any) => {
     setActivePersona(persona.id, persona.name);
     setSystemPrompt(persona.instructions);
     if (persona.parameters?.temperature != null)
@@ -88,7 +66,6 @@ export function PersonaSelector() {
       setMaxTokens(persona.parameters.maxTokens || null);
     if (persona.parameters?.isTemporary != null)
       setIsTemporary(Boolean(persona.parameters.isTemporary));
-    setOpen(false);
   };
 
   const handleCreate = async () => {
@@ -109,14 +86,20 @@ export function PersonaSelector() {
       const created = await createPersona.mutateAsync(payload);
       if (created?.id) {
         personasQuery.refetch();
-        setDraft((prev) => ({
-          ...prev,
+        setDraft({
           name: "",
           description: "",
           instructions: "",
-        }));
+          parameters: {
+            temperature: 0.7,
+            topP: 0.9,
+            topK: 0.4,
+            maxTokens: 4096,
+            isTemporary: false,
+          },
+        });
         setIsDialogOpen(false);
-        applyPersona(created.id);
+        applyPersona(created);
       }
     } catch (error) {
       console.error("Failed to create persona", error);
@@ -125,109 +108,37 @@ export function PersonaSelector() {
 
   return (
     <>
-      <ChatFeaturePopover
-        open={open}
-        onOpenChange={setOpen}
-        icon={IconUserCircle}
-        tooltip={
-          activePersonaName ? `Persona: ${activePersonaName}` : "Select persona"
-        }
-        isIndicatorActive={!!activePersonaName}
-        className={cn(
-          activePersonaName &&
-            "bg-accent/40 text-foreground border border-border/60",
-        )}
-        contentClassName="w-[400px] p-0 bg-popover/95 backdrop-blur-sm border-border/50 shadow-2xl rounded-xl overflow-hidden"
-      >
-        <Command shouldFilter={false} className="bg-transparent">
-          <div className="border-b border-border/40 p-1">
-            <CommandInput
-              placeholder="Search personas..."
-              value={search}
-              onValueChange={setSearch}
-              className="h-10 text-sm"
-            />
-          </div>
-          <CommandList className="max-h-[360px] p-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
-            {filtered.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No personas found
-              </div>
-            ) : (
-              filtered.map((persona) => {
-                const isActive = persona.id === activePersonaId;
-                return (
-                  <div
-                    key={persona.id}
-                    role="option"
-                    tabIndex={0}
-                    onClick={() => {
-                      applyPersona(persona.id);
-                      setOpen(false);
-                      setSearch("");
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        applyPersona(persona.id);
-                        setOpen(false);
-                        setSearch("");
-                      }
-                    }}
-                    className={cn(
-                      "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
-                      "hover:bg-accent/50",
-                      isActive
-                        ? "bg-accent/70 text-accent-foreground"
-                        : "text-foreground",
-                    )}
-                  >
-                    <div className="flex flex-col gap-1 min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium truncate">
-                          {persona.name}
-                        </span>
-                      </div>
-                      {persona.description && (
-                        <span className="text-xs text-muted-foreground truncate opacity-80">
-                          {persona.description}
-                        </span>
-                      )}
-                    </div>
-                    {isActive && (
-                      <IconCheck className="ml-3 size-4 shrink-0 text-primary" />
-                    )}
-                  </div>
-                );
-              })
+      <GenericResourceSelector
+        items={personasQuery.data ?? []}
+        activeId={activePersonaId}
+        activeLabel={activePersonaName}
+        onSelect={applyPersona}
+        onClear={() => {
+          clearPersona();
+          // System prompt clearing is now handled by store's clearPersona
+        }}
+        onCreate={() => setIsDialogOpen(true)}
+        icon={IconUser}
+        tooltip="Select persona"
+        searchPlaceholder="Search personas..."
+        emptyMessage="No personas found"
+        getSearchTerms={(persona) => [
+          persona.name,
+          persona.description || "",
+        ]}
+        renderItem={(persona, isSelected) => (
+          <div className="flex flex-col gap-1 min-w-0 flex-1 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium truncate">{persona.name}</span>
+            </div>
+            {persona.description && (
+              <span className="text-xs text-muted-foreground truncate opacity-80">
+                {persona.description}
+              </span>
             )}
-          </CommandList>
-          <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                clearPersona();
-                setSystemPrompt("");
-                setOpen(false);
-              }}
-            >
-              <IconX className="size-3.5 mr-1.5" />
-              Clear
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-xs hover:bg-background"
-              onClick={() => setIsDialogOpen(true)}
-            >
-              <IconPlus className="size-3.5 mr-1.5" />
-              New Persona
-            </Button>
           </div>
-        </Command>
-      </ChatFeaturePopover>
+        )}
+      />
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-[640px]">

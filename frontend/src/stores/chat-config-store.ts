@@ -73,8 +73,19 @@ export const useChatConfigStore = create<ChatConfigStore>()(
       setIsTemporary: (isTemporary) => set({ isTemporary }),
       setActivePersona: (id, name) =>
         set({ activePersonaId: id, activePersonaName: name }),
-      clearPersona: () =>
-        set({ activePersonaId: null, activePersonaName: null }),
+  clearPersona: () => {
+    set({
+      activePersonaId: null,
+      activePersonaName: null,
+      // Reset params to defaults when clearing persona
+      temperature: defaultChatConfig.temperature,
+      topP: defaultChatConfig.topP,
+      topK: defaultChatConfig.topK,
+      maxTokens: defaultChatConfig.maxTokens,
+      systemPrompt: defaultChatConfig.systemPrompt,
+      isTemporary: defaultChatConfig.isTemporary,
+    });
+  },
       setActivePrompt: (id, title) =>
         set({ activePromptId: id, activePromptTitle: title }),
       clearPrompt: () =>

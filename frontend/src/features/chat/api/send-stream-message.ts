@@ -49,8 +49,6 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
     isTemporary,
     systemPrompt,
     activePersonaId,
-    activePromptId,
-    promptVariables,
   } = useChatConfigStore.getState();
 
   const {
@@ -175,8 +173,6 @@ const streamMessageFn = async (variables: StreamMessageInput) => {
       systemPrompt,
       attachments: attachmentDtos,
       personaId: activePersonaId,
-      promptId: activePromptId,
-      promptVariables,
     }),
     signal: abortController.signal,
   });

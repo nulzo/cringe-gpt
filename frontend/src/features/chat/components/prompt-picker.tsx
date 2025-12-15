@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Command, CommandInput, CommandList } from "@/components/ui/command";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { IconHash, IconX, IconPlus } from "@tabler/icons-react";
+import { IconHash } from "@tabler/icons-react";
 import {
   usePrompts,
   useCreatePrompt,
@@ -23,8 +22,7 @@ import type {
 import { useChatConfigStore } from "@/stores/chat-config-store";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { ChatFeaturePopover } from "./chat-feature-popover";
+import { GenericResourceSelector } from "./generic-resource-selector";
 
 const renderTemplate = (template: string, values: Record<string, string>) => {
   if (!template) return "";
@@ -45,17 +43,15 @@ const inferVariables = (content: string): PromptVariable[] => {
 export function PromptPicker() {
   const promptsQuery = usePrompts();
   const createPrompt = useCreatePrompt();
-  const { setActivePrompt, clearPrompt, setPromptVariables } =
-    useChatConfigStore();
+  // We no longer set activePromptId to avoid the bug where it overrides text
+  const { setPromptVariables } = useChatConfigStore();
   const { setInputValue } = useChatStore();
 
-  const [open, setOpen] = useState(false);
   const [variablePrompt, setVariablePrompt] = useState<Prompt | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [variableValues, setVariableValues] = useState<Record<string, string>>(
     {},
   );
-  const [search, setSearch] = useState("");
 
   const [draft, setDraft] = useState<{
     title: string;
@@ -67,23 +63,12 @@ export function PromptPicker() {
     tags: "",
   });
 
-  const filtered = useMemo(() => {
-    const term = search.toLowerCase().trim();
-    if (!term) return promptsQuery.data ?? [];
-    return (promptsQuery.data ?? []).filter(
-      (prompt) =>
-        prompt.title.toLowerCase().includes(term) ||
-        prompt.content.toLowerCase().includes(term) ||
-        prompt.tags?.some((t) => t.name.toLowerCase().includes(term)),
-    );
-  }, [search, promptsQuery.data]);
-
   const applyPrompt = (prompt: Prompt, values: Record<string, string> = {}) => {
-    setActivePrompt(prompt.id, prompt.title);
+    // BUG FIX: Do not set activePromptId. Just insert text.
+    // setActivePrompt(prompt.id, prompt.title); 
     setPromptVariables(values);
     const rendered = renderTemplate(prompt.content, values);
     setInputValue(rendered);
-    setOpen(false);
     setVariablePrompt(null);
   };
 
@@ -126,88 +111,42 @@ export function PromptPicker() {
 
   return (
     <>
-      <ChatFeaturePopover
-        open={open}
-        onOpenChange={setOpen}
+      <GenericResourceSelector
+        items={promptsQuery.data ?? []}
+        // No active ID tracking for prompts as they are one-off insertions
+        activeId={null} 
+        activeLabel={null}
+        onSelect={handlePromptSelect}
+        onClear={() => {
+          // No op since we don't have active prompt state
+        }}
+        onCreate={() => setIsCreateOpen(true)}
         icon={IconHash}
         tooltip="Select prompt"
-        contentClassName="w-[400px] p-0 bg-popover/95 backdrop-blur-sm border-border/50 shadow-2xl rounded-xl overflow-hidden"
+        searchPlaceholder="Search prompts..."
+        emptyMessage="No prompts found"
         side="bottom"
-      >
-        <Command shouldFilter={false} className="bg-transparent">
-          <div className="border-b border-border/40 p-1">
-            <CommandInput
-              placeholder="Search prompts..."
-              value={search}
-              onValueChange={setSearch}
-              className="h-10 text-sm"
-            />
+        getSearchTerms={(prompt) => [
+          prompt.title,
+          prompt.content,
+          ...(prompt.tags?.map(t => t.name) || [])
+        ]}
+        renderItem={(prompt) => (
+          <div className="flex flex-col gap-1 min-w-0 flex-1 px-3 py-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium truncate">{prompt.title}</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
+                {prompt.variables?.length
+                  ? `${prompt.variables.length} vars`
+                  : "static"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground line-clamp-1 opacity-80">
+              {prompt.content}
+            </p>
           </div>
-          <CommandList className="max-h-[320px] p-1.5 overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
-            {filtered.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                No prompts found
-              </div>
-            ) : (
-              filtered.map((prompt) => (
-                <div
-                  key={prompt.id}
-                  role="option"
-                  onClick={() => {
-                    handlePromptSelect(prompt);
-                    setOpen(false);
-                    setSearch("");
-                  }}
-                  className={cn(
-                    "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
-                    "hover:bg-accent/50",
-                  )}
-                >
-                  <div className="flex flex-col gap-1 min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">
-                        {prompt.title}
-                      </span>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
-                        {prompt.variables?.length
-                          ? `${prompt.variables.length} vars`
-                          : "static"}
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1 opacity-80">
-                      {prompt.content}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
-          </CommandList>
-          <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => {
-                clearPrompt();
-                setVariablePrompt(null);
-                setOpen(false);
-              }}
-            >
-              <IconX className="size-3.5 mr-1.5" />
-              Clear
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-8 px-2 text-xs hover:bg-background"
-              onClick={() => setIsCreateOpen(true)}
-            >
-              <IconPlus className="size-3.5 mr-1.5" />
-              New Prompt
-            </Button>
-          </div>
-        </Command>
-      </ChatFeaturePopover>
+        )}
+      />
 
       {/* Variable fill dialog */}
       <Dialog
@@ -220,7 +159,7 @@ export function PromptPicker() {
               {variablePrompt ? `Use ${variablePrompt.title}` : "Use prompt"}
             </DialogTitle>
           </DialogHeader>
-          {variablePrompt ? (
+          {variablePrompt && (
             <div className="space-y-4">
               {variablePrompt.variables?.length ? (
                 variablePrompt.variables.map((variable) => (
@@ -256,61 +195,18 @@ export function PromptPicker() {
                 </p>
               )}
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <Label>Title</Label>
-                <Input
-                  value={draft.title}
-                  onChange={(e) =>
-                    setDraft((prev) => ({ ...prev, title: e.target.value }))
-                  }
-                  placeholder="Daily standup helper"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Content</Label>
-                <Textarea
-                  value={draft.content}
-                  onChange={(e) =>
-                    setDraft((prev) => ({ ...prev, content: e.target.value }))
-                  }
-                  placeholder="Summarize the following updates: {{updates}}"
-                  className="min-h-[140px]"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Tags</Label>
-                <Input
-                  value={draft.tags}
-                  onChange={(e) =>
-                    setDraft((prev) => ({ ...prev, tags: e.target.value }))
-                  }
-                  placeholder="planning, team"
-                />
-              </div>
-            </div>
           )}
           <DialogFooter>
             <Button variant="ghost" onClick={() => setVariablePrompt(null)}>
               Cancel
             </Button>
-            {variablePrompt ? (
-              <Button
-                onClick={() =>
-                  variablePrompt && applyPrompt(variablePrompt, variableValues)
-                }
-              >
-                Apply prompt
-              </Button>
-            ) : (
-              <Button
-                onClick={() => handleCreate()}
-                disabled={createPrompt.isPending}
-              >
-                Save prompt
-              </Button>
-            )}
+            <Button
+              onClick={() =>
+                variablePrompt && applyPrompt(variablePrompt, variableValues)
+              }
+            >
+              Apply prompt
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
