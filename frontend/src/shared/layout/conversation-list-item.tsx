@@ -4,7 +4,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useChatStore } from "@/features/chat/stores/chat-store";
 import {
   memo,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -44,7 +43,6 @@ import {
   IconPencil,
   IconTag,
   IconTrash,
-  IconX,
 } from "@tabler/icons-react";
 import { useUpdateConversation } from "@/features/chat/api/update-conversation";
 import { useDeleteConversation } from "@/features/chat/api/delete-conversation";
@@ -166,11 +164,9 @@ export const SidebarConversationItem = memo(
         )}
       >
         <Link
-          to={isOpen ? to : "#"}
-          tabIndex={isOpen ? 0 : -1}
+          to={to}
           className="flex min-w-0 flex-1 items-center gap-2 h-full cursor-pointer z-10"
-          onClick={(e) => {
-            if (!isOpen) e.preventDefault();
+          onClick={() => {
             markRead(String(conversation.id));
           }}
         >
@@ -179,14 +175,14 @@ export const SidebarConversationItem = memo(
               {conversation.title}
             </span>
             {isStreaming && (
-              <span className="size-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />
+              <span className="size-2 shrink-0 rounded-full bg-primary animate-pulse" />
             )}
             {unread && !isActive && (
-              <span className="size-2 flex-shrink-0 rounded-full bg-blue-400" />
+              <span className="size-2 shrink-0 rounded-full bg-blue-400" />
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {tags.length > 0 && (
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <IconTag className="size-3" />
@@ -204,7 +200,7 @@ export const SidebarConversationItem = memo(
         {/* options */}
         <div
           className={cn(
-            "flex items-center self-stretch text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 z-20",
+            "flex items-center self-stretch text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 z-20",
             !isOpen && "pointer-events-none opacity-0",
             isDropdownOpen && "opacity-100",
           )}

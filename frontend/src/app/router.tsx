@@ -6,7 +6,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import App from "@/App";
-import { Layout } from "@/shared/layout/layout";
+import { Layout } from "@/shared/layout/modern/layout";
 import { UIStateProvider } from "@/shared/layout/ui-state-provider";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { PATHS } from "@/configuration/paths";

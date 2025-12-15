@@ -8,3 +8,4 @@ public interface IAgentRepository : IGenericRepository<Agent>
     Task<Agent?> GetByIdForUserAsync(int id, int userId);
 }
 
+

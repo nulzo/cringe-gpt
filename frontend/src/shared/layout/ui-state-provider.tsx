@@ -24,6 +24,11 @@ interface UIStateContextType {
   openSidebar: () => void;
   closeSidebar: () => void;
   toggleSidebar: () => void;
+
+  isMobileMenuOpen: boolean;
+  openMobileMenu: () => void;
+  closeMobileMenu: () => void;
+  toggleMobileMenu: () => void;
 }
 
 const UIStateContext = createContext<UIStateContextType | undefined>(undefined);
@@ -32,6 +37,7 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleCommandPaletteNavigation = (path: string) => {
@@ -52,8 +58,12 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
       openSidebar: () => setIsSidebarOpen(true),
       closeSidebar: () => setIsSidebarOpen(false),
       toggleSidebar: () => setIsSidebarOpen((v) => !v),
+      isMobileMenuOpen,
+      openMobileMenu: () => setIsMobileMenuOpen(true),
+      closeMobileMenu: () => setIsMobileMenuOpen(false),
+      toggleMobileMenu: () => setIsMobileMenuOpen((v) => !v),
     }),
-    [isSettingsModalOpen, isCommandPaletteOpen, isSidebarOpen],
+    [isSettingsModalOpen, isCommandPaletteOpen, isSidebarOpen, isMobileMenuOpen],
   );
 
   return (

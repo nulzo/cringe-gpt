@@ -60,7 +60,6 @@ interface ChatState {
     range: { start: number; end: number } | null,
   ) => void;
   setMaxVisibleMessages: (max: number) => void;
-  getVisibleMessages: () => Message[];
 
   // Input actions
   setInputValue: (value: string) => void;
@@ -185,59 +184,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setVisibleMessageRange: (range) => set({ visibleMessageRange: range }),
 
   setMaxVisibleMessages: (max) => set({ maxVisibleMessages: max }),
-
-  getVisibleMessages: () => {
-    const {
-      messages,
-      streamedMessage,
-      visibleMessageRange,
-      maxVisibleMessages,
-      currentConversationId,
-      streams,
-    } = get();
-
-    // If no range is set, show last N messages for performance
-    if (!visibleMessageRange) {
-      const startIndex = Math.max(0, messages.length - maxVisibleMessages);
-      const visibleMessages = messages.slice(startIndex);
-
-      // Include streamed message for active conversation from multi-streams first
-      if (currentConversationId && streams[currentConversationId]) {
-        return [...visibleMessages, streams[currentConversationId].message];
-      }
-      // Fallback for legacy single stream
-      if (
-        streamedMessage &&
-        streamedMessage.conversation_uuid === currentConversationId
-      ) {
-        return [...visibleMessages, streamedMessage];
-      }
-      return visibleMessages;
-    }
-
-    // Use custom range
-    const visibleMessages = messages.slice(
-      visibleMessageRange.start,
-      visibleMessageRange.end,
-    );
-
-    // Include streamed message if it's within range or if it's currently streaming
-    if (currentConversationId && streams[currentConversationId]) {
-      const isStreamedMessageVisible =
-        visibleMessageRange.end >= messages.length;
-      if (isStreamedMessageVisible)
-        visibleMessages.push(streams[currentConversationId].message);
-    } else if (
-      streamedMessage &&
-      streamedMessage.conversation_uuid === currentConversationId
-    ) {
-      const isStreamedMessageVisible =
-        visibleMessageRange.end >= messages.length && get().isStreaming;
-      if (isStreamedMessageVisible) visibleMessages.push(streamedMessage);
-    }
-
-    return visibleMessages;
-  },
 
   // Input actions
   setInputValue: (value) => set({ inputValue: value }),
