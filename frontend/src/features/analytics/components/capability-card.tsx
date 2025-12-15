@@ -1,17 +1,29 @@
-"use client"
+"use client";
 
-import { useMemo, memo } from "react"
-import { IconChevronRight } from "@tabler/icons-react"
-import { cn } from "@/lib/utils"
-import { Sparkline } from "./sparkline"
+import { useMemo, memo } from "react";
+import { IconChevronRight } from "@tabler/icons-react";
+import { BarChart, Bar, XAxis } from "recharts";
+import { cn } from "@/lib/utils";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface CapabilityCardProps {
-  title: string
-  metrics: { label: string; value: number | string; color?: string }[]
-  chartData?: { date: string; value: number }[]
-  onClick?: () => void
-  className?: string
+  title: string;
+  metrics: { label: string; value: number | string; color?: string }[];
+  chartData?: { date: string; value: number }[];
+  onClick?: () => void;
+  className?: string;
 }
+
+const chartConfig = {
+  value: {
+    label: "Value",
+    color: "hsl(var(--primary))",
+  },
+};
 
 export const CapabilityCard = memo(function CapabilityCard({
   title,
@@ -21,24 +33,16 @@ export const CapabilityCard = memo(function CapabilityCard({
   className,
 }: CapabilityCardProps) {
   const hasData = useMemo(() => {
-    if (!chartData) return false
-    return chartData.some((d) => d.value > 0)
-  }, [chartData])
-
-  const series = useMemo(() => (chartData ? chartData.map((d) => d.value) : []), [chartData])
-  const sparkColor = metrics[0]?.color || "hsl(var(--primary))"
-
-  const placeholderHeights = useMemo(
-    () => [22, 28, 35, 30, 42, 34, 50, 44, 58, 46, 62, 55, 70, 60, 74, 66, 78, 72, 82, 76],
-    []
-  )
+    if (!chartData) return false;
+    return chartData.some((d) => d.value > 0);
+  }, [chartData]);
 
   return (
     <div
       className={cn(
-        "group relative flex flex-col rounded-2xl border border-border/50 bg-card p-4 shadow-sm transition-colors",
-        onClick && "cursor-pointer hover:border-border/70 hover:bg-card/95",
-        className
+        "group relative flex flex-col rounded-xl border border-border/60 bg-card/50 p-4 transition-colors",
+        onClick && "cursor-pointer hover:border-border hover:bg-card/80",
+        className,
       )}
       onClick={onClick}
     >
@@ -55,7 +59,10 @@ export const CapabilityCard = memo(function CapabilityCard({
       {/* Metrics */}
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         {metrics.map((metric, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div
+            key={i}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground"
+          >
             <span
               className="h-2 w-2 rounded-sm"
               style={{ backgroundColor: metric.color || "hsl(var(--primary))" }}
@@ -75,27 +82,30 @@ export const CapabilityCard = memo(function CapabilityCard({
         <div className="h-[100px] w-full">
           {!hasData ? (
             <div className="flex h-full items-end justify-between gap-px px-1 opacity-20">
-              {placeholderHeights.map((h, i) => (
+              {Array.from({ length: 20 }).map((_, i) => (
                 <div
                   key={i}
                   className="h-full w-full rounded-t-sm bg-muted"
-                  style={{ height: `${h}%` }}
+                  style={{ height: `${Math.random() * 60 + 20}%` }}
                 />
               ))}
             </div>
           ) : (
-            <div className="h-full w-full">
-              <Sparkline
-                data={series}
-                width="100%"
-                height={100}
-                color={sparkColor}
-                variant="area"
-                strokeWidth={1.75}
-                showDot={false}
-                className="w-full"
-              />
-            </div>
+            <ChartContainer config={chartConfig} className="h-full w-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <XAxis hide dataKey="date" />
+                <ChartTooltip
+                  cursor={{ fill: "hsl(var(--muted) / 0.1)" }}
+                  content={<ChartTooltipContent hideLabel indicator="line" />}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="var(--color-value)"
+                  radius={[2, 2, 0, 0]}
+                  maxBarSize={32}
+                />
+              </BarChart>
+            </ChartContainer>
           )}
         </div>
       </div>
@@ -110,14 +120,16 @@ export const CapabilityCard = memo(function CapabilityCard({
             })}
           </span>
           <span>
-            {new Date(chartData[chartData.length - 1].date).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            {new Date(chartData[chartData.length - 1].date).toLocaleDateString(
+              "en-US",
+              {
+                month: "short",
+                day: "numeric",
+              },
+            )}
           </span>
         </div>
       )}
     </div>
-  )
-})
-
+  );
+});

@@ -1,25 +1,43 @@
-import { useMemo, useState } from 'react';
-import { Command, CommandInput, CommandList } from '@/components/ui/command';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { IconHash, IconX, IconPlus } from '@tabler/icons-react';
-import { usePrompts, useCreatePrompt } from '@/features/prompts/api/get-prompts';
-import type { Prompt, PromptPayload, PromptVariable } from '@/features/prompts/types';
-import { useChatConfigStore } from '@/stores/chat-config-store';
-import { useChatStore } from '@/features/chat/stores/chat-store';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChatFeaturePopover } from './chat-feature-popover';
+import { useMemo, useState } from "react";
+import { Command, CommandInput, CommandList } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { IconHash, IconX, IconPlus } from "@tabler/icons-react";
+import {
+  usePrompts,
+  useCreatePrompt,
+} from "@/features/prompts/api/get-prompts";
+import type {
+  Prompt,
+  PromptPayload,
+  PromptVariable,
+} from "@/features/prompts/types";
+import { useChatConfigStore } from "@/stores/chat-config-store";
+import { useChatStore } from "@/features/chat/stores/chat-store";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ChatFeaturePopover } from "./chat-feature-popover";
 
 const renderTemplate = (template: string, values: Record<string, string>) => {
-  if (!template) return '';
-  return template.replace(/{{\s*(\w+)\s*}}/g, (_, key) => values[key] ?? `{{${key}}}`);
+  if (!template) return "";
+  return template.replace(
+    /{{\s*(\w+)\s*}}/g,
+    (_, key) => values[key] ?? `{{${key}}}`,
+  );
 };
 
 const inferVariables = (content: string): PromptVariable[] => {
-  const matches = Array.from(content.matchAll(/{{\s*(\w+)\s*}}/g)).map((m) => m[1]);
+  const matches = Array.from(content.matchAll(/{{\s*(\w+)\s*}}/g)).map(
+    (m) => m[1],
+  );
   const unique = Array.from(new Set(matches));
   return unique.map((name) => ({ name, label: name, required: true }));
 };
@@ -27,19 +45,26 @@ const inferVariables = (content: string): PromptVariable[] => {
 export function PromptPicker() {
   const promptsQuery = usePrompts();
   const createPrompt = useCreatePrompt();
-  const { setActivePrompt, clearPrompt, setPromptVariables } = useChatConfigStore();
+  const { setActivePrompt, clearPrompt, setPromptVariables } =
+    useChatConfigStore();
   const { setInputValue } = useChatStore();
 
   const [open, setOpen] = useState(false);
   const [variablePrompt, setVariablePrompt] = useState<Prompt | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [variableValues, setVariableValues] = useState<Record<string, string>>({});
-  const [search, setSearch] = useState('');
+  const [variableValues, setVariableValues] = useState<Record<string, string>>(
+    {},
+  );
+  const [search, setSearch] = useState("");
 
-  const [draft, setDraft] = useState<{ title: string; content: string; tags: string }>({
-    title: '',
-    content: '',
-    tags: '',
+  const [draft, setDraft] = useState<{
+    title: string;
+    content: string;
+    tags: string;
+  }>({
+    title: "",
+    content: "",
+    tags: "",
   });
 
   const filtered = useMemo(() => {
@@ -49,7 +74,7 @@ export function PromptPicker() {
       (prompt) =>
         prompt.title.toLowerCase().includes(term) ||
         prompt.content.toLowerCase().includes(term) ||
-        prompt.tags?.some((t) => t.name.toLowerCase().includes(term))
+        prompt.tags?.some((t) => t.name.toLowerCase().includes(term)),
     );
   }, [search, promptsQuery.data]);
 
@@ -66,7 +91,7 @@ export function PromptPicker() {
     if (prompt.variables && prompt.variables.length > 0) {
       const defaults: Record<string, string> = {};
       prompt.variables.forEach((v) => {
-        defaults[v.name] = variableValues[v.name] ?? '';
+        defaults[v.name] = variableValues[v.name] ?? "";
       });
       setVariableValues(defaults);
       setVariablePrompt(prompt);
@@ -82,7 +107,7 @@ export function PromptPicker() {
       title: draft.title,
       content: draft.content,
       tags: draft.tags
-        .split(',')
+        .split(",")
         .map((t) => t.trim())
         .filter(Boolean),
       variables,
@@ -91,11 +116,11 @@ export function PromptPicker() {
       const created = await createPrompt.mutateAsync(payload);
       if (created?.id) {
         promptsQuery.refetch();
-        setDraft({ title: '', content: '', tags: '' });
+        setDraft({ title: "", content: "", tags: "" });
         applyPrompt(created, {});
       }
     } catch (error) {
-      console.error('Failed to create prompt', error);
+      console.error("Failed to create prompt", error);
     }
   };
 
@@ -131,38 +156,48 @@ export function PromptPicker() {
                   onClick={() => {
                     handlePromptSelect(prompt);
                     setOpen(false);
-                    setSearch('');
+                    setSearch("");
                   }}
                   className={cn(
                     "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
-                    "hover:bg-accent/50"
+                    "hover:bg-accent/50",
                   )}
                 >
                   <div className="flex flex-col gap-1 min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium truncate">{prompt.title}</span>
+                      <span className="font-medium truncate">
+                        {prompt.title}
+                      </span>
                       <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded border border-border/50">
-                        {prompt.variables?.length ? `${prompt.variables.length} vars` : 'static'}
+                        {prompt.variables?.length
+                          ? `${prompt.variables.length} vars`
+                          : "static"}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1 opacity-80">{prompt.content}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 opacity-80">
+                      {prompt.content}
+                    </p>
                   </div>
                 </div>
               ))
             )}
           </CommandList>
           <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" 
-              onClick={() => { clearPrompt(); setVariablePrompt(null); setOpen(false); }}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                clearPrompt();
+                setVariablePrompt(null);
+                setOpen(false);
+              }}
             >
               <IconX className="size-3.5 mr-1.5" />
               Clear
             </Button>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="ghost"
               className="h-8 px-2 text-xs hover:bg-background"
               onClick={() => setIsCreateOpen(true)}
@@ -175,11 +210,14 @@ export function PromptPicker() {
       </ChatFeaturePopover>
 
       {/* Variable fill dialog */}
-      <Dialog open={Boolean(variablePrompt)} onOpenChange={(open) => !open && setVariablePrompt(null)}>
+      <Dialog
+        open={Boolean(variablePrompt)}
+        onOpenChange={(open) => !open && setVariablePrompt(null)}
+      >
         <DialogContent className="max-w-[560px]">
           <DialogHeader>
             <DialogTitle>
-              {variablePrompt ? `Use ${variablePrompt.title}` : 'Use prompt'}
+              {variablePrompt ? `Use ${variablePrompt.title}` : "Use prompt"}
             </DialogTitle>
           </DialogHeader>
           {variablePrompt ? (
@@ -189,17 +227,26 @@ export function PromptPicker() {
                   <div key={variable.name} className="space-y-1.5">
                     <Label className="flex items-center gap-2">
                       {variable.label || variable.name}
-                      {variable.required && <span className="text-xs text-muted-foreground">(required)</span>}
+                      {variable.required && (
+                        <span className="text-xs text-muted-foreground">
+                          (required)
+                        </span>
+                      )}
                     </Label>
                     <Input
                       placeholder={variable.placeholder || variable.name}
-                      value={variableValues[variable.name] ?? ''}
+                      value={variableValues[variable.name] ?? ""}
                       onChange={(e) =>
-                        setVariableValues((prev) => ({ ...prev, [variable.name]: e.target.value }))
+                        setVariableValues((prev) => ({
+                          ...prev,
+                          [variable.name]: e.target.value,
+                        }))
                       }
                     />
                     {variable.description && (
-                      <p className="text-xs text-muted-foreground">{variable.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {variable.description}
+                      </p>
                     )}
                   </div>
                 ))
@@ -215,7 +262,9 @@ export function PromptPicker() {
                 <Label>Title</Label>
                 <Input
                   value={draft.title}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((prev) => ({ ...prev, title: e.target.value }))
+                  }
                   placeholder="Daily standup helper"
                 />
               </div>
@@ -223,7 +272,9 @@ export function PromptPicker() {
                 <Label>Content</Label>
                 <Textarea
                   value={draft.content}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, content: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((prev) => ({ ...prev, content: e.target.value }))
+                  }
                   placeholder="Summarize the following updates: {{updates}}"
                   className="min-h-[140px]"
                 />
@@ -232,7 +283,9 @@ export function PromptPicker() {
                 <Label>Tags</Label>
                 <Input
                   value={draft.tags}
-                  onChange={(e) => setDraft((prev) => ({ ...prev, tags: e.target.value }))}
+                  onChange={(e) =>
+                    setDraft((prev) => ({ ...prev, tags: e.target.value }))
+                  }
                   placeholder="planning, team"
                 />
               </div>
@@ -243,11 +296,18 @@ export function PromptPicker() {
               Cancel
             </Button>
             {variablePrompt ? (
-              <Button onClick={() => variablePrompt && applyPrompt(variablePrompt, variableValues)}>
+              <Button
+                onClick={() =>
+                  variablePrompt && applyPrompt(variablePrompt, variableValues)
+                }
+              >
                 Apply prompt
               </Button>
             ) : (
-              <Button onClick={() => handleCreate()} disabled={createPrompt.isPending}>
+              <Button
+                onClick={() => handleCreate()}
+                disabled={createPrompt.isPending}
+              >
                 Save prompt
               </Button>
             )}
@@ -265,7 +325,9 @@ export function PromptPicker() {
               <Label>Title</Label>
               <Input
                 value={draft.title}
-                onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, title: e.target.value }))
+                }
                 placeholder="Daily standup helper"
               />
             </div>
@@ -273,7 +335,9 @@ export function PromptPicker() {
               <Label>Content</Label>
               <Textarea
                 value={draft.content}
-                onChange={(e) => setDraft((prev) => ({ ...prev, content: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, content: e.target.value }))
+                }
                 placeholder="Summarize the following updates: {{updates}}"
                 className="min-h-[140px]"
               />
@@ -282,7 +346,9 @@ export function PromptPicker() {
               <Label>Tags</Label>
               <Input
                 value={draft.tags}
-                onChange={(e) => setDraft((prev) => ({ ...prev, tags: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, tags: e.target.value }))
+                }
                 placeholder="planning, team"
               />
             </div>

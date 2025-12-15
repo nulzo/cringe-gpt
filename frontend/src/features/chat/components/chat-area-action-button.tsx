@@ -31,7 +31,7 @@ export const ChatAreaActionButton = forwardRef(
       children,
       ...props
     }: PolymorphicComponentProps<T>,
-    ref: any
+    ref: any,
   ) => {
     const Component = as || "button";
 
@@ -45,7 +45,7 @@ export const ChatAreaActionButton = forwardRef(
               disabled
                 ? "pointer-events-none opacity-50"
                 : "cursor-pointer hover:bg-hover hover:text-accent-foreground",
-              className
+              className,
             )}
             disabled={disabled}
             {...props}
@@ -57,7 +57,7 @@ export const ChatAreaActionButton = forwardRef(
         <TooltipContent>{tooltipText}</TooltipContent>
       </Tooltip>
     );
-  }
+  },
 );
 
 ChatAreaActionButton.displayName = "ChatAreaActionButton";

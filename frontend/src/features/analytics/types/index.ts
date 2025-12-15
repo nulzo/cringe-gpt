@@ -81,7 +81,7 @@ export interface AnalyticsDashboard {
 export interface AnalyticsQueryParams {
   from?: string;
   to?: string;
-  groupBy?: 'hour' | 'day' | 'month';
+  groupBy?: "hour" | "day" | "month";
   limit?: number;
   days?: number;
 }
@@ -125,14 +125,14 @@ export interface ModelChartData {
 export interface AnalyticsTimeRange {
   from?: Date;
   to?: Date;
-  preset?: '7d' | '30d' | '90d' | '1y' | 'all';
+  preset?: "7d" | "30d" | "90d" | "1y" | "all";
 }
 
 export interface AnalyticsFilters {
   timeRange: AnalyticsTimeRange;
   providers?: string[];
   models?: string[];
-  groupBy: 'hour' | 'day' | 'month';
+  groupBy: "hour" | "day" | "month";
 }
 
 // Trend analysis types
@@ -142,7 +142,7 @@ export interface TrendData {
 
 // Export types
 export interface ExportFormat {
-  format: 'csv' | 'json' | 'pdf';
+  format: "csv" | "json" | "pdf";
   data: any;
   filename: string;
 }
@@ -251,7 +251,7 @@ export interface ConversationMetricsCardData {
   label: string;
   value: string | number;
   change?: number;
-  trend?: 'up' | 'down' | 'neutral';
+  trend?: "up" | "down" | "neutral";
   icon?: string;
   color?: string;
 }

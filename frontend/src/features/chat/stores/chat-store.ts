@@ -1,6 +1,6 @@
-import { create } from 'zustand';
-import { type Message } from '../types';
-import { filterValidAttachments } from '../utils/attachments';
+import { create } from "zustand";
+import { type Message } from "../types";
+import { filterValidAttachments } from "../utils/attachments";
 
 interface ConversationStreamState {
   message: Message;
@@ -42,7 +42,11 @@ interface ChatState {
   cancelStream: () => void;
 
   // Multi-conversation streaming actions
-  startStream: (key: string, initialAssistant: Message, abortController: AbortController) => void;
+  startStream: (
+    key: string,
+    initialAssistant: Message,
+    abortController: AbortController,
+  ) => void;
   renameStreamKey: (oldKey: string, newKey: string) => void;
   appendStreamFor: (key: string, chunk: string) => void;
   appendStreamImageFor: (key: string, image: any) => void;
@@ -52,7 +56,9 @@ interface ChatState {
   isStreamingFor: (conversationId?: string | null) => boolean;
 
   // Performance actions
-  setVisibleMessageRange: (range: { start: number; end: number } | null) => void;
+  setVisibleMessageRange: (
+    range: { start: number; end: number } | null,
+  ) => void;
   setMaxVisibleMessages: (max: number) => void;
   getVisibleMessages: () => Message[];
 
@@ -74,25 +80,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
   unread: {},
   visibleMessageRange: null,
   maxVisibleMessages: 50, // Default to showing last 50 messages
-  inputValue: '',
+  inputValue: "",
   attachments: [],
 
   // Message actions
-  setMessages: (messages, conversationId) => set((state) => {
-    const cap = Math.max(200, state.maxVisibleMessages * 40); // keep ample history but bounded
-    const trimmed = messages.length > cap ? messages.slice(messages.length - cap) : messages;
-    return {
-      messages: trimmed,
-      currentConversationId: conversationId || null
-    };
-  }),
+  setMessages: (messages, conversationId) =>
+    set((state) => {
+      const cap = Math.max(200, state.maxVisibleMessages * 40); // keep ample history but bounded
+      const trimmed =
+        messages.length > cap
+          ? messages.slice(messages.length - cap)
+          : messages;
+      return {
+        messages: trimmed,
+        currentConversationId: conversationId || null,
+      };
+    }),
 
-  addMessage: (message) => set((state) => {
-    const cap = Math.max(200, state.maxVisibleMessages * 40);
-    const next = [...state.messages, message];
-    const trimmed = next.length > cap ? next.slice(next.length - cap) : next;
-    return { messages: trimmed };
-  }),
+  addMessage: (message) =>
+    set((state) => {
+      const cap = Math.max(200, state.maxVisibleMessages * 40);
+      const next = [...state.messages, message];
+      const trimmed = next.length > cap ? next.slice(next.length - cap) : next;
+      return { messages: trimmed };
+    }),
 
   setStreamedMessage: (message) => set({ streamedMessage: message }),
 
@@ -122,7 +133,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   appendStreamedMessageBatch: (chunks) =>
     set((state) => {
       if (!state.streamedMessage) return {};
-      const combinedChunk = chunks.join('');
+      const combinedChunk = chunks.join("");
       return {
         streamedMessage: {
           ...state.streamedMessage,
@@ -133,15 +144,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setIsStreaming: (isStreaming) => set({ isStreaming }),
 
-  clearStreaming: () => set({ streamedMessage: null, isStreaming: false, abortController: null }),
+  clearStreaming: () =>
+    set({ streamedMessage: null, isStreaming: false, abortController: null }),
 
-  clearConversation: () => set({
-    messages: [],
-    streamedMessage: null,
-    isStreaming: false,
-    currentConversationId: null,
-    visibleMessageRange: null
-  }),
+  clearConversation: () =>
+    set({
+      messages: [],
+      streamedMessage: null,
+      isStreaming: false,
+      currentConversationId: null,
+      visibleMessageRange: null,
+    }),
 
   setAbortController: (controller) => set({ abortController: controller }),
 
@@ -174,7 +187,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setMaxVisibleMessages: (max) => set({ maxVisibleMessages: max }),
 
   getVisibleMessages: () => {
-    const { messages, streamedMessage, visibleMessageRange, maxVisibleMessages, currentConversationId, streams } = get();
+    const {
+      messages,
+      streamedMessage,
+      visibleMessageRange,
+      maxVisibleMessages,
+      currentConversationId,
+      streams,
+    } = get();
 
     // If no range is set, show last N messages for performance
     if (!visibleMessageRange) {
@@ -186,21 +206,33 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return [...visibleMessages, streams[currentConversationId].message];
       }
       // Fallback for legacy single stream
-      if (streamedMessage && streamedMessage.conversation_uuid === currentConversationId) {
+      if (
+        streamedMessage &&
+        streamedMessage.conversation_uuid === currentConversationId
+      ) {
         return [...visibleMessages, streamedMessage];
       }
       return visibleMessages;
     }
 
     // Use custom range
-    const visibleMessages = messages.slice(visibleMessageRange.start, visibleMessageRange.end);
+    const visibleMessages = messages.slice(
+      visibleMessageRange.start,
+      visibleMessageRange.end,
+    );
 
     // Include streamed message if it's within range or if it's currently streaming
     if (currentConversationId && streams[currentConversationId]) {
-      const isStreamedMessageVisible = visibleMessageRange.end >= messages.length;
-      if (isStreamedMessageVisible) visibleMessages.push(streams[currentConversationId].message);
-    } else if (streamedMessage && streamedMessage.conversation_uuid === currentConversationId) {
-      const isStreamedMessageVisible = visibleMessageRange.end >= messages.length && get().isStreaming;
+      const isStreamedMessageVisible =
+        visibleMessageRange.end >= messages.length;
+      if (isStreamedMessageVisible)
+        visibleMessages.push(streams[currentConversationId].message);
+    } else if (
+      streamedMessage &&
+      streamedMessage.conversation_uuid === currentConversationId
+    ) {
+      const isStreamedMessageVisible =
+        visibleMessageRange.end >= messages.length && get().isStreaming;
       if (isStreamedMessageVisible) visibleMessages.push(streamedMessage);
     }
 
@@ -209,100 +241,127 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // Input actions
   setInputValue: (value) => set({ inputValue: value }),
-  setAttachments: (files) => set({ attachments: filterValidAttachments(files) }),
-  addAttachments: (files) => set((state) => ({
-    attachments: filterValidAttachments([...state.attachments, ...files])
-  })),
-  removeAttachment: (fileName) => set((state) => ({
-    attachments: state.attachments.filter(f => f.name !== fileName)
-  })),
-  clearInput: () => set({ inputValue: '', attachments: [] }),
+  setAttachments: (files) =>
+    set({ attachments: filterValidAttachments(files) }),
+  addAttachments: (files) =>
+    set((state) => ({
+      attachments: filterValidAttachments([...state.attachments, ...files]),
+    })),
+  removeAttachment: (fileName) =>
+    set((state) => ({
+      attachments: state.attachments.filter((f) => f.name !== fileName),
+    })),
+  clearInput: () => set({ inputValue: "", attachments: [] }),
 
   // Multi-conversation streaming actions impl
-  startStream: (key, initialAssistant, abortController) => set((state) => ({
-    currentConversationId: key,
-    streams: {
-      ...state.streams,
-      [key]: { message: { ...initialAssistant, images: [] }, isStreaming: true, abortController },
-    },
-  })),
-
-  renameStreamKey: (oldKey, newKey) => set((state) => {
-    if (!state.streams[oldKey]) return {} as any;
-    const { [oldKey]: oldStream, ...rest } = state.streams;
-    return {
-      currentConversationId: state.currentConversationId === oldKey ? newKey : state.currentConversationId,
-      streams: { ...rest, [newKey]: oldStream },
-    };
-  }),
-
-  appendStreamFor: (key, chunk) => set((state) => {
-    const s = state.streams[key];
-    if (!s) return {} as any;
-    return {
+  startStream: (key, initialAssistant, abortController) =>
+    set((state) => ({
+      currentConversationId: key,
       streams: {
         ...state.streams,
-        [key]: { ...s, message: { ...s.message, content: s.message.content + chunk } },
+        [key]: {
+          message: { ...initialAssistant, images: [] },
+          isStreaming: true,
+          abortController,
+        },
       },
-    };
-  }),
+    })),
 
-  appendStreamImageFor: (key, image) => set((state) => {
-    const s = state.streams[key];
-    if (!s) return {} as any;
+  renameStreamKey: (oldKey, newKey) =>
+    set((state) => {
+      if (!state.streams[oldKey]) return {} as any;
+      const { [oldKey]: oldStream, ...rest } = state.streams;
+      return {
+        currentConversationId:
+          state.currentConversationId === oldKey
+            ? newKey
+            : state.currentConversationId,
+        streams: { ...rest, [newKey]: oldStream },
+      };
+    }),
 
-    const nextImages = Array.isArray(s.message.images) ? [...s.message.images] : [];
-    const url = image?.image_url?.url ?? image?.url;
-    const index = image?.index;
+  appendStreamFor: (key, chunk) =>
+    set((state) => {
+      const s = state.streams[key];
+      if (!s) return {} as any;
+      return {
+        streams: {
+          ...state.streams,
+          [key]: {
+            ...s,
+            message: { ...s.message, content: s.message.content + chunk },
+          },
+        },
+      };
+    }),
 
-    // Avoid duplicates by url+index signature
-    const exists = nextImages.some((img: any) => {
-      const imgUrl = img?.image_url?.url ?? img?.url;
-      const imgIndex = img?.index;
-      return imgUrl === url && (imgIndex ?? index) === (index ?? imgIndex);
-    });
+  appendStreamImageFor: (key, image) =>
+    set((state) => {
+      const s = state.streams[key];
+      if (!s) return {} as any;
 
-    if (!exists && url) {
-      nextImages.push({
-        type: image?.type ?? 'image_url',
-        image_url: { url },
-        index: index ?? nextImages.length,
+      const nextImages = Array.isArray(s.message.images)
+        ? [...s.message.images]
+        : [];
+      const url = image?.image_url?.url ?? image?.url;
+      const index = image?.index;
+
+      // Avoid duplicates by url+index signature
+      const exists = nextImages.some((img: any) => {
+        const imgUrl = img?.image_url?.url ?? img?.url;
+        const imgIndex = img?.index;
+        return imgUrl === url && (imgIndex ?? index) === (index ?? imgIndex);
       });
-    }
 
-    return {
-      streams: {
-        ...state.streams,
-        [key]: { ...s, message: { ...s.message, images: nextImages } },
-      },
-    };
-  }),
+      if (!exists && url) {
+        nextImages.push({
+          type: image?.type ?? "image_url",
+          image_url: { url },
+          index: index ?? nextImages.length,
+        });
+      }
 
-  finalizeStream: (key, finalMessage) => set((state) => {
-    const { [key]: _, ...rest } = state.streams;
-    const finishedId = String(finalMessage.conversation_uuid || key);
-    const isActive = state.currentConversationId === finishedId;
-    return {
-      messages: isActive ? [...state.messages, finalMessage] : state.messages,
-      streams: rest,
-      unread: isActive ? state.unread : { ...state.unread, [finishedId]: true },
-    } as any;
-  }),
+      return {
+        streams: {
+          ...state.streams,
+          [key]: { ...s, message: { ...s.message, images: nextImages } },
+        },
+      };
+    }),
 
-  cancelStreamFor: (key) => set((state) => {
-    const s = state.streams[key];
-    if (!s) return {} as any;
-    if (s.abortController) s.abortController.abort();
-    const interrupted = { ...s.message, is_interrupted: true } as Message;
-    const { [key]: _, ...rest } = state.streams;
-    return { messages: [...state.messages, interrupted], streams: rest } as any;
-  }),
+  finalizeStream: (key, finalMessage) =>
+    set((state) => {
+      const { [key]: _, ...rest } = state.streams;
+      const finishedId = String(finalMessage.conversation_uuid || key);
+      const isActive = state.currentConversationId === finishedId;
+      return {
+        messages: isActive ? [...state.messages, finalMessage] : state.messages,
+        streams: rest,
+        unread: isActive
+          ? state.unread
+          : { ...state.unread, [finishedId]: true },
+      } as any;
+    }),
 
-  markConversationRead: (conversationId) => set((state) => {
-    if (!conversationId) return {} as any;
-    const { [conversationId]: __, ...rest } = state.unread;
-    return { unread: rest, currentConversationId: conversationId } as any;
-  }),
+  cancelStreamFor: (key) =>
+    set((state) => {
+      const s = state.streams[key];
+      if (!s) return {} as any;
+      if (s.abortController) s.abortController.abort();
+      const interrupted = { ...s.message, is_interrupted: true } as Message;
+      const { [key]: _, ...rest } = state.streams;
+      return {
+        messages: [...state.messages, interrupted],
+        streams: rest,
+      } as any;
+    }),
+
+  markConversationRead: (conversationId) =>
+    set((state) => {
+      if (!conversationId) return {} as any;
+      const { [conversationId]: __, ...rest } = state.unread;
+      return { unread: rest, currentConversationId: conversationId } as any;
+    }),
 
   isStreamingFor: (conversationId) => {
     if (!conversationId) return false;

@@ -18,7 +18,7 @@ import { useAuthStore } from "@/stores/auth-store";
 const NotFound = lazy(() => import("@/app/routes/not-found"));
 
 const ImageGenerationPage = lazy(
-  () => import("@/features/image-generation/routes/image-generation-page")
+  () => import("@/features/image-generation/routes/image-generation-page"),
 );
 
 const AppLayout = () => (

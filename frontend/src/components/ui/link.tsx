@@ -1,14 +1,14 @@
-import {Link as RouterLink, type LinkProps} from "react-router-dom";
+import { Link as RouterLink, type LinkProps } from "react-router-dom";
 
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
-export const Link = ({className, children, ...props}: LinkProps) => {
-    return (
-        <RouterLink
-            className={cn("text-primary hover:text-foreground", className)}
-            {...props}
-        >
-            {children}
-        </RouterLink>
-    );
+export const Link = ({ className, children, ...props }: LinkProps) => {
+  return (
+    <RouterLink
+      className={cn("text-primary hover:text-foreground", className)}
+      {...props}
+    >
+      {children}
+    </RouterLink>
+  );
 };

@@ -53,13 +53,15 @@ export function UIStateProvider({ children }: { children: ReactNode }) {
       closeSidebar: () => setIsSidebarOpen(false),
       toggleSidebar: () => setIsSidebarOpen((v) => !v),
     }),
-    [isSettingsModalOpen, isCommandPaletteOpen, isSidebarOpen]
+    [isSettingsModalOpen, isCommandPaletteOpen, isSidebarOpen],
   );
 
   return (
     <UIStateContext.Provider value={value}>
       {children}
-      <GlobalHotkeyBinder onOpenCommandPalette={() => setIsCommandPaletteOpen(true)} />
+      <GlobalHotkeyBinder
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+      />
       {/* Modals are rendered here, controlled by the context's state */}
       <CommandPalette
         open={isCommandPaletteOpen}

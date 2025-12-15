@@ -110,7 +110,9 @@ export const RegisterForm = () => {
         />
         <div className="flex justify-end gap-1 pt-4">
           <Button className="w-full" disabled={registerMutation.isPending}>
-            {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+            {registerMutation.isPending
+              ? "Creating Account..."
+              : "Create Account"}
           </Button>
         </div>
       </form>

@@ -91,12 +91,12 @@ const SidebarNavButton = ({
     item.path === "/"
       ? location.pathname === "/" && !location.search.includes("temp=true")
       : item.path === "/?temp=true"
-      ? location.pathname === "/" && location.search.includes("temp=true")
-      : item.path && location.pathname.startsWith(item.path);
+        ? location.pathname === "/" && location.search.includes("temp=true")
+        : item.path && location.pathname.startsWith(item.path);
 
   const commonClasses = cn(
     "group/sidebar-nav-button flex items-center w-full h-9 rounded-md text-sm font-base text-foreground group relative overflow-hidden",
-    isActive && "bg-sidebar-hover/75"
+    isActive && "bg-sidebar-hover/75",
   );
 
   const element = (
@@ -206,14 +206,14 @@ export function Layout() {
         return names.some((n) => tagSet.has(n as string));
       })
       .sort((a, b) => {
-        const pinnedA = (a as any).isPinned ?? (a as any).is_pinned ? 1 : 0;
-        const pinnedB = (b as any).isPinned ?? (b as any).is_pinned ? 1 : 0;
+        const pinnedA = ((a as any).isPinned ?? (a as any).is_pinned) ? 1 : 0;
+        const pinnedB = ((b as any).isPinned ?? (b as any).is_pinned) ? 1 : 0;
         if (pinnedA !== pinnedB) return pinnedB - pinnedA;
         const dateA = new Date(
-          (a as any).updated_at ?? (a as any).updatedAt ?? 0
+          (a as any).updated_at ?? (a as any).updatedAt ?? 0,
         ).getTime();
         const dateB = new Date(
-          (b as any).updated_at ?? (b as any).updatedAt ?? 0
+          (b as any).updated_at ?? (b as any).updatedAt ?? 0,
         ).getTime();
         return dateB - dateA;
       });
@@ -222,7 +222,7 @@ export function Layout() {
   const rowVirtualizer = useVirtualizer({
     count: filteredConversations.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 40, 
+    estimateSize: () => 40,
     overscan: 5,
   });
 
@@ -246,7 +246,7 @@ export function Layout() {
             className={cn(
               "h-full flex flex-col flex-shrink-0 border-r border-border/40 bg-sidebar",
               "transition-[width] ease-in-out will-change-[width]",
-              isSidebarOpen ? "w-[256px]" : "w-[72px]"
+              isSidebarOpen ? "w-[256px]" : "w-[72px]",
             )}
             style={{ transitionDuration: `${transitionDuration}ms` }}
             aria-expanded={isSidebarOpen}
@@ -275,7 +275,7 @@ export function Layout() {
                     "flex items-center justify-between flex-1 overflow-hidden",
                     isSidebarOpen
                       ? "opacity-100 ml-2 translate-x-0"
-                      : "opacity-0 ml-0 -translate-x-2 pointer-events-none"
+                      : "opacity-0 ml-0 -translate-x-2 pointer-events-none",
                   )}
                   style={{
                     transitionDuration: `${transitionDuration}ms`,
@@ -372,7 +372,7 @@ export function Layout() {
               ref={parentRef}
               className={cn(
                 "overflow-y-auto overflow-x-hidden flex-1",
-                isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                isSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none",
               )}
               style={{
                 transitionDuration: `${transitionDuration}ms`,
@@ -409,7 +409,7 @@ export function Layout() {
                             className={cn(
                               "h-7 w-7 text-muted-foreground",
                               (tagFilters.length > 0 || showArchived) &&
-                                "text-primary bg-sidebar-accent"
+                                "text-primary bg-sidebar-accent",
                             )}
                           >
                             <IconTag className="size-3.5" />
@@ -434,7 +434,7 @@ export function Layout() {
                               key={tag.id}
                               checked={tagFilters.some(
                                 (t) =>
-                                  t.toLowerCase() === tag.name.toLowerCase()
+                                  t.toLowerCase() === tag.name.toLowerCase(),
                               )}
                               onCheckedChange={() => toggleTag(tag.name)}
                             >

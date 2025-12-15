@@ -1,10 +1,10 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
 import type {
   AnalyticsTimeRange,
   AnalyticsFilters,
-  AnalyticsLoadingState
-} from '@/features/analytics/types';
+  AnalyticsLoadingState,
+} from "@/features/analytics/types";
 
 interface AnalyticsState {
   // Time range and filters
@@ -19,34 +19,42 @@ interface AnalyticsState {
   cacheExpiry: number; // minutes
 
   // UI state
-  activeTab: 'overview' | 'costs' | 'usage' | 'performance' | 'models' | 'providers';
-  chartType: 'line' | 'bar' | 'area' | 'pie' | 'donut';
-  theme: 'light' | 'dark' | 'auto';
+  activeTab:
+    | "overview"
+    | "costs"
+    | "usage"
+    | "performance"
+    | "models"
+    | "providers";
+  chartType: "line" | "bar" | "area" | "pie" | "donut";
+  theme: "light" | "dark" | "auto";
 
   // Actions
   setTimeRange: (timeRange: AnalyticsTimeRange) => void;
   setFilters: (filters: Partial<AnalyticsFilters>) => void;
   setLoading: (loading: Partial<AnalyticsLoadingState>) => void;
-  setActiveTab: (tab: AnalyticsState['activeTab']) => void;
-  setChartType: (type: AnalyticsState['chartType']) => void;
-  setTheme: (theme: AnalyticsState['theme']) => void;
+  setActiveTab: (tab: AnalyticsState["activeTab"]) => void;
+  setChartType: (type: AnalyticsState["chartType"]) => void;
+  setTheme: (theme: AnalyticsState["theme"]) => void;
 
   // Utility functions
   resetFilters: () => void;
   isCacheValid: () => boolean;
   updateCacheTimestamp: () => void;
-  getQuickTimeRange: (preset: '7d' | '30d' | '90d' | '1y' | 'all') => AnalyticsTimeRange;
+  getQuickTimeRange: (
+    preset: "7d" | "30d" | "90d" | "1y" | "all",
+  ) => AnalyticsTimeRange;
 }
 
 const defaultTimeRange: AnalyticsTimeRange = {
   from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
   to: new Date(),
-  preset: '30d'
+  preset: "30d",
 };
 
 const defaultFilters: AnalyticsFilters = {
   timeRange: defaultTimeRange,
-  groupBy: 'day'
+  groupBy: "day",
 };
 
 const defaultLoadingState: AnalyticsLoadingState = {
@@ -57,7 +65,7 @@ const defaultLoadingState: AnalyticsLoadingState = {
   performance: false,
   costBreakdown: false,
   usageHabits: false,
-  trends: false
+  trends: false,
 };
 
 const useAnalyticsStore = create<AnalyticsState>()(
@@ -70,75 +78,94 @@ const useAnalyticsStore = create<AnalyticsState>()(
         loading: defaultLoadingState,
         lastUpdated: null,
         cacheExpiry: 5, // 5 minutes
-        activeTab: 'overview',
-        chartType: 'line',
-        theme: 'auto',
+        activeTab: "overview",
+        chartType: "line",
+        theme: "auto",
 
         // Actions
         setTimeRange: (timeRange) =>
-          set((state) => ({
-            timeRange,
-            filters: { ...state.filters, timeRange },
-            lastUpdated: new Date()
-          }), false, 'setTimeRange'),
+          set(
+            (state) => ({
+              timeRange,
+              filters: { ...state.filters, timeRange },
+              lastUpdated: new Date(),
+            }),
+            false,
+            "setTimeRange",
+          ),
 
         setFilters: (newFilters) =>
-          set((state) => ({
-            filters: { ...state.filters, ...newFilters },
-            lastUpdated: new Date()
-          }), false, 'setFilters'),
+          set(
+            (state) => ({
+              filters: { ...state.filters, ...newFilters },
+              lastUpdated: new Date(),
+            }),
+            false,
+            "setFilters",
+          ),
 
         setLoading: (loading) =>
-          set((state) => ({
-            loading: { ...state.loading, ...loading }
-          }), false, 'setLoading'),
+          set(
+            (state) => ({
+              loading: { ...state.loading, ...loading },
+            }),
+            false,
+            "setLoading",
+          ),
 
         setActiveTab: (activeTab) =>
-          set((state) => (state.activeTab === activeTab ? state : { activeTab }), false, 'setActiveTab'),
+          set(
+            (state) => (state.activeTab === activeTab ? state : { activeTab }),
+            false,
+            "setActiveTab",
+          ),
 
-        setChartType: (chartType) =>
-          set({ chartType }, false, 'setChartType'),
+        setChartType: (chartType) => set({ chartType }, false, "setChartType"),
 
-        setTheme: (theme) =>
-          set({ theme }, false, 'setTheme'),
+        setTheme: (theme) => set({ theme }, false, "setTheme"),
 
         // Utility functions
         resetFilters: () =>
-          set({
-            filters: defaultFilters,
-            timeRange: defaultTimeRange,
-            lastUpdated: new Date()
-          }, false, 'resetFilters'),
+          set(
+            {
+              filters: defaultFilters,
+              timeRange: defaultTimeRange,
+              lastUpdated: new Date(),
+            },
+            false,
+            "resetFilters",
+          ),
 
         isCacheValid: () => {
           const state = get();
           if (!state.lastUpdated) return false;
           const now = new Date();
-          const diffMinutes = (now.getTime() - state.lastUpdated.getTime()) / (1000 * 60);
+          const diffMinutes =
+            (now.getTime() - state.lastUpdated.getTime()) / (1000 * 60);
           return diffMinutes < state.cacheExpiry;
         },
 
         updateCacheTimestamp: () =>
-          set({ lastUpdated: new Date() }, false, 'updateCacheTimestamp'),
+          set({ lastUpdated: new Date() }, false, "updateCacheTimestamp"),
 
         getQuickTimeRange: (preset) => {
           const now = new Date();
           let from: Date;
 
           switch (preset) {
-            case '7d':
+            case "7d":
               from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
               break;
-            case '30d':
+            case "30d":
               from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
               break;
-            case '90d':
+            case "90d":
               from = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
               break;
-            case '1y':
+            case "1y":
               from = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
               break;
-            case 'all':
+            case "all":
               from = new Date(2020, 0, 1); // Far back date for "all" data
               break;
             default:
@@ -148,30 +175,34 @@ const useAnalyticsStore = create<AnalyticsState>()(
           return {
             from,
             to: now,
-            preset
+            preset,
           };
-        }
+        },
       }),
       {
-        name: 'analytics-store',
+        name: "analytics-store",
         partialize: (state) => ({
           timeRange: state.timeRange,
           filters: state.filters,
           activeTab: state.activeTab,
           chartType: state.chartType,
           theme: state.theme,
-          cacheExpiry: state.cacheExpiry
-        })
-      }
+          cacheExpiry: state.cacheExpiry,
+        }),
+      },
     ),
     {
-      name: 'analytics-store'
-    }
-  )
+      name: "analytics-store",
+    },
+  ),
 );
 
 // Selectors used by the remaining analytics UI
-export const useAnalyticsTimeRange = () => useAnalyticsStore((state) => state.timeRange);
-export const useAnalyticsFilters = () => useAnalyticsStore((state) => state.filters);
-export const useSetTimeRange = () => useAnalyticsStore((state) => state.setTimeRange);
-export const useGetQuickTimeRange = () => useAnalyticsStore((state) => state.getQuickTimeRange);
+export const useAnalyticsTimeRange = () =>
+  useAnalyticsStore((state) => state.timeRange);
+export const useAnalyticsFilters = () =>
+  useAnalyticsStore((state) => state.filters);
+export const useSetTimeRange = () =>
+  useAnalyticsStore((state) => state.setTimeRange);
+export const useGetQuickTimeRange = () =>
+  useAnalyticsStore((state) => state.getQuickTimeRange);

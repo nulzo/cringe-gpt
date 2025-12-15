@@ -25,8 +25,7 @@ import { type Message as ChatMessage } from "@/features/chat/types";
 import { useVirtualizer } from "@tanstack/react-virtual";
 
 const COMPOSER_OVERLAP_PX = 55;
-const COMPOSER_WIDTH_CLASSES =
-  "";
+const COMPOSER_WIDTH_CLASSES = "";
 type ChatViewMode = "loading" | "welcome" | "conversation";
 
 export function ChatRoute() {
@@ -45,16 +44,16 @@ export function ChatRoute() {
     handleRemoveAttachment,
   } = useConsolidatedChatState();
 
-  const streamedContent = useChatStore((s) => (
+  const streamedContent = useChatStore((s) =>
     s.currentConversationId && s.streams[s.currentConversationId]
       ? s.streams[s.currentConversationId].message.content
-      : s.streamedMessage?.content
-  ));
-  const isStreaming = useChatStore((s) => (
+      : s.streamedMessage?.content,
+  );
+  const isStreaming = useChatStore((s) =>
     s.currentConversationId && s.streams[s.currentConversationId]
       ? s.streams[s.currentConversationId].isStreaming
-      : s.isStreaming
-  ));
+      : s.isStreaming,
+  );
 
   const { scrollRef, endRef, showButton, scrollToBottom } =
     useIntelligentScroll(messages, streamedContent, conversationId ?? null, {
@@ -67,17 +66,19 @@ export function ChatRoute() {
   const highlightRef = useRef<string | null>(null);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const targetId = params.get('messageId');
+    const targetId = params.get("messageId");
     if (!targetId) return;
     highlightRef.current = targetId;
     // delay to allow virtualizer to lay out nodes
     requestAnimationFrame(() => {
-      const el = document.querySelector(`[data-message-id="${CSS.escape(targetId)}"]`);
+      const el = document.querySelector(
+        `[data-message-id="${CSS.escape(targetId)}"]`,
+      );
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-2', 'ring-primary', 'ring-offset-2');
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("ring-2", "ring-primary", "ring-offset-2");
         setTimeout(() => {
-          el.classList.remove('ring-2', 'ring-primary', 'ring-offset-2');
+          el.classList.remove("ring-2", "ring-primary", "ring-offset-2");
         }, 1600);
       }
     });
@@ -87,8 +88,8 @@ export function ChatRoute() {
     isLoading && conversationId
       ? "loading"
       : !conversationId || (!hasMessages && !isPending)
-      ? "welcome"
-      : "conversation";
+        ? "welcome"
+        : "conversation";
 
   const isWelcome = mode === "welcome";
   const mainClassName = [
@@ -100,12 +101,12 @@ export function ChatRoute() {
 
   const onSendMessage = useCallback(
     (msg: string) => handleSendMessage(msg),
-    [handleSendMessage]
+    [handleSendMessage],
   );
 
   const onInputChange = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => handleInputChange(e),
-    [handleInputChange]
+    [handleInputChange],
   );
 
   useLayoutEffect(() => {
@@ -236,7 +237,7 @@ const ChatComposer = memo<ComposerProps>(
       disabled={disabled}
       mode={mode}
     />
-  )
+  ),
 );
 ChatComposer.displayName = "ChatComposer";
 
@@ -342,7 +343,7 @@ function ConversationView({
     if (node) {
       node.scrollIntoView({ behavior: "auto", block: "end" });
       requestAnimationFrame(() =>
-        node.scrollIntoView({ behavior: "auto", block: "end" })
+        node.scrollIntoView({ behavior: "auto", block: "end" }),
       );
     }
   }, []);
@@ -383,7 +384,7 @@ function ConversationView({
                   isCancelled={Boolean(m.is_interrupted)}
                   // data attributes passed to wrapper div via extraProps
                   {...({
-                    'data-message-id': (m as any).messageId || m.id,
+                    "data-message-id": (m as any).messageId || m.id,
                   } as any)}
                 />
               </div>

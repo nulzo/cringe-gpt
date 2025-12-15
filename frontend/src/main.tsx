@@ -22,15 +22,15 @@
 //   createRoot(elem).render(app);
 // }
 import ReactDOM from "react-dom/client";
-import {StrictMode} from "react";
-import {router} from "@/app/router";
+import { StrictMode } from "react";
+import { router } from "@/app/router";
 import AppProvider from "@/app/provider";
-import {RouterProvider} from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-    <StrictMode>
-        <AppProvider>
-            <RouterProvider router={router}/>
-        </AppProvider>
-    </StrictMode>
+  <StrictMode>
+    <AppProvider>
+      <RouterProvider router={router} />
+    </AppProvider>
+  </StrictMode>,
 );

@@ -1,23 +1,23 @@
-export const CringeLogo = ({...props}) => {
-    return (
-        <>
-            <svg
-                version="1.0"
-                xmlns="http://www.w3.org/2000/svg"
-                width="300.000000pt"
-                height="300.000000pt"
-                viewBox="0 0 300.000000 300.000000"
-                preserveAspectRatio="xMidYMid meet"
-                fill="currentColor"
-                {...props}
-            >
-                <g
-                    transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
-                    fill="currentColor"
-                    stroke="none"
-                >
-                    <path
-                        d="M1600 2871 c-105 -34 -163 -95 -272 -286 -165 -288 -240 -413 -256
+export const CringeLogo = ({ ...props }) => {
+  return (
+    <>
+      <svg
+        version="1.0"
+        xmlns="http://www.w3.org/2000/svg"
+        width="300.000000pt"
+        height="300.000000pt"
+        viewBox="0 0 300.000000 300.000000"
+        preserveAspectRatio="xMidYMid meet"
+        fill="currentColor"
+        {...props}
+      >
+        <g
+          transform="translate(0.000000,300.000000) scale(0.100000,-0.100000)"
+          fill="currentColor"
+          stroke="none"
+        >
+          <path
+            d="M1600 2871 c-105 -34 -163 -95 -272 -286 -165 -288 -240 -413 -256
         -428 -12 -11 -51 -16 -142 -19 -110 -4 -133 -8 -188 -33 -88 -39 -126 -87
         -271 -336 -69 -118 -154 -263 -189 -324 -147 -250 -156 -271 -160 -365 -3 -70
         0 -95 18 -140 37 -93 158 -286 206 -329 81 -71 98 -74 469 -80 182 -3 335 -9
@@ -51,9 +51,9 @@ export const CringeLogo = ({...props}) => {
         -331 575 9 36 59 116 70 112 6 -2 43 -62 84 -133z m1408 -518 c9 -23 -80 -152
         -118 -173 -30 -16 -72 -18 -495 -21 -468 -3 -503 0 -503 33 0 13 67 131 92
         163 8 9 123 12 515 12 430 0 504 -2 509 -14z"
-                    />
-                </g>
-            </svg>
-        </>
-    );
+          />
+        </g>
+      </svg>
+    </>
+  );
 };

@@ -177,7 +177,8 @@ interface SettingsModalProps {
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const [activeSection, setActiveSection] = useState("general");
   const { data: settings } = useSettings();
-  const { mutateAsync: updateSettings, isPending: isSavingSettings } = useUpdateSettings();
+  const { mutateAsync: updateSettings, isPending: isSavingSettings } =
+    useUpdateSettings();
 
   const { setTheme, theme } = useTheme();
 
@@ -307,7 +308,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   }, [selectedProvider, initialProvider]);
 
   const { data: providerSettings, isLoading: isLoadingProviderSettings } =
-    useProviderSettingsWithOptions(selectedProvider, { enabled: open && !!selectedProvider });
+    useProviderSettingsWithOptions(selectedProvider, {
+      enabled: open && !!selectedProvider,
+    });
   const { mutate: saveProviderSettings, isPending: isSavingProvider } =
     useUpdateProviderSettings(selectedProvider as ProviderType);
   const [apiUrl, setApiUrl] = useState<string>("");
@@ -385,8 +388,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
     }
   }, [activeSection]);
 
-  const { data: modelsForProvider = [] } =
-    useModelsByProviderWithOptions(selectedProvider, { enabled: open && !!selectedProvider });
+  const { data: modelsForProvider = [] } = useModelsByProviderWithOptions(
+    selectedProvider,
+    { enabled: open && !!selectedProvider },
+  );
 
   const handleThemeChange = (t: "light" | "dark" | "system") => {
     // Persist to backend and sync UI theme locally
@@ -447,7 +452,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
   // Form submission handlers (only for sections that need manual save)
   const onPersonalizationSubmit = (
-    data: z.infer<typeof personalizationSchema>
+    data: z.infer<typeof personalizationSchema>,
   ) => {
     try {
       // Store personalization data in localStorage for now
@@ -471,7 +476,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         onSuccess: () => toast.success(`${selectedProvider} settings saved`),
         onError: () =>
           toast.error(`Failed to save ${selectedProvider} settings`),
-      }
+      },
     );
   };
   const handleResetProvider = () => {
@@ -492,7 +497,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
         },
         onError: () =>
           toast.error(`Failed to clear ${selectedProvider} settings`),
-      }
+      },
     );
   };
   const isDirty = useMemo(() => {
@@ -585,7 +590,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   {accentSelection === "custom" && (
                     <div className="space-y-3">
                       <div className="flex flex-wrap gap-2">
-                        {["#4146F8","#F97316","#F43F5E","#0EA5E9","#22C55E","#EAB308","#8B5CF6","#0F172A"].map((swatch) => (
+                        {[
+                          "#4146F8",
+                          "#F97316",
+                          "#F43F5E",
+                          "#0EA5E9",
+                          "#22C55E",
+                          "#EAB308",
+                          "#8B5CF6",
+                          "#0F172A",
+                        ].map((swatch) => (
                           <button
                             key={swatch}
                             type="button"
@@ -601,22 +615,36 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         <div className="flex items-center gap-2">
                           <input
                             type="color"
-                            value={currentAccent.startsWith("#") ? currentAccent : "#4146F8"}
-                            onChange={(e) => handleCustomColorChange(e.target.value)}
+                            value={
+                              currentAccent.startsWith("#")
+                                ? currentAccent
+                                : "#4146F8"
+                            }
+                            onChange={(e) =>
+                              handleCustomColorChange(e.target.value)
+                            }
                             className="size-10 rounded-md border border-border cursor-pointer bg-transparent p-0"
                             aria-label="Custom accent color"
                           />
                           <div className="flex flex-col">
-                            <span className="text-xs text-muted-foreground">Accent preview</span>
+                            <span className="text-xs text-muted-foreground">
+                              Accent preview
+                            </span>
                             <div
                               className="h-2 w-16 rounded-full"
-                              style={{ backgroundColor: currentAccent.startsWith("#") ? currentAccent : "#4146F8" }}
+                              style={{
+                                backgroundColor: currentAccent.startsWith("#")
+                                  ? currentAccent
+                                  : "#4146F8",
+                              }}
                             />
                           </div>
                         </div>
 
                         <div className="relative flex items-center">
-                          <span className="left-3 absolute text-foreground/70 text-sm">#</span>
+                          <span className="left-3 absolute text-foreground/70 text-sm">
+                            #
+                          </span>
                           <Input
                             value={
                               currentAccent.startsWith("#")
@@ -737,7 +765,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
           <Form {...personalizationForm}>
             <form
               onSubmit={personalizationForm.handleSubmit(
-                onPersonalizationSubmit
+                onPersonalizationSubmit,
               )}
               className="space-y-6"
             >
@@ -945,7 +973,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       // Auto-save to localStorage
                       localStorage.setItem(
                         "dataControls",
-                        JSON.stringify({ improveModel: checked })
+                        JSON.stringify({ improveModel: checked }),
                       );
                     }}
                   />
@@ -1082,7 +1110,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <div className="flex items-center gap-4">
                     <Avatar className="w-14 h-14 border">
                       {avatarPreview ? (
-                        <AvatarImage src={avatarPreview} alt={profileName || "Avatar"} />
+                        <AvatarImage
+                          src={avatarPreview}
+                          alt={profileName || "Avatar"}
+                        />
                       ) : (
                         <AvatarFallback>
                           {profileName?.charAt(0)?.toUpperCase() || "U"}
@@ -1120,7 +1151,9 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => void handleAvatarFile(e.target.files?.[0] ?? null)}
+                        onChange={(e) =>
+                          void handleAvatarFile(e.target.files?.[0] ?? null)
+                        }
                       />
                     </div>
                   </div>
@@ -1183,7 +1216,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   onClick={async () => {
                     if (
                       !confirm(
-                        "Are you sure you want to permanently delete your account? This action cannot be undone."
+                        "Are you sure you want to permanently delete your account? This action cannot be undone.",
                       )
                     )
                       return;
@@ -1233,13 +1266,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <div>
                       <h4 className="font-semibold text-lg">
                         {provider
-                          ? providerMeta[provider]?.label ?? provider
+                          ? (providerMeta[provider]?.label ?? provider)
                           : "Provider"}
                       </h4>
                       <p className="mt-0.5 text-muted-foreground text-sm">
                         {provider
-                          ? providerMeta[provider]?.description ??
-                            "Configure credentials and defaults."
+                          ? (providerMeta[provider]?.description ??
+                            "Configure credentials and defaults.")
                           : ""}
                       </p>
                     </div>
@@ -1273,8 +1306,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                           onChange={(e) => setApiUrl(e.target.value)}
                           placeholder={
                             provider
-                              ? providerMeta[provider]?.urlPlaceholder ??
-                                "https://..."
+                              ? (providerMeta[provider]?.urlPlaceholder ??
+                                "https://...")
                               : "https://..."
                           }
                           disabled={!provider || isSavingProvider}
@@ -1296,8 +1329,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                             <SelectValue
                               placeholder={
                                 provider
-                                  ? providerMeta[provider]?.modelPlaceholder ??
-                                    "model-id"
+                                  ? (providerMeta[provider]?.modelPlaceholder ??
+                                    "model-id")
                                   : "model-id"
                               }
                             />

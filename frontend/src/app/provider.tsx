@@ -13,10 +13,13 @@ import { ImageViewerProvider } from "@/context/image-viewer-context";
 import { GlobalImageViewer } from "@/features/chat/components/global-image-viewer";
 import { AnimationSyncEffect } from "@/shared/ui/animation-sync";
 import { bootstrapAuthFromStorage } from "@/lib/auth";
-import { useEffect } from 'react';
-import { ensureNotificationsConnection, stopNotificationsConnection } from '@/lib/signalr';
-import { env } from '@/configuration/env';
-import { useAuthStore } from '@/stores/auth-store';
+import { useEffect } from "react";
+import {
+  ensureNotificationsConnection,
+  stopNotificationsConnection,
+} from "@/lib/signalr";
+import { env } from "@/configuration/env";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -43,11 +46,13 @@ const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     if (!isAuthReady) return;
 
     // Normalize to origin (strip trailing /api[/vX]) so hub path is correct
-    const rawBase = import.meta.env.MODE === 'production' ? '' : env.API_URL;
-    const apiBase = rawBase.replace(/\/api(\/v\d+)?\/?$/, '');
+    const rawBase = import.meta.env.MODE === "production" ? "" : env.API_URL;
+    const apiBase = rawBase.replace(/\/api(\/v\d+)?\/?$/, "");
 
     if (token) {
-      ensureNotificationsConnection(apiBase, () => localStorage.getItem('token'));
+      ensureNotificationsConnection(apiBase, () =>
+        localStorage.getItem("token"),
+      );
     } else {
       stopNotificationsConnection();
     }

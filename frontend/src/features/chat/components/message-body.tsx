@@ -66,7 +66,15 @@ export const MessageBody = memo(
       }
 
       return content;
-    }, [messageContent, deferred, isTyping, isCancelled, message.has_citations, message.citations, inlineCitationsEnabled]);
+    }, [
+      messageContent,
+      deferred,
+      isTyping,
+      isCancelled,
+      message.has_citations,
+      message.citations,
+      inlineCitationsEnabled,
+    ]);
 
     const isUser = message.role === "user";
 
@@ -76,7 +84,8 @@ export const MessageBody = memo(
       : [];
     const inlineImages = Array.isArray(message.images)
       ? message.images.filter((img: any) => {
-          const u = img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
+          const u =
+            img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
           return !img?.id && Boolean(u);
         })
       : [];
@@ -84,7 +93,9 @@ export const MessageBody = memo(
       ? message.attachments.filter((att) => att.file_type?.startsWith("image/"))
       : [];
     const fileAttachments = Array.isArray(message.attachments)
-      ? message.attachments.filter((att) => !att.file_type?.startsWith("image/"))
+      ? message.attachments.filter(
+          (att) => !att.file_type?.startsWith("image/"),
+        )
       : [];
 
     const normalizedImages = [
@@ -98,7 +109,9 @@ export const MessageBody = memo(
         const url =
           img?.image_url?.url ?? img?.image_url?.Url ?? img?.url ?? img?.Url;
         const alt =
-          img?.type === "image_url" ? img?.alt ?? img?.name : `Image ${idx + 1}`;
+          img?.type === "image_url"
+            ? (img?.alt ?? img?.name)
+            : `Image ${idx + 1}`;
         return {
           id: `${message.id}-inline-${idx}`,
           src: url,
@@ -175,7 +188,9 @@ export const MessageBody = memo(
                 />
               ) : (
                 <div className="prose dark:invert-prose markdown prose-p:my-3 prose-pre:my-3 prose-ul:my-3 prose-ol:my-3 max-w-[38rem] @[48rem]:max-w-[42rem] @[64rem]:max-w-[46rem]">
-                  <MarkdownRenderer markdown={isTyping ? deferred : displayContent} />
+                  <MarkdownRenderer
+                    markdown={isTyping ? deferred : displayContent}
+                  />
                 </div>
               )}
 
@@ -208,5 +223,5 @@ export const MessageBody = memo(
         )}
       </>
     );
-  }
+  },
 );

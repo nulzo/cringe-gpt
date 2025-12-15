@@ -1,23 +1,27 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { Progress } from "@/components/ui/progress"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Sparkline } from "./sparkline"
-import { cn } from "@/lib/utils"
-import type { TimeSeriesMetrics, MetricsByModel, MetricsByProvider } from "../types"
+import { useMemo } from "react";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Sparkline } from "./sparkline";
+import { cn } from "@/lib/utils";
+import type {
+  TimeSeriesMetrics,
+  MetricsByModel,
+  MetricsByProvider,
+} from "../types";
 
 interface MetricSidebarProps {
-  timeSeries?: TimeSeriesMetrics[]
-  byModel?: MetricsByModel[]
-  byProvider?: MetricsByProvider[]
-  totalCost?: number
-  totalTokens?: number
-  totalRequests?: number
-  isLoading?: boolean
-  className?: string
+  timeSeries?: TimeSeriesMetrics[];
+  byModel?: MetricsByModel[];
+  byProvider?: MetricsByProvider[];
+  totalCost?: number;
+  totalTokens?: number;
+  totalRequests?: number;
+  isLoading?: boolean;
+  className?: string;
 }
 
 export function MetricSidebar({
@@ -30,31 +34,34 @@ export function MetricSidebar({
   isLoading,
   className,
 }: MetricSidebarProps) {
-  
   const tokenSparkline = useMemo(() => {
-    if (!timeSeries) return []
-    return timeSeries.map((d) => d.promptTokens + d.completionTokens)
-  }, [timeSeries])
+    if (!timeSeries) return [];
+    return timeSeries.map((d) => d.promptTokens + d.completionTokens);
+  }, [timeSeries]);
 
   const requestSparkline = useMemo(() => {
-    if (!timeSeries) return []
-    return timeSeries.map((d) => d.requests)
-  }, [timeSeries])
+    if (!timeSeries) return [];
+    return timeSeries.map((d) => d.requests);
+  }, [timeSeries]);
 
   // Get current month name
-  const currentMonth = new Date().toLocaleDateString("en-US", { month: "long" })
+  const currentMonth = new Date().toLocaleDateString("en-US", {
+    month: "long",
+  });
 
   // Calculate days until reset (end of month)
   const daysUntilReset = useMemo(() => {
-    const now = new Date()
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    return Math.ceil((endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-  }, [])
+    const now = new Date();
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return Math.ceil(
+      (endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+    );
+  }, []);
 
   // Mock budget for now (could be from user settings)
-  const budget = 100
-  const budgetUsed = totalCost
-  const budgetPercent = Math.min((budgetUsed / budget) * 100, 100)
+  const budget = 100;
+  const budgetUsed = totalCost;
+  const budgetPercent = Math.min((budgetUsed / budget) * 100, 100);
 
   if (isLoading) {
     return (
@@ -76,7 +83,7 @@ export function MetricSidebar({
           <Skeleton className="h-6 w-full" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -85,7 +92,9 @@ export function MetricSidebar({
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground">{currentMonth} budget</p>
         <div className="flex items-baseline gap-1">
-          <span className="text-2xl font-semibold">${budgetUsed.toFixed(2)}</span>
+          <span className="text-2xl font-semibold">
+            ${budgetUsed.toFixed(2)}
+          </span>
           <span className="text-muted-foreground">/ ${budget}</span>
         </div>
         <Progress value={budgetPercent} className="h-1.5" />
@@ -111,7 +120,9 @@ export function MetricSidebar({
       {/* Total Requests */}
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">Total requests</p>
-        <p className="text-2xl font-semibold">{totalRequests.toLocaleString()}</p>
+        <p className="text-2xl font-semibold">
+          {totalRequests.toLocaleString()}
+        </p>
         <Sparkline
           data={requestSparkline}
           width="100%"
@@ -126,13 +137,13 @@ export function MetricSidebar({
         <TabsList className="h-8 w-full justify-start border-b bg-transparent p-0">
           <TabsTrigger
             value="models"
-            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
+            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs data-[state=active]:border-foreground data-[state=active]:bg-transparent"
           >
             Models
           </TabsTrigger>
           <TabsTrigger
             value="providers"
-            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs text-muted-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground"
+            className="h-8 rounded-none border-b-2 border-transparent px-3 pb-2 text-xs data-[state=active]:border-foreground data-[state=active]:bg-transparent"
           >
             Providers
           </TabsTrigger>
@@ -151,7 +162,9 @@ export function MetricSidebar({
                       {m.model.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="max-w-[140px] truncate text-xs">{m.model}</span>
+                  <span className="max-w-[140px] truncate text-xs">
+                    {m.model}
+                  </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {m.summary.totalRequests}
@@ -178,7 +191,9 @@ export function MetricSidebar({
                       {p.provider.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="max-w-[140px] truncate text-xs">{p.provider}</span>
+                  <span className="max-w-[140px] truncate text-xs">
+                    {p.provider}
+                  </span>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {p.summary.totalRequests}
@@ -193,7 +208,5 @@ export function MetricSidebar({
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
-
-

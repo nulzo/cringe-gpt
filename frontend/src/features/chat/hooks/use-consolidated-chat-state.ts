@@ -1,9 +1,9 @@
-import { useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useConversation } from '../api/get-conversation';
-import { useChatStore } from '../stores/chat-store';
-import { useSendStreamMessage } from '../api/send-stream-message';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useCallback } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useConversation } from "../api/get-conversation";
+import { useChatStore } from "../stores/chat-store";
+import { useSendStreamMessage } from "../api/send-stream-message";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Attachment conversion is handled in the streaming API layer; keep UI memory light here.
 
@@ -44,44 +44,51 @@ export function useConsolidatedChatState() {
   const sendMessageMutation = useSendStreamMessage({
     onSuccess: () => {
       clearInput();
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (error: unknown) => {
-      console.error('Failed to send message:', error);
+      console.error("Failed to send message:", error);
     },
   });
 
   // Smooth typing animation for character-by-character streaming
-  const createTypingAnimation = useCallback((text: string, onProgress: (currentText: string) => void, onComplete: () => void) => {
-    let currentIndex = 0;
-    let animationId: number;
-    const startTime = Date.now();
+  const createTypingAnimation = useCallback(
+    (
+      text: string,
+      onProgress: (currentText: string) => void,
+      onComplete: () => void,
+    ) => {
+      let currentIndex = 0;
+      let animationId: number;
+      const startTime = Date.now();
 
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const targetIndex = Math.min(text.length, Math.floor(elapsed / 15)); // ~15ms per character
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const targetIndex = Math.min(text.length, Math.floor(elapsed / 15)); // ~15ms per character
 
-      if (targetIndex > currentIndex) {
-        currentIndex = targetIndex;
-        onProgress(text.slice(0, currentIndex));
+        if (targetIndex > currentIndex) {
+          currentIndex = targetIndex;
+          onProgress(text.slice(0, currentIndex));
 
-        if (currentIndex >= text.length) {
-          onComplete();
-          return;
+          if (currentIndex >= text.length) {
+            onComplete();
+            return;
+          }
         }
-      }
+
+        animationId = requestAnimationFrame(animate);
+      };
 
       animationId = requestAnimationFrame(animate);
-    };
 
-    animationId = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, []);
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      };
+    },
+    [],
+  );
 
   // Handle sending message
   const handleSendMessage = async (message: string) => {

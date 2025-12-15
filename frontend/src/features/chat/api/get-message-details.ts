@@ -1,11 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
 
 interface MessageDetailsResponse {
   messageId: string;
   parentMessageId?: string;
   conversationId: number;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   createdAt: string;
   provider?: string;
@@ -23,13 +23,15 @@ interface MessageDetailsResponse {
   attachmentCount: number;
 }
 
-const getMessageDetailsFn = async (messageId: string): Promise<MessageDetailsResponse> => {
+const getMessageDetailsFn = async (
+  messageId: string,
+): Promise<MessageDetailsResponse> => {
   return api.get(`/messages/${messageId}`);
 };
 
 export const useMessageDetails = (messageId: string, enabled = true) => {
   return useQuery({
-    queryKey: ['message-details', messageId],
+    queryKey: ["message-details", messageId],
     queryFn: () => getMessageDetailsFn(messageId),
     enabled: enabled && !!messageId,
     staleTime: 5 * 60 * 1000, // 5 minutes

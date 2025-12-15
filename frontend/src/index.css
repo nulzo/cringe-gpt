@@ -73,7 +73,7 @@
   --accent-foreground: oklch(0.21 0.006 285.885);
   --destructive: oklch(0.577 0.245 27.325);
 
-  --border: oklch(0.90 0.004 286.32);
+  --border: oklch(0.9 0.004 286.32);
 
   --input: oklch(1 0 0);
 
@@ -93,14 +93,14 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.645 0.246 16.439);
-  --sidebar-hover: oklch(0.90 0 0);
+  --sidebar-hover: oklch(0.9 0 0);
 
   --hover: oklch(14.077% 0.0044 285.776 / 0.066);
   --chat-message: oklch(92.494% 0.00011 271.152);
 }
 
 .dark {
-  --background: oklch(20.463% .00002 271.152);
+  --background: oklch(20.463% 0.00002 271.152);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
@@ -119,7 +119,7 @@
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(25.615% .00003 271.152);
+  --input: oklch(25.615% 0.00003 271.152);
   --ring: oklch(0.645 0.246 16.439);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -127,7 +127,7 @@
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
 
-  --sidebar: oklch(24.354% .00003 271.152);
+  --sidebar: oklch(24.354% 0.00003 271.152);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.645 0.246 16.439);
   --sidebar-primary-foreground: oklch(0.969 0.015 12.422);
@@ -135,7 +135,7 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.645 0.246 16.439);
-  --sidebar-hover: oklch(0.30 0.00007 271.152);
+  --sidebar-hover: oklch(0.3 0.00007 271.152);
 
   --hover: oklch(71.547% 0.00008 271.152 / 0.156);
   --chat-message: oklch(33.68% 0.00004 271.152);
@@ -295,9 +295,11 @@
   .content-fade:after {
     --fade-start-color: transparent;
     --fade-end-color: var(--background);
-    background: linear-gradient(to bottom, transparent, var(--background)),
+    background:
+      linear-gradient(to bottom, transparent, var(--background)),
       linear-gradient(to bottom, transparent 55px, var(--background) 100px);
-    background: linear-gradient(
+    background:
+      linear-gradient(
         to bottom,
         var(--fade-start-color),
         var(--fade-end-color)
@@ -305,7 +307,9 @@
       linear-gradient(to bottom, transparent 55px, var(--background) 100px);
     background-position: top, bottom;
     background-repeat: no-repeat;
-    background-size: 100% 55px, 100% 100%;
+    background-size:
+      100% 55px,
+      100% 100%;
     content: "";
     inset: 0;
     position: absolute;
@@ -314,8 +318,9 @@
 }
 
 @theme {
-  --font-mono: "geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace, "mono";
+  --font-mono:
+    "geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace, "mono";
 }
 
 /* Add cmdk default styles */
@@ -612,9 +617,9 @@ code.hljs {
 }
 
 :is(
-    .markdown.streaming-animation.block-entry-animation pre,
-    .markdown.streaming-animation.block-entry-animation table
-  ):after {
+  .markdown.streaming-animation.block-entry-animation pre,
+  .markdown.streaming-animation.block-entry-animation table
+):after {
   --overlap-distance: 10px;
   --overlap-negative-distance: -10px;
   content: "";
@@ -651,9 +656,9 @@ code.hljs {
 
 @media (prefers-reduced-motion: no-preference) {
   :is(
-      .markdown.streaming-animation.block-entry-animation pre,
-      .markdown.streaming-animation.block-entry-animation table
-    ):after {
+    .markdown.streaming-animation.block-entry-animation pre,
+    .markdown.streaming-animation.block-entry-animation table
+  ):after {
     transition: 0.5s translate var(--spring-standard);
   }
 }

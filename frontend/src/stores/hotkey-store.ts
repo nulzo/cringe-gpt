@@ -1,64 +1,66 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { type ActionId, hotkeyActions } from '@/configuration/hotkeys';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { type ActionId, hotkeyActions } from "@/configuration/hotkeys";
 
 export interface HotkeyConfig {
-    keys: string;
+  keys: string;
 }
 
 interface HotkeyConfigState {
-    configs: Record<ActionId, HotkeyConfig>;
-    setHotkey: (id: ActionId, keys: string) => void;
-    resetHotkey: (id: ActionId) => void;
-    resetAllHotkeys: () => void;
+  configs: Record<ActionId, HotkeyConfig>;
+  setHotkey: (id: ActionId, keys: string) => void;
+  resetHotkey: (id: ActionId) => void;
+  resetAllHotkeys: () => void;
 }
 
 const getDefaultConfigs = (): Record<ActionId, HotkeyConfig> => {
-    return Object.fromEntries(
-        Object.entries(hotkeyActions).map(([id, action]) => [
-            id,
-            { keys: action.defaultKeys },
-        ])
-    ) as Record<ActionId, HotkeyConfig>;
+  return Object.fromEntries(
+    Object.entries(hotkeyActions).map(([id, action]) => [
+      id,
+      { keys: action.defaultKeys },
+    ]),
+  ) as Record<ActionId, HotkeyConfig>;
 };
 
 export const useHotkeyConfigStore = create<HotkeyConfigState>()(
-    persist(
-        (set) => ({
-            configs: getDefaultConfigs(),
+  persist(
+    (set) => ({
+      configs: getDefaultConfigs(),
 
-            setHotkey: (id, keys) =>
-                set((state) => ({
-                    configs: { ...state.configs, [id]: { keys } },
-                })),
+      setHotkey: (id, keys) =>
+        set((state) => ({
+          configs: { ...state.configs, [id]: { keys } },
+        })),
 
-            resetHotkey: (id) =>
-                set((state) => ({
-                    configs: {
-                        ...state.configs,
-                        [id]: { keys: hotkeyActions[id].defaultKeys },
-                    },
-                })),
+      resetHotkey: (id) =>
+        set((state) => ({
+          configs: {
+            ...state.configs,
+            [id]: { keys: hotkeyActions[id].defaultKeys },
+          },
+        })),
 
-            resetAllHotkeys: () => set({ configs: getDefaultConfigs() }),
-        }),
-        {
-            name: 'user-hotkey-configuration', // Unique name for localStorage
-            storage: createJSONStorage(() => localStorage),
-            // The `merge` function is crucial. It combines the stored state
-            // with the initial state, ensuring new hotkeys are added automatically.
-            merge: (persistedState, currentState) => {
-                const merged = { ...currentState, ...persistedState };
-                // Ensure all actions from the default config are present
-                for (const actionId in hotkeyActions) {
-                    if (!merged.configs[actionId as ActionId]) {
-                        merged.configs[actionId as ActionId] = { keys: hotkeyActions[actionId as ActionId].defaultKeys };
-                    }
-                }
-                return merged;
-            },
+      resetAllHotkeys: () => set({ configs: getDefaultConfigs() }),
+    }),
+    {
+      name: "user-hotkey-configuration", // Unique name for localStorage
+      storage: createJSONStorage(() => localStorage),
+      // The `merge` function is crucial. It combines the stored state
+      // with the initial state, ensuring new hotkeys are added automatically.
+      merge: (persistedState, currentState) => {
+        const merged = { ...currentState, ...persistedState };
+        // Ensure all actions from the default config are present
+        for (const actionId in hotkeyActions) {
+          if (!merged.configs[actionId as ActionId]) {
+            merged.configs[actionId as ActionId] = {
+              keys: hotkeyActions[actionId as ActionId].defaultKeys,
+            };
+          }
         }
-    )
+        return merged;
+      },
+    },
+  ),
 );
 
 /**
@@ -66,4 +68,6 @@ export const useHotkeyConfigStore = create<HotkeyConfigState>()(
  * Falls back to the default if the user never changed it.
  */
 export const useHotkey = (id: ActionId) =>
-    useHotkeyConfigStore((s) => s.configs[id]?.keys ?? hotkeyActions[id].defaultKeys);
+  useHotkeyConfigStore(
+    (s) => s.configs[id]?.keys ?? hotkeyActions[id].defaultKeys,
+  );

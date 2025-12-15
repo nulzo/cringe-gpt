@@ -53,7 +53,7 @@ export const LoginForm = () => {
             } finally {
               setIsSubmitting(false);
             }
-          }
+          },
         )}
         className="space-y-2"
       >

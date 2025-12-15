@@ -79,8 +79,8 @@ export function NavUser({ user, isOpen }: NavUserProps) {
         e.preventDefault();
         openSettingsModal();
       },
-    }
-  ]
+    },
+  ];
 
   const popoverItemsBottom = [
     {
@@ -98,8 +98,8 @@ export function NavUser({ user, isOpen }: NavUserProps) {
       label: "Log out",
       onClick: handleLogout,
       disabled: isLoggingOut,
-    }
-  ]
+    },
+  ];
 
   const userButton = (
     <button
@@ -111,7 +111,7 @@ export function NavUser({ user, isOpen }: NavUserProps) {
       <div
         className={cn(
           "absolute left-0 top-0 h-full rounded-md transition-all ease-out",
-          isHovered ? "bg-sidebar-hover" : "bg-transparent"
+          isHovered ? "bg-sidebar-hover" : "bg-transparent",
         )}
         style={{
           left: isOpen ? "0px" : "8px",
@@ -137,7 +137,7 @@ export function NavUser({ user, isOpen }: NavUserProps) {
         className={cn(
           "flex-1 flex items-center justify-between whitespace-nowrap overflow-hidden z-10",
           "transition-[opacity,transform] duration-200 ease-out",
-          isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-1.5"
+          isOpen ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-1.5",
         )}
         style={{
           transitionDelay: isOpen ? "100ms" : "0ms",
@@ -185,14 +185,18 @@ export function NavUser({ user, isOpen }: NavUserProps) {
       </DropdownMenuLabel>
       <div className="py-1">
         {popoverItemsTop.map((item) => (
-          <DropdownMenuItem key={item.label} onSelect={item.onClick} className="gap-3 px-2 py-2 text-sm transition-colors cursor-pointer hover:bg-popover-hover">
+          <DropdownMenuItem
+            key={item.label}
+            onSelect={item.onClick}
+            className="gap-3 px-2 py-2 text-sm transition-colors cursor-pointer hover:bg-popover-hover"
+          >
             <item.icon className="size-5 text-foreground/90" />
             {item.label}
           </DropdownMenuItem>
         ))}
-      
+
         <DropdownMenuSeparator className="m-1 bg-border" />
-        
+
         {popoverItemsBottom.map((item) => (
           <DropdownMenuItem
             key={item.label}

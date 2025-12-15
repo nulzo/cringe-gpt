@@ -5,8 +5,8 @@ import {
   useRef,
   useState,
   type RefObject,
-} from 'react';
-import type { Message } from '../types';
+} from "react";
+import type { Message } from "../types";
 
 interface Options {
   /** px from bottom that still counts as “at bottom” (default 120 px) */
@@ -52,9 +52,9 @@ export function useIntelligentScroll(
   const [autoScroll, setAutoScroll] = useState(true);
   const [showButton, setShowButton] = useState(false);
 
-  const lastChunk = useRef(streamedChunk);      // detect new streamed chunks
-  const prevLen = useRef(0);                    // detect first real message batch
-  const isScrollingToBottom = useRef(false);    // track programmatic scrolling
+  const lastChunk = useRef(streamedChunk); // detect new streamed chunks
+  const prevLen = useRef(0); // detect first real message batch
+  const isScrollingToBottom = useRef(false); // track programmatic scrolling
 
   // ——————————————————— helpers
   const distanceFromBottom = () => {
@@ -72,8 +72,8 @@ export function useIntelligentScroll(
       isScrollingToBottom.current = true;
 
       node.scrollIntoView({
-        behavior: instant ? 'instant' : smooth ? 'smooth' : 'auto',
-        block: 'end',
+        behavior: instant ? "instant" : smooth ? "smooth" : "auto",
+        block: "end",
       });
     },
     [enabled, smooth],
@@ -109,8 +109,8 @@ export function useIntelligentScroll(
       }
     };
 
-    area.addEventListener('scroll', onScroll, { passive: true });
-    return () => area.removeEventListener('scroll', onScroll);
+    area.addEventListener("scroll", onScroll, { passive: true });
+    return () => area.removeEventListener("scroll", onScroll);
   }, [enabled, nearBottomPx, buttonPx]);
 
   // ——————————————————— IO sentinel to resume auto-scroll when bottom visible

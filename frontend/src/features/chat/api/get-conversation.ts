@@ -1,15 +1,17 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { type Conversation, type Message } from '../types';
+import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import { type Conversation, type Message } from "../types";
 
 export const normalizeMessage = (m: any): Message => {
   const camel = {
     id: m.id ?? m.messageId ?? m.message_id,
     messageId: m.messageId ?? m.message_id,
     parentMessageId: m.parentMessageId ?? m.parent_message_id,
-    conversation_uuid: String(m.conversation_uuid ?? m.conversationId ?? m.conversation_id ?? ''),
+    conversation_uuid: String(
+      m.conversation_uuid ?? m.conversationId ?? m.conversation_id ?? "",
+    ),
     role: m.role,
-    content: m.content ?? '',
+    content: m.content ?? "",
     created_at: m.created_at ?? m.createdAt ?? new Date().toISOString(),
     name: m.name,
     provider: m.provider,
@@ -38,13 +40,13 @@ export const normalizeMessage = (m: any): Message => {
   if (rawError) {
     camel.error = {
       error_code: rawError.error_code ?? rawError.errorCode ?? rawError.code,
-      error_title: rawError.error_title ?? rawError.title ?? 'Error',
+      error_title: rawError.error_title ?? rawError.title ?? "Error",
       error_description:
         rawError.error_description ??
         rawError.description ??
         rawError.detail ??
         rawError.message ??
-        'Something went wrong.',
+        "Something went wrong.",
     };
     camel.is_error = camel.is_error ?? true;
   }
@@ -54,7 +56,8 @@ export const normalizeMessage = (m: any): Message => {
   // Helper to pull a property regardless of Pascal/camel case
   const pick = (obj: any, ...keys: string[]) => {
     for (const k of keys) {
-      if (obj && Object.prototype.hasOwnProperty.call(obj, k)) return (obj as any)[k];
+      if (obj && Object.prototype.hasOwnProperty.call(obj, k))
+        return (obj as any)[k];
     }
     return undefined;
   };
@@ -82,7 +85,7 @@ export const normalizeMessage = (m: any): Message => {
       const url = img?.image_url?.url ?? img?.url;
       if (url) {
         mergedImages.push({
-          type: img?.type ?? 'image_url',
+          type: img?.type ?? "image_url",
           image_url: { url },
           index: img?.index ?? index,
         });
@@ -91,31 +94,36 @@ export const normalizeMessage = (m: any): Message => {
   };
 
   // Images can arrive under several shapes; normalize them all
-  addProcessedImages(pick(m, 'processedImages', 'ProcessedImages'));
-  addProcessedImages(pick(m, 'images', 'Images'));
+  addProcessedImages(pick(m, "processedImages", "ProcessedImages"));
+  addProcessedImages(pick(m, "images", "Images"));
 
   // Raw image_url streaming payloads (no file id yet)
-  addInlineImages(pick(m, 'images', 'Images'));
+  addInlineImages(pick(m, "images", "Images"));
 
   // image_ids from legacy flow
-  const imageIds = pick(m, 'image_ids', 'imageIds', 'ImageIds') as (string | number)[] | undefined;
+  const imageIds = pick(m, "image_ids", "imageIds", "ImageIds") as
+    | (string | number)[]
+    | undefined;
   if (Array.isArray(imageIds) && imageIds.length > 0) {
-    mergedImages.push(...imageIds.map((id) => ({ id } as any)));
+    mergedImages.push(...imageIds.map((id) => ({ id }) as any));
   }
 
   // toolCallsJson/tool_calls_json may contain serialized MessageImageDto[]
   const toolCallsJson = pick(
     m,
-    'toolCallsJson',
-    'ToolCallsJson',
-    'tool_calls_json',
-    'tool_callsJson',
-    'tool_calls'
+    "toolCallsJson",
+    "ToolCallsJson",
+    "tool_calls_json",
+    "tool_callsJson",
+    "tool_calls",
   );
 
   if (toolCallsJson) {
     try {
-      const parsed = typeof toolCallsJson === 'string' ? JSON.parse(toolCallsJson) : toolCallsJson;
+      const parsed =
+        typeof toolCallsJson === "string"
+          ? JSON.parse(toolCallsJson)
+          : toolCallsJson;
       if (Array.isArray(parsed)) {
         // Could be list of ids or list of objects
         parsed.forEach((p: any, idx: number) => {
@@ -126,14 +134,14 @@ export const normalizeMessage = (m: any): Message => {
               url: p.url,
               mimeType: p.mimeType,
             });
-          } else if (typeof p === 'number' || typeof p === 'string') {
+          } else if (typeof p === "number" || typeof p === "string") {
             mergedImages.push({ id: p });
           }
         });
       }
     } catch (e) {
       // swallow – malformed payloads should not break chat rendering
-      console.warn('Failed to parse toolCallsJson for message', m, e);
+      console.warn("Failed to parse toolCallsJson for message", m, e);
     }
   }
 
@@ -158,12 +166,18 @@ export const normalizeMessage = (m: any): Message => {
   return camel;
 };
 
-const getConversation = async (conversationId: string): Promise<Conversation> => {
+const getConversation = async (
+  conversationId: string,
+): Promise<Conversation> => {
   const res = await api.get(`/conversations/${conversationId}`);
   const normalized: any = {
     ...res,
     id: res.id ?? res.Id,
-    conversation_id: res.conversation_id ?? res.conversationId ?? res.conversation_uuid ?? res.conversationId,
+    conversation_id:
+      res.conversation_id ??
+      res.conversationId ??
+      res.conversation_uuid ??
+      res.conversationId,
     title: res.title ?? res.Title,
     created_at: res.created_at ?? res.createdAt,
     updated_at: res.updated_at ?? res.updatedAt,
@@ -180,10 +194,10 @@ const getConversation = async (conversationId: string): Promise<Conversation> =>
 
 export const useConversation = (
   conversationId: string,
-  options?: Partial<UseQueryOptions<Conversation, Error>>
+  options?: Partial<UseQueryOptions<Conversation, Error>>,
 ) => {
   return useQuery<Conversation, Error>({
-    queryKey: ['conversation', conversationId],
+    queryKey: ["conversation", conversationId],
     queryFn: () => getConversation(conversationId),
     enabled: !!conversationId,
     ...options,

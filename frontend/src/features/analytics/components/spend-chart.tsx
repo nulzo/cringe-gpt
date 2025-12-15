@@ -1,17 +1,27 @@
-"use client"
+"use client";
 
-import { useMemo, useState, memo } from "react"
-import { BarChart, Bar, XAxis, CartesianGrid } from "recharts"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import type { TimeSeriesMetrics } from "../types"
+import { useMemo, useState, memo } from "react";
+import { BarChart, Bar, XAxis, CartesianGrid } from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import type { TimeSeriesMetrics } from "../types";
 
 interface SpendChartProps {
-  data?: TimeSeriesMetrics[]
-  isLoading?: boolean
-  className?: string
+  data?: TimeSeriesMetrics[];
+  isLoading?: boolean;
+  className?: string;
 }
 
 const chartConfig = {
@@ -19,55 +29,66 @@ const chartConfig = {
     label: "Cost",
     color: "hsl(var(--primary))",
   },
-}
+};
 
-export const SpendChart = memo(function SpendChart({ data, isLoading, className }: SpendChartProps) {
-  const [groupBy, setGroupBy] = useState<"1d" | "7d" | "30d">("1d")
+export const SpendChart = memo(function SpendChart({
+  data,
+  isLoading,
+  className,
+}: SpendChartProps) {
+  const [groupBy, setGroupBy] = useState<"1d" | "7d" | "30d">("1d");
 
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) return []
+    if (!data || data.length === 0) return [];
 
     // Group data if needed
     if (groupBy === "1d") {
       return data.map((d) => ({
         date: d.date,
         cost: d.cost,
-        label: new Date(d.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      }))
+        label: new Date(d.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+      }));
     }
 
     // Group by week or month
-    const grouped: Record<string, { cost: number; count: number }> = {}
+    const grouped: Record<string, { cost: number; count: number }> = {};
     data.forEach((d) => {
-      const date = new Date(d.date)
-      let key: string
+      const date = new Date(d.date);
+      let key: string;
       if (groupBy === "7d") {
         // Week number
-        const weekStart = new Date(date)
-        weekStart.setDate(date.getDate() - date.getDay())
-        key = weekStart.toISOString().split("T")[0]
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        key = weekStart.toISOString().split("T")[0];
       } else {
         // Month
-        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+        key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       }
-      if (!grouped[key]) grouped[key] = { cost: 0, count: 0 }
-      grouped[key].cost += d.cost
-      grouped[key].count++
-    })
+      if (!grouped[key]) grouped[key] = { cost: 0, count: 0 };
+      grouped[key].cost += d.cost;
+      grouped[key].count++;
+    });
 
     return Object.entries(grouped).map(([key, value]) => ({
       date: key,
       cost: value.cost,
-      label: groupBy === "7d"
-        ? `Week of ${new Date(key).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
-        : new Date(key + "-01").toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
-    }))
-  }, [data, groupBy])
+      label:
+        groupBy === "7d"
+          ? `Week of ${new Date(key).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+          : new Date(key + "-01").toLocaleDateString("en-US", {
+              month: "short",
+              year: "2-digit",
+            }),
+    }));
+  }, [data, groupBy]);
 
   const totalSpend = useMemo(() => {
-    if (!data) return 0
-    return data.reduce((acc, d) => acc + d.cost, 0)
-  }, [data])
+    if (!data) return 0;
+    return data.reduce((acc, d) => acc + d.cost, 0);
+  }, [data]);
 
   if (isLoading) {
     return (
@@ -81,7 +102,7 @@ export const SpendChart = memo(function SpendChart({ data, isLoading, className 
         </div>
         <Skeleton className="h-[280px] w-full" />
       </div>
-    )
+    );
   }
 
   return (
@@ -98,7 +119,10 @@ export const SpendChart = memo(function SpendChart({ data, isLoading, className 
         </div>
 
         <div className="flex items-center gap-2">
-          <Select value={groupBy} onValueChange={(v) => setGroupBy(v as typeof groupBy)}>
+          <Select
+            value={groupBy}
+            onValueChange={(v) => setGroupBy(v as typeof groupBy)}
+          >
             <SelectTrigger className="h-8 w-[100px] text-xs">
               <SelectValue placeholder="Group by" />
             </SelectTrigger>
@@ -120,7 +144,12 @@ export const SpendChart = memo(function SpendChart({ data, isLoading, className 
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <BarChart accessibilityLayer data={chartData}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray="3 3"
+                stroke="hsl(var(--border))"
+                opacity={0.4}
+              />
               <XAxis
                 dataKey="label"
                 axisLine={false}
@@ -144,10 +173,5 @@ export const SpendChart = memo(function SpendChart({ data, isLoading, className 
         )}
       </div>
     </div>
-  )
-})
-
-
-
-
-
+  );
+});

@@ -1,4 +1,4 @@
-import type { ProviderType } from '@/features/chat/types';
+import type { ProviderType } from "@/features/chat/types";
 
 export interface PersonaParameters {
   temperature?: number | null;
@@ -28,4 +28,3 @@ export interface PersonaPayload {
   model?: string;
   parameters?: PersonaParameters;
 }
-

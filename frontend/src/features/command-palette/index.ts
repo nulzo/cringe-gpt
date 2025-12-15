@@ -1,1 +1,1 @@
-export * from './components/command-palette'; 
+export * from "./components/command-palette";

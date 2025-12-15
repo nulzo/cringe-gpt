@@ -26,7 +26,7 @@ export function SimpleMarkdownRenderer({
     <div
       className={cn(
         "markdown break-words overflow-hidden [&_pre]:overflow-x-auto [&_pre>code]:whitespace-pre [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
-        className
+        className,
       )}
       dangerouslySetInnerHTML={{ __html: html }}
     />

@@ -11,10 +11,15 @@ import { MessageError } from "./message-error";
 import { MessageLoading } from "./message-loading";
 import { ImageSkeleton } from "./image-skeleton";
 import { useUpdateMessageLike } from "../api/update-message-like";
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
-import {Button} from "@/components/ui/button.tsx";
-import {IconCheck, IconCopy} from "@tabler/icons-react";
-import {useClipboard} from "@/hooks/use-clipboard.ts";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { IconCheck, IconCopy } from "@tabler/icons-react";
+import { useClipboard } from "@/hooks/use-clipboard.ts";
 
 // Helper to extract provider from model ID - you can move this to a utils file
 const getProviderFromModel = (modelId: string): string | undefined => {
@@ -46,13 +51,13 @@ export const Message = memo(
         isCancelled = false,
         onUpdateLike,
       },
-      ref
+      ref,
     ) => {
       const [isLiked, setIsLiked] = useState(
-        message.isLiked || message.is_liked || false
+        message.isLiked || message.is_liked || false,
       );
 
-      const {copy, copied} = useClipboard();
+      const { copy, copied } = useClipboard();
 
       const isOptimisticUpdate = useRef(false);
 
@@ -62,7 +67,7 @@ export const Message = memo(
           provider:
             message.provider || getProviderFromModel(message.model || ""),
         }),
-        [message.provider, message.model]
+        [message.provider, message.model],
       );
 
       const providerName = modelInfo?.provider;
@@ -93,7 +98,6 @@ export const Message = memo(
             messageId: messageGuid,
             isLiked: newIsLiked,
           });
-
         } catch (error) {
           setIsLiked(!newIsLiked);
           console.error("Failed to update like status:", error);
@@ -192,9 +196,9 @@ export const Message = memo(
 
                 <div className="py-4">
                   <MessageBody
-                      message={message}
-                      isTyping={isTyping}
-                      isCancelled={isCancelled}
+                    message={message}
+                    isTyping={isTyping}
+                    isCancelled={isCancelled}
                   />
                 </div>
 
@@ -228,12 +232,16 @@ export const Message = memo(
                   <Tooltip>
                     <TooltipTrigger>
                       <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => copy(message.content)}
-                          className="size-9 text-muted-foreground hover:text-foreground "
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => copy(message.content)}
+                        className="size-9 text-muted-foreground hover:text-foreground "
                       >
-                        {copied ? <IconCheck className="size-5" strokeWidth={2} /> : <IconCopy className="size-5" strokeWidth={2}/>}
+                        {copied ? (
+                          <IconCheck className="size-5" strokeWidth={2} />
+                        ) : (
+                          <IconCopy className="size-5" strokeWidth={2} />
+                        )}
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -246,7 +254,7 @@ export const Message = memo(
           )}
         </div>
       );
-    }
+    },
   ),
   (prevProps, nextProps) => {
     // Performance optimization: only re-render if essential props changed
@@ -259,5 +267,5 @@ export const Message = memo(
       prevProps.message.id === nextProps.message.id &&
       prevProps.isCancelled === nextProps.isCancelled
     );
-  }
+  },
 );

@@ -1,17 +1,31 @@
-import { useMemo, useState } from 'react';
-import { Command, CommandInput, CommandList } from '@/components/ui/command';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { IconUserCircle, IconX, IconCheck, IconPlus } from '@tabler/icons-react';
-import { usePersonas, useCreatePersona } from '@/features/personas/api/get-personas';
-import type { PersonaPayload } from '@/features/personas/types';
-import { useChatConfigStore } from '@/stores/chat-config-store';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { ChatFeaturePopover } from './chat-feature-popover';
+import { useMemo, useState } from "react";
+import { Command, CommandInput, CommandList } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  IconUserCircle,
+  IconX,
+  IconCheck,
+  IconPlus,
+} from "@tabler/icons-react";
+import {
+  usePersonas,
+  useCreatePersona,
+} from "@/features/personas/api/get-personas";
+import type { PersonaPayload } from "@/features/personas/types";
+import { useChatConfigStore } from "@/stores/chat-config-store";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { ChatFeaturePopover } from "./chat-feature-popover";
 
 export function PersonaSelector() {
   const personasQuery = usePersonas();
@@ -33,12 +47,12 @@ export function PersonaSelector() {
 
   const [open, setOpen] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
 
   const [draft, setDraft] = useState<PersonaPayload>({
-    name: '',
-    description: '',
-    instructions: '',
+    name: "",
+    description: "",
+    instructions: "",
     parameters: {
       temperature: 0.7,
       topP: 0.9,
@@ -54,7 +68,7 @@ export function PersonaSelector() {
     return (personasQuery.data ?? []).filter(
       (persona) =>
         persona.name.toLowerCase().includes(term) ||
-        persona.description?.toLowerCase().includes(term)
+        persona.description?.toLowerCase().includes(term),
     );
   }, [search, personasQuery.data]);
 
@@ -64,11 +78,16 @@ export function PersonaSelector() {
 
     setActivePersona(persona.id, persona.name);
     setSystemPrompt(persona.instructions);
-    if (persona.parameters?.temperature != null) setTemperature(Number(persona.parameters.temperature));
-    if (persona.parameters?.topP != null) setTopP(Number(persona.parameters.topP));
-    if (persona.parameters?.topK != null) setTopK(Number(persona.parameters.topK));
-    if (persona.parameters?.maxTokens != null) setMaxTokens(persona.parameters.maxTokens || null);
-    if (persona.parameters?.isTemporary != null) setIsTemporary(Boolean(persona.parameters.isTemporary));
+    if (persona.parameters?.temperature != null)
+      setTemperature(Number(persona.parameters.temperature));
+    if (persona.parameters?.topP != null)
+      setTopP(Number(persona.parameters.topP));
+    if (persona.parameters?.topK != null)
+      setTopK(Number(persona.parameters.topK));
+    if (persona.parameters?.maxTokens != null)
+      setMaxTokens(persona.parameters.maxTokens || null);
+    if (persona.parameters?.isTemporary != null)
+      setIsTemporary(Boolean(persona.parameters.isTemporary));
     setOpen(false);
   };
 
@@ -77,8 +96,8 @@ export function PersonaSelector() {
     try {
       const payload: PersonaPayload = {
         ...draft,
-        provider: selectedProvider ?? 'OpenAi',
-        model: selectedModelId ?? 'gpt-4o-mini',
+        provider: selectedProvider ?? "OpenAi",
+        model: selectedModelId ?? "gpt-4o-mini",
         parameters: {
           temperature: draft.parameters?.temperature ?? undefined,
           topP: draft.parameters?.topP ?? undefined,
@@ -90,12 +109,17 @@ export function PersonaSelector() {
       const created = await createPersona.mutateAsync(payload);
       if (created?.id) {
         personasQuery.refetch();
-        setDraft((prev) => ({ ...prev, name: '', description: '', instructions: '' }));
+        setDraft((prev) => ({
+          ...prev,
+          name: "",
+          description: "",
+          instructions: "",
+        }));
         setIsDialogOpen(false);
         applyPersona(created.id);
       }
     } catch (error) {
-      console.error('Failed to create persona', error);
+      console.error("Failed to create persona", error);
     }
   };
 
@@ -105,10 +129,13 @@ export function PersonaSelector() {
         open={open}
         onOpenChange={setOpen}
         icon={IconUserCircle}
-        tooltip={activePersonaName ? `Persona: ${activePersonaName}` : "Select persona"}
+        tooltip={
+          activePersonaName ? `Persona: ${activePersonaName}` : "Select persona"
+        }
         isIndicatorActive={!!activePersonaName}
         className={cn(
-          activePersonaName && "bg-accent/40 text-foreground border border-border/60"
+          activePersonaName &&
+            "bg-accent/40 text-foreground border border-border/60",
         )}
         contentClassName="w-[400px] p-0 bg-popover/95 backdrop-blur-sm border-border/50 shadow-2xl rounded-xl overflow-hidden"
       >
@@ -137,25 +164,29 @@ export function PersonaSelector() {
                     onClick={() => {
                       applyPersona(persona.id);
                       setOpen(false);
-                      setSearch('');
+                      setSearch("");
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
+                      if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         applyPersona(persona.id);
                         setOpen(false);
-                        setSearch('');
+                        setSearch("");
                       }
                     }}
                     className={cn(
                       "relative flex cursor-pointer select-none items-center rounded-md px-3 py-2.5 text-sm outline-none transition-colors",
                       "hover:bg-accent/50",
-                      isActive ? "bg-accent/70 text-accent-foreground" : "text-foreground"
+                      isActive
+                        ? "bg-accent/70 text-accent-foreground"
+                        : "text-foreground",
                     )}
                   >
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium truncate">{persona.name}</span>
+                        <span className="font-medium truncate">
+                          {persona.name}
+                        </span>
                       </div>
                       {persona.description && (
                         <span className="text-xs text-muted-foreground truncate opacity-80">
@@ -163,24 +194,30 @@ export function PersonaSelector() {
                         </span>
                       )}
                     </div>
-                    {isActive && <IconCheck className="ml-3 size-4 shrink-0 text-primary" />}
+                    {isActive && (
+                      <IconCheck className="ml-3 size-4 shrink-0 text-primary" />
+                    )}
                   </div>
                 );
               })
             )}
           </CommandList>
           <div className="flex items-center justify-between p-2 border-t border-border/40 bg-muted/20">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground" 
-              onClick={() => { clearPersona(); setSystemPrompt(''); setOpen(false); }}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                clearPersona();
+                setSystemPrompt("");
+                setOpen(false);
+              }}
             >
               <IconX className="size-3.5 mr-1.5" />
               Clear
             </Button>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="ghost"
               className="h-8 px-2 text-xs hover:bg-background"
               onClick={() => setIsDialogOpen(true)}
@@ -203,7 +240,9 @@ export function PersonaSelector() {
               <Input
                 id="persona-name"
                 value={draft.name}
-                onChange={(e) => setDraft((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="Research assistant"
               />
             </div>
@@ -211,8 +250,10 @@ export function PersonaSelector() {
               <Label htmlFor="persona-description">Description</Label>
               <Input
                 id="persona-description"
-                value={draft.description ?? ''}
-                onChange={(e) => setDraft((prev) => ({ ...prev, description: e.target.value }))}
+                value={draft.description ?? ""}
+                onChange={(e) =>
+                  setDraft((prev) => ({ ...prev, description: e.target.value }))
+                }
                 placeholder="Concise, analytical tone..."
               />
             </div>
@@ -221,7 +262,12 @@ export function PersonaSelector() {
               <Textarea
                 id="persona-instructions"
                 value={draft.instructions}
-                onChange={(e) => setDraft((prev) => ({ ...prev, instructions: e.target.value }))}
+                onChange={(e) =>
+                  setDraft((prev) => ({
+                    ...prev,
+                    instructions: e.target.value,
+                  }))
+                }
                 placeholder="You are a helpful assistant..."
                 className="min-h-[140px]"
               />
@@ -232,11 +278,14 @@ export function PersonaSelector() {
                 <Input
                   type="number"
                   step="0.01"
-                  value={draft.parameters?.temperature ?? ''}
+                  value={draft.parameters?.temperature ?? ""}
                   onChange={(e) =>
                     setDraft((prev) => ({
                       ...prev,
-                      parameters: { ...prev.parameters, temperature: Number(e.target.value) },
+                      parameters: {
+                        ...prev.parameters,
+                        temperature: Number(e.target.value),
+                      },
                     }))
                   }
                 />
@@ -246,11 +295,14 @@ export function PersonaSelector() {
                 <Input
                   type="number"
                   step="0.01"
-                  value={draft.parameters?.topP ?? ''}
+                  value={draft.parameters?.topP ?? ""}
                   onChange={(e) =>
                     setDraft((prev) => ({
                       ...prev,
-                      parameters: { ...prev.parameters, topP: Number(e.target.value) },
+                      parameters: {
+                        ...prev.parameters,
+                        topP: Number(e.target.value),
+                      },
                     }))
                   }
                 />
@@ -262,11 +314,14 @@ export function PersonaSelector() {
                 <Input
                   type="number"
                   step="0.1"
-                  value={draft.parameters?.topK ?? ''}
+                  value={draft.parameters?.topK ?? ""}
                   onChange={(e) =>
                     setDraft((prev) => ({
                       ...prev,
-                      parameters: { ...prev.parameters, topK: Number(e.target.value) },
+                      parameters: {
+                        ...prev.parameters,
+                        topK: Number(e.target.value),
+                      },
                     }))
                   }
                 />
@@ -275,11 +330,14 @@ export function PersonaSelector() {
                 <Label>Max tokens</Label>
                 <Input
                   type="number"
-                  value={draft.parameters?.maxTokens ?? ''}
+                  value={draft.parameters?.maxTokens ?? ""}
                   onChange={(e) =>
                     setDraft((prev) => ({
                       ...prev,
-                      parameters: { ...prev.parameters, maxTokens: Number(e.target.value) },
+                      parameters: {
+                        ...prev.parameters,
+                        maxTokens: Number(e.target.value),
+                      },
                     }))
                   }
                 />
@@ -292,11 +350,16 @@ export function PersonaSelector() {
                 onCheckedChange={(checked) =>
                   setDraft((prev) => ({
                     ...prev,
-                    parameters: { ...prev.parameters, isTemporary: Boolean(checked) },
+                    parameters: {
+                      ...prev.parameters,
+                      isTemporary: Boolean(checked),
+                    },
                   }))
                 }
               />
-              <Label htmlFor="persona-temp">Ephemeral conversation (do not save history)</Label>
+              <Label htmlFor="persona-temp">
+                Ephemeral conversation (do not save history)
+              </Label>
             </div>
           </div>
           <DialogFooter>

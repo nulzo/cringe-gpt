@@ -180,16 +180,16 @@ export function ImageViewer({
         const ratio = target / prevScale;
 
         setPanX((prevPanX) =>
-          target === MIN_SCALE ? 0 : prevPanX + originX * (1 - ratio)
+          target === MIN_SCALE ? 0 : prevPanX + originX * (1 - ratio),
         );
         setPanY((prevPanY) =>
-          target === MIN_SCALE ? 0 : prevPanY + originY * (1 - ratio)
+          target === MIN_SCALE ? 0 : prevPanY + originY * (1 - ratio),
         );
 
         return target;
       });
     },
-    []
+    [],
   );
 
   const nextImage = useCallback(() => {
@@ -240,7 +240,7 @@ export function ImageViewer({
           break;
       }
     },
-    [images.length, nextImage, onClose, prevImage, toggleZoom]
+    [images.length, nextImage, onClose, prevImage, toggleZoom],
   );
 
   useEffect(() => {
@@ -292,7 +292,9 @@ export function ImageViewer({
       link.href = url;
       link.download =
         currentImage.filename ||
-        (currentImage.fileId ? `image-${currentImage.fileId}.png` : "image.png");
+        (currentImage.fileId
+          ? `image-${currentImage.fileId}.png`
+          : "image.png");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -311,7 +313,7 @@ export function ImageViewer({
       isDraggingRef.current = true;
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [scale]
+    [scale],
   );
 
   const handleMouseMove = useCallback(
@@ -329,7 +331,7 @@ export function ImageViewer({
 
       lastPointerRef.current = { x: e.clientX, y: e.clientY };
     },
-    [scale]
+    [scale],
   );
 
   const handleMouseUp = useCallback(() => {
@@ -373,7 +375,7 @@ export function ImageViewer({
       const zoomFactor = Math.exp(-e.deltaY * 0.0025);
       applyZoom(scale * zoomFactor, { x: e.clientX, y: e.clientY });
     },
-    [applyZoom, scale]
+    [applyZoom, scale],
   );
 
   // Add non-passive wheel event listener
@@ -396,7 +398,7 @@ export function ImageViewer({
       transformOrigin: "center center",
       transition: isDraggingRef.current ? "none" : "transform 0.18s ease-out",
     }),
-    [panX, panY, scale]
+    [panX, panY, scale],
   );
 
   // Cleanup on unmount
@@ -603,7 +605,7 @@ export function ImageViewer({
                       onError={() => {
                         console.warn(
                           "Image failed to load:",
-                          currentImage.fileId || currentImage.sourceUrl
+                          currentImage.fileId || currentImage.sourceUrl,
                         );
                         setIsLoading(false);
                       }}
@@ -660,7 +662,7 @@ function ImageThumbnail({
   onClick: () => void;
 }) {
   const { data: imageBlob } = useGetImage(
-    image.sourceUrl ? undefined : image.fileId
+    image.sourceUrl ? undefined : image.fileId,
   );
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 

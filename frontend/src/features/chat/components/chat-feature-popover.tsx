@@ -1,6 +1,14 @@
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { type Icon, type IconProps } from "@tabler/icons-react";
-import type { ForwardRefExoticComponent, RefAttributes, ReactNode } from "react";
+import type {
+  ForwardRefExoticComponent,
+  RefAttributes,
+  ReactNode,
+} from "react";
 import { ChatAreaActionButton } from "./chat-area-action-button";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +57,10 @@ export function ChatFeaturePopover({
         </ChatAreaActionButton>
       </PopoverTrigger>
       <PopoverContent
-        className={cn("p-0 shadow-lg border-border/60 bg-popover", contentClassName)}
+        className={cn(
+          "p-0 shadow-lg border-border/60 bg-popover",
+          contentClassName,
+        )}
         side={side}
         align={align}
       >

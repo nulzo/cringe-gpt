@@ -245,9 +245,8 @@ export function ModernChatArea({
                 onValueChange={handleModelChange}
               />
 
-
               <PersonaSelector />
-              
+
               <PromptPicker />
 
               {/* <ChatToolsPopover
@@ -301,13 +300,13 @@ export function ModernChatArea({
                   <TooltipContent>Stop generating</TooltipContent>
                 </Tooltip>
               ) : (
-                  <ChatAreaActionButton
-                    onClick={handleSend}
-                    aria-label="Send"
-                    tooltipText="Send"
-                    icon={IconSend}
-                    disabled={disabled || isInputEmpty || !canSend}
-                  />
+                <ChatAreaActionButton
+                  onClick={handleSend}
+                  aria-label="Send"
+                  tooltipText="Send"
+                  icon={IconSend}
+                  disabled={disabled || isInputEmpty || !canSend}
+                />
               )}
             </div>
           </div>

@@ -41,9 +41,11 @@ export function ImageDisplay({
   images,
   imageIndex = 0,
 }: ImageDisplayProps) {
-  const { data: imageBlob, isLoading, isError } = useGetImage(
-    src ? undefined : fileId
-  );
+  const {
+    data: imageBlob,
+    isLoading,
+    isError,
+  } = useGetImage(src ? undefined : fileId);
   const [imageUrl, setImageUrl] = useState<string | null>(src ?? null);
   const [hasLoaded, setHasLoaded] = useState(Boolean(src));
   const { openViewer } = useImageViewer();
@@ -88,7 +90,8 @@ export function ImageDisplay({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = filename || (fileId ? `image-${fileId}.png` : "image.png");
+      link.download =
+        filename || (fileId ? `image-${fileId}.png` : "image.png");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -99,16 +102,17 @@ export function ImageDisplay({
   };
 
   const handleOpenViewer = () => {
-    const gallery = (images?.length
-      ? images
-      : [
-          {
-            fileId,
-            src,
-            altText,
-            filename,
-          },
-        ]
+    const gallery = (
+      images?.length
+        ? images
+        : [
+            {
+              fileId,
+              src,
+              altText,
+              filename,
+            },
+          ]
     ).map((img, index) =>
       createImageData(img.fileId, {
         id: img.id || `${messageId ?? "image"}-${index}`,
@@ -117,7 +121,7 @@ export function ImageDisplay({
         filename: img.filename,
         conversationId,
         messageId,
-      })
+      }),
     );
 
     openViewer(gallery, imageIndex);
@@ -128,7 +132,7 @@ export function ImageDisplay({
       <div
         className={cn(
           "w-full max-w-sm rounded-xl overflow-hidden border border-border/60 bg-muted/40",
-          className
+          className,
         )}
       >
         <div className="w-full aspect-[4/3] bg-muted animate-pulse flex items-center justify-center rounded-xl">
@@ -143,7 +147,7 @@ export function ImageDisplay({
       <div
         className={cn(
           "w-full max-w-sm rounded-xl overflow-hidden border border-destructive/70 bg-destructive/5",
-          className
+          className,
         )}
       >
         <div className="w-full aspect-[4/3] bg-destructive/10 flex flex-col items-center justify-center text-destructive rounded-xl">
@@ -167,7 +171,7 @@ export function ImageDisplay({
       tabIndex={0}
       className={cn(
         "group relative w-full max-w-[18rem] min-w-[11rem] overflow-hidden rounded-xl border border-border/60 bg-muted/20 shadow-sm transition-all hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background cursor-pointer",
-        className
+        className,
       )}
       onClick={handleOpenViewer}
       onKeyDown={handleKeyDown}

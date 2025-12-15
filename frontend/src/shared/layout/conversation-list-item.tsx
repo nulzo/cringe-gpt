@@ -1,8 +1,15 @@
 import type { Conversation } from "@/features/chat/types";
 import { cn } from "@/lib/utils";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useChatStore } from '@/features/chat/stores/chat-store';
-import { memo, useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useChatStore } from "@/features/chat/stores/chat-store";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+} from "react";
 
 import {
   DropdownMenu,
@@ -30,7 +37,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
-import { IconArchive, IconArchiveOff, IconDots, IconPencil, IconTag, IconTrash, IconX } from "@tabler/icons-react";
+import {
+  IconArchive,
+  IconArchiveOff,
+  IconDots,
+  IconPencil,
+  IconTag,
+  IconTrash,
+  IconX,
+} from "@tabler/icons-react";
 import { useUpdateConversation } from "@/features/chat/api/update-conversation";
 import { useDeleteConversation } from "@/features/chat/api/delete-conversation";
 import { useTags } from "@/features/chat/api/get-tags";
@@ -59,9 +74,12 @@ export const SidebarConversationItem = memo(
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [draftTitle, setDraftTitle] = useState(conversation.title);
-    const initialTags = useMemo(() => (conversation.tags ?? []).map((t) => t.name), [conversation.tags]);
+    const initialTags = useMemo(
+      () => (conversation.tags ?? []).map((t) => t.name),
+      [conversation.tags],
+    );
     const [selectedTags, setSelectedTags] = useState<string[]>(initialTags);
-    const [tagInput, setTagInput] = useState('');
+    const [tagInput, setTagInput] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const updateConversation = useUpdateConversation();
@@ -76,11 +94,11 @@ export const SidebarConversationItem = memo(
     const toggleTag = (name: string) => {
       setSelectedTags((prev) => {
         const lowerName = name.toLowerCase();
-        const exists = prev.some(t => t.toLowerCase() === lowerName);
+        const exists = prev.some((t) => t.toLowerCase() === lowerName);
         if (exists) {
-            return prev.filter(t => t.toLowerCase() !== lowerName);
+          return prev.filter((t) => t.toLowerCase() !== lowerName);
         } else {
-            return [...prev, name];
+          return [...prev, name];
         }
       });
     };
@@ -89,14 +107,16 @@ export const SidebarConversationItem = memo(
       const value = name.trim();
       if (!value) return;
       setSelectedTags((prev) => {
-        const exists = prev.some((t) => t.toLowerCase() === value.toLowerCase());
+        const exists = prev.some(
+          (t) => t.toLowerCase() === value.toLowerCase(),
+        );
         return exists ? prev : [...prev, value];
       });
-      setTagInput('');
+      setTagInput("");
     };
 
     const handleTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         e.preventDefault();
         addTag(tagInput);
       }
@@ -117,7 +137,7 @@ export const SidebarConversationItem = memo(
         isHidden: !isHidden,
       });
       if (!isHidden && location.pathname === to) {
-        navigate('/');
+        navigate("/");
       }
     };
 
@@ -125,12 +145,16 @@ export const SidebarConversationItem = memo(
       await deleteConversation.mutateAsync(conversation.id);
       setIsDeleteOpen(false);
       if (location.pathname === to) {
-        navigate('/');
+        navigate("/");
       }
     };
 
-    const isStreaming = useChatStore((s) => s.isStreamingFor(String(conversation.id)));
-    const unread = useChatStore((s) => Boolean(s.unread[String(conversation.id)]));
+    const isStreaming = useChatStore((s) =>
+      s.isStreamingFor(String(conversation.id)),
+    );
+    const unread = useChatStore((s) =>
+      Boolean(s.unread[String(conversation.id)]),
+    );
     const markRead = useChatStore((s) => s.markConversationRead);
 
     const content = (
@@ -138,7 +162,7 @@ export const SidebarConversationItem = memo(
         className={cn(
           "group flex items-center gap-2 pl-3 pr-3 py-2 h-9 rounded-md text-sm font-normal relative overflow-hidden",
           "hover:bg-sidebar-hover",
-          (isActive || isDropdownOpen) && "bg-sidebar-hover/75 font-medium"
+          (isActive || isDropdownOpen) && "bg-sidebar-hover/75 font-medium",
         )}
       >
         <Link
@@ -151,9 +175,15 @@ export const SidebarConversationItem = memo(
           }}
         >
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate text-foreground">{conversation.title}</span>
-            {isStreaming && <span className="size-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />}
-            {unread && !isActive && <span className="size-2 flex-shrink-0 rounded-full bg-blue-400" />}
+            <span className="truncate text-foreground">
+              {conversation.title}
+            </span>
+            {isStreaming && (
+              <span className="size-2 flex-shrink-0 rounded-full bg-primary animate-pulse" />
+            )}
+            {unread && !isActive && (
+              <span className="size-2 flex-shrink-0 rounded-full bg-blue-400" />
+            )}
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -176,7 +206,7 @@ export const SidebarConversationItem = memo(
           className={cn(
             "flex items-center self-stretch text-muted-foreground opacity-0 group-hover:opacity-100 flex-shrink-0 z-20",
             !isOpen && "pointer-events-none opacity-0",
-            isDropdownOpen && "opacity-100"
+            isDropdownOpen && "opacity-100",
           )}
           onClick={(e) => {
             e.stopPropagation();
@@ -211,7 +241,11 @@ export const SidebarConversationItem = memo(
                   handleArchiveToggle();
                 }}
               >
-                {isHidden ? <IconArchiveOff className="size-4 mr-2" /> : <IconArchive className="size-4 mr-2" />}
+                {isHidden ? (
+                  <IconArchiveOff className="size-4 mr-2" />
+                ) : (
+                  <IconArchive className="size-4 mr-2" />
+                )}
                 {isHidden ? "Unarchive" : "Archive"}
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -241,64 +275,72 @@ export const SidebarConversationItem = memo(
             </DialogHeader>
 
             <div className="space-y-4 py-2">
-               <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground ml-1">Name</label>
-                  <Input
-                    value={draftTitle}
-                    onChange={(e) => setDraftTitle(e.target.value)}
-                    placeholder="Chat name"
-                    className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50"
-                  />
-               </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground ml-1">
+                  Name
+                </label>
+                <Input
+                  value={draftTitle}
+                  onChange={(e) => setDraftTitle(e.target.value)}
+                  placeholder="Chat name"
+                  className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50"
+                />
+              </div>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium text-muted-foreground ml-1">Tags</label>
-                  <span className="text-[10px] text-muted-foreground">Select to apply</span>
+                  <label className="text-xs font-medium text-muted-foreground ml-1">
+                    Tags
+                  </label>
+                  <span className="text-[10px] text-muted-foreground">
+                    Select to apply
+                  </span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                    {/* Render available tags as toggleable chips */}
-                    {availableTags.data?.map((tag) => {
-                        const isSelected = selectedTags.some(t => t.toLowerCase() === tag.name.toLowerCase());
-                        return (
-                            <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() => toggleTag(tag.name)}
-                                className={cn(
-                                    "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors",
-                                    isSelected
-                                        ? "bg-foreground text-background border-foreground hover:bg-foreground/90"
-                                        : "bg-background text-foreground border-border hover:bg-muted"
-                                )}
-                            >
-                                {tag.name}
-                            </button>
-                        )
-                    })}
+                  {/* Render available tags as toggleable chips */}
+                  {availableTags.data?.map((tag) => {
+                    const isSelected = selectedTags.some(
+                      (t) => t.toLowerCase() === tag.name.toLowerCase(),
+                    );
+                    return (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => toggleTag(tag.name)}
+                        className={cn(
+                          "inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+                          isSelected
+                            ? "bg-foreground text-background border-foreground hover:bg-foreground/90"
+                            : "bg-background text-foreground border-border hover:bg-muted",
+                        )}
+                      >
+                        {tag.name}
+                      </button>
+                    );
+                  })}
                 </div>
-                
+
                 <div className="relative">
-                    <Input
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleTagKeyDown}
-                        placeholder="Add new tag..."
-                        className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50 text-xs h-9"
-                    />
-                     {tagInput && (
-                        <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                            <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                                onClick={() => addTag(tagInput)}
-                            >
-                                Add
-                            </Button>
-                        </div>
-                    )}
+                  <Input
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagKeyDown}
+                    placeholder="Add new tag..."
+                    className="bg-muted/50 border-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:border-primary/50 text-xs h-9"
+                  />
+                  {tagInput && (
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                        onClick={() => addTag(tagInput)}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -307,7 +349,10 @@ export const SidebarConversationItem = memo(
               <Button variant="outline" onClick={() => setIsEditOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={updateConversation.isPending}>
+              <Button
+                onClick={handleSave}
+                disabled={updateConversation.isPending}
+              >
                 Save
               </Button>
             </DialogFooter>
@@ -319,7 +364,11 @@ export const SidebarConversationItem = memo(
             <AlertDialogHeader>
               <AlertDialogTitle>Delete chat?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will delete <span className="font-medium text-foreground">"{conversation.title}"</span>.
+                This will delete{" "}
+                <span className="font-medium text-foreground">
+                  "{conversation.title}"
+                </span>
+                .
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -340,5 +389,5 @@ export const SidebarConversationItem = memo(
     a.conversation.id === b.conversation.id &&
     a.conversation.title === b.conversation.title &&
     a.isOpen === b.isOpen &&
-    a.isActive === b.isActive
+    a.isActive === b.isActive,
 );

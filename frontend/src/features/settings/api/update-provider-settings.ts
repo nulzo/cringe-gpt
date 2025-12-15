@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@/lib/api-client';
-import { type ProviderType } from '@/features/chat/types';
-import { type ProviderSettings } from './get-provider-settings';
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api-client";
+import { type ProviderType } from "@/features/chat/types";
+import { type ProviderSettings } from "./get-provider-settings";
 
 const updateProviderSettings = (
   provider: ProviderType,
@@ -15,7 +15,7 @@ export const useUpdateProviderSettings = (provider: ProviderType) => {
     mutationFn: (data: ProviderSettings) =>
       updateProviderSettings(provider, data),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['providerSettings', provider] });
+      qc.invalidateQueries({ queryKey: ["providerSettings", provider] });
     },
   });
 };
